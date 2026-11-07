@@ -60,10 +60,10 @@ Registration seams touched: `server/providers/local.js` (one plugin), `src/app/t
 
 | Check | Result |
 | --- | --- |
-| `npm test` | see the final report |
+| `npm test` | 11,491 tests: 11,487 passed, 0 failed, 4 skipped (optional PyOsmium builder, Windows-only DACL hardener, two opt-in timing budgets). An earlier run at load average 40–48 failed 9: one real (a Cesium label in the footprint overlay, fixed in `c5a7fa13`) and eight wall-clock or spawn-timeout assertions in files this branch does not touch, which pass when re-run. |
 | `npm run format:check` | fails on `main` and here for the same pre-existing reason: `scripts/format-scope.json` lists `src/fieldbook/document.test.mjs` and `src/sources/firmsArea.test.mjs`, which do not exist at `45efecdc`. With those two entries excluded, every file passes. |
-| `npm run check:boundaries` | passes |
+| `npm run check:boundaries` | passes (re-run after the last import change) |
 | `npm run i18n` | all 11 catalogs complete at 3,726 messages |
-| QA script | 18/18 |
+| QA script | 18/18, re-run after both fixes |
 | Browser check | 1440×900 and 390×844, live and fixture runs |
 | `.env` | not read, printed or changed |
