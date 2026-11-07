@@ -1502,5 +1502,18 @@
   "docs/design/aurel/PHASE-5.md",
   "docs/design/aurel/phase-5/HARDENING.md",
   "scripts/qa-aurel-hardening.mjs",
-  "scripts/qa-aurel-commands.mjs"
+  "scripts/qa-aurel-commands.mjs",
+  "src/fieldkit/author.test.mjs",
+  "src/fieldkit/budget.test.mjs",
+  "src/fieldkit/envelope.test.mjs",
+  "src/fieldkit/executor.test.mjs",
+  "src/fieldkit/legend.test.mjs",
+  "src/fieldkit/missionTemplates.test.mjs",
+  "src/fieldkit/tools.test.mjs",
+  "server/agentDesk/relay.test.mjs",
+  "src/ui/agentDeskController.test.mjs",
+  "src/ui/views/panels/agentWritesToggle.test.mjs",
+  "src/testSupport/fieldKitFakes.mjs",
+  "scripts/qa-aurel-field-kit.mjs",
+  "docs/design/aurel/phase-6/wp6/README.md"
 ]

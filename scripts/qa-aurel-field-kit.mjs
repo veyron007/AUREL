@@ -385,12 +385,17 @@ try {
     ),
   );
   check('no unhandled browser errors', errors.length === 0);
+  assert.ok(
+    checks.every((entry) => entry.pass),
+    'Field Kit acceptance failure',
+  );
+} finally {
+  // Evidence is written even when a check or wait fails.
   fs.writeFileSync(
     path.join(output, 'field-kit-checks.json'),
     JSON.stringify(
       {
         base: BASE,
-        date,
         checks,
         errors,
         blockedHosts: [...new Set(blocked)].sort(),
@@ -400,11 +405,6 @@ try {
       2,
     ),
   );
-  assert.ok(
-    checks.every((entry) => entry.pass),
-    'Field Kit acceptance failure',
-  );
-} finally {
   mcp.close();
   await browser.close();
 }

@@ -58,18 +58,7 @@ const LOCAL_READ_ANNOTATIONS = Object.freeze({
   openWorldHint: false,
 });
 
-/**
- * Slots for tools other work packages deliver. A slot is documentation and
- * a registration point, never an implementation.
- */
-export const FIELD_KIT_SLOTS = Object.freeze([
-  Object.freeze({
-    name: 'horizon_at',
-    owner: 'WP1 Kshitij Horizon Engine',
-    status: 'pending',
-    note: 'Pass its tool definition as createFieldKitTools({ horizonAt }) once WP1 merges.',
-  }),
-]);
+export { FIELD_KIT_SLOTS } from './slots.js';
 
 const iso = (now) => new Date(now).toISOString();
 
@@ -216,7 +205,7 @@ export const runMissionTemplate = defineTool({
     }
     const result = await relay(services, 'run_mission_template', args, signal);
     return {
-      summary: `${result.plan.title}: saved ${result.place_ids.length} places and a checklist to "${result.project_title}" (revision ${result.revision}), ${result.author}.`,
+      summary: `${result.plan.title}: saved ${result.place_ids.length} ${result.place_ids.length === 1 ? 'place' : 'places'} and a checklist to "${result.project_title}" (revision ${result.revision}), ${result.author}.`,
       data: result,
       envelope: noteEnvelope('run_mission_template', at, AGENT_TEXT_NOTE),
     };

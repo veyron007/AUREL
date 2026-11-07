@@ -341,6 +341,8 @@ test('draw_area saves a closed polygon and refuses invalid geometry', async () =
       'invalid_geometry',
       JSON.stringify(shape),
     );
+    if (shape.polygon?.length === 4)
+      assert.match(answer.refusal.message, /edges cross/);
   }
   assert.equal(fieldbook.records.get(first.project_id).revision, 2);
 });

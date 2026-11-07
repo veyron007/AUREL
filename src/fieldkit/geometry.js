@@ -91,7 +91,7 @@ export function areaPolygon({ polygon, bbox }) {
     Math.max(...lats) - Math.min(...lats) > MAX_AREA_SPAN_DEG
   )
     refuse(`it spans more than ${MAX_AREA_SPAN_DEG}° in latitude or longitude`);
-  if (ringArea(ring) <= EPSILON) refuse('it has no area');
   checkSimple(ring);
+  if (ringArea(ring) <= EPSILON) refuse('it has no area');
   return { type: 'Polygon', coordinates: [ring] };
 }

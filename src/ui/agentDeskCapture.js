@@ -41,8 +41,8 @@ function drawLegend(ctx, { top, width, lines }) {
   lines.forEach((line, index) => {
     ctx.fillStyle =
       index === lines.length - 1
-        ? token('--text-dim', FALLBACK.muted)
-        : token('--aurel-ink', FALLBACK.ink);
+        ? token('--text-secondary', FALLBACK.muted)
+        : token('--text-primary', FALLBACK.ink);
     ctx.fillText(
       line,
       PADDING,

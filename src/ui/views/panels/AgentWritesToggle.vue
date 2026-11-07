@@ -30,6 +30,7 @@ const clock = (value) => new Date(value).toLocaleTimeString();
 
 <style scoped>
 .agent-desk {
+  flex: 1 0 100%;
   display: grid;
   gap: 4px;
   margin-top: 6px;
@@ -41,7 +42,7 @@ const clock = (value) => new Date(value).toLocaleTimeString();
   align-items: center;
   gap: 8px;
   min-height: 32px;
-  color: var(--aurel-ink);
+  color: var(--workspace-text, var(--text-primary));
   font-weight: 600;
   cursor: pointer;
 }
@@ -57,7 +58,7 @@ const clock = (value) => new Date(value).toLocaleTimeString();
 }
 .agent-desk-hint {
   margin: 0;
-  color: var(--text-dim);
+  color: var(--workspace-muted, var(--text-secondary));
   font-size: 12px;
   line-height: 1.4;
 }
@@ -67,7 +68,7 @@ const clock = (value) => new Date(value).toLocaleTimeString();
   margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--text-dim);
+  color: var(--workspace-muted, var(--text-secondary));
   font: 11px/1.4 var(--font-mono);
   overflow-wrap: anywhere;
 }

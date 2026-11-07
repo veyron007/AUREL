@@ -2,7 +2,7 @@ import { AgentDeskController } from '../ui/agentDeskController.js';
 import { createViewCapture } from '../ui/agentDeskCapture.js';
 import { useAgentDeskStore } from '../ui/stores/agentDesk.js';
 import { useDisplayStore } from '../ui/stores/display.js';
-import { FIELD_KIT_SLOTS } from '../fieldkit/tools.js';
+import { FIELD_KIT_SLOTS } from '../fieldkit/slots.js';
 import { isEmbedded } from './embed.js';
 
 const pendingTools = new Set(

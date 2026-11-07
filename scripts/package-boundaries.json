@@ -3371,7 +3371,7 @@
       "src/fieldkit/missionTemplates.js",
       "src/fieldkit/refusals.js",
       "src/fieldkit/schemas.js",
-      "src/fieldkit/tools.js",
+      "src/fieldkit/slots.js",
       "src/ui/fieldbookPresentation.js",
       "src/ui/lensController.js",
       "src/ui/lensPresentation.js",
