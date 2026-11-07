@@ -1,0 +1,2 @@
+#EventID|Time|Latitude|Longitude|Depth/km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|MagAuthor|EventLocationName|EventType
+gfz2026vtjo|2026-11-06T10:39:28.29|34.987|142.162|31.0|||GFZ|gfz2026vtjo|Mw|6.01||Off East Coast of Honshu, Japan|earthquake
