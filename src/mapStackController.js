@@ -1,6 +1,7 @@
 import { MapSourceController } from './maps/controller.js';
 import { createDefaultMapSources } from './maps/defaultSources.js';
 import { governorRequestRender } from './renderGovernor.js';
+import { cameraGeoPoint } from './maps/photorealCoverage.js';
 export { MAP_STACKS } from './maps/catalog.js';
 export { photorealUnavailableReason } from './maps/availability.js';
 
@@ -17,6 +18,7 @@ export class MapStackController extends MapSourceController {
       ...options,
       googleApiKey,
       freeOnly,
+      cameraPoint: () => cameraGeoPoint(viewer),
     });
     super(viewer, {
       registry,

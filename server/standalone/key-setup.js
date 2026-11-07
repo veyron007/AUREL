@@ -1,4 +1,5 @@
 import { FREE_ONLY_STATUS } from './free-only-status.js';
+import { radioPriorityStatus } from '../providers/radio/priority.js';
 import {
   knownKeySetupEnvVars,
   admitKeySetupRequest,
@@ -182,6 +183,8 @@ function keySetupEndpoint({
     return {
       ...status,
       ...(freeOnly ? FREE_ONLY_STATUS : {}),
+      // Keyless configuration shown read-only: country codes, never a key.
+      radioPriority: radioPriorityStatus(process.env),
       store: storeName(),
     };
   };

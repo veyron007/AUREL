@@ -4130,5 +4130,20 @@
   "Some work could not stop. Check active layers and watches.": "تعذر إيقاف بعض العمليات. تحقق من الطبقات والمراقبات النشطة.",
   "Pausing feeds…": "جارٍ إيقاف التدفقات مؤقتًا…",
   "Pause feeds": "إيقاف التدفقات مؤقتًا",
-  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "إيقاف التدفقات المباشرة والمراقبات المحلية والتحليلات المعلقة. يظل العمل المحفوظ مفتوحًا."
+  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "إيقاف التدفقات المباشرة والمراقبات المحلية والتحليلات المعلقة. يظل العمل المحفوظ مفتوحًا.",
+  "Dehradun": "دهرادون",
+  "Mussoorie": "موسوري",
+  "Rishikesh": "ريشيكيش",
+  "Delhi": "دلهي",
+  "Mumbai": "مومباي",
+  "Bengaluru": "بنغالورو",
+  "Chennai": "تشيناي",
+  "Kolkata": "كولكاتا",
+  "Google 3D tiles unavailable — this area is likely outside Google's photorealistic coverage. If 3D fails elsewhere too, check the key's API restrictions, quota, or network": "بلاطات Google 3D غير متاحة — يُرجَّح أن هذه المنطقة خارج تغطية Google الواقعية. إن تعذّر 3D في أماكن أخرى أيضًا، فتحقّق من قيود API للمفتاح أو الحصة أو الشبكة",
+  "This area is likely outside Google's photorealistic coverage, so a Google key would not add 3D buildings here. Esri and OSM imagery cover it": "يُرجَّح أن هذه المنطقة خارج تغطية Google الواقعية، فلن يضيف مفتاح Google مبانيَ ثلاثية الأبعاد هنا. صور Esri وOSM تغطيها",
+  "RADIO_PRIORITY_COUNTRIES is not valid: use up to eight two-letter country codes, such as IN. The radio directory will not start until it is fixed": "قيمة RADIO_PRIORITY_COUNTRIES غير صالحة: استخدم حتى ثمانية رموز دول من حرفين، مثل IN. لن يعمل دليل الإذاعات حتى يتم تصحيحها",
+  "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "غير مضبوط. أضف RADIO_PRIORITY_COUNTRIES=IN إلى .env لحجز ما يصل إلى {count} محطة هندية في دليل الإذاعات، ثم أعد التشغيل",
+  "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "يحجز ما يصل إلى {count} محطة إذاعية لكل دولة من: {countries}. مضبوط عبر RADIO_PRIORITY_COUNTRIES في .env؛ أعد التشغيل بعد تغييره",
+  "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "الرمز متجاهَل في وضع مجاني فقط — تعمل هذه الخدمة دون مفتاح. تبقى بيانات الاعتماد المحفوظة دون تغيير.",
+  "RADIO PRIORITY COUNTRIES": "دول أولوية الإذاعات"
 }

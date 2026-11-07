@@ -3755,5 +3755,20 @@
   "Some work could not stop. Check active layers and watches.": "部分工作無法停止。請檢查執行中的圖層和監測。",
   "Pausing feeds…": "正在暫停資料更新…",
   "Pause feeds": "暫停資料更新",
-  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "停止即時資料流、本機監測和待處理的分析。已儲存的工作保持開啟。"
+  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "停止即時資料流、本機監測和待處理的分析。已儲存的工作保持開啟。",
+  "Dehradun": "德拉敦",
+  "Mussoorie": "穆索里",
+  "Rishikesh": "瑞詩凱詩",
+  "Delhi": "德里",
+  "Mumbai": "孟買",
+  "Bengaluru": "班加羅爾",
+  "Chennai": "金奈",
+  "Kolkata": "加爾各答",
+  "Google 3D tiles unavailable — this area is likely outside Google's photorealistic coverage. If 3D fails elsewhere too, check the key's API restrictions, quota, or network": "Google 3D 瓦片不可用——此區域可能不在 Google 照片級逼真覆蓋範圍內。如果其他地方的 3D 也無法載入，請檢查密鑰的 API 限制、配額或網絡",
+  "This area is likely outside Google's photorealistic coverage, so a Google key would not add 3D buildings here. Esri and OSM imagery cover it": "此區域可能不在 Google 照片級逼真覆蓋範圍內，因此 Google 密鑰無法在此添加 3D 建築。Esri 和 OSM 影像覆蓋此區域",
+  "RADIO_PRIORITY_COUNTRIES is not valid: use up to eight two-letter country codes, such as IN. The radio directory will not start until it is fixed": "RADIO_PRIORITY_COUNTRIES 無效：請使用最多八個兩位字母國家代碼，例如 IN。修正之前電台目錄不會啟動",
+  "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "未設定。在 .env 中添加 RADIO_PRIORITY_COUNTRIES=IN，可在電台目錄中為印度預留最多 {count} 個電台，然後重啟",
+  "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "為 {countries} 每個國家預留最多 {count} 個電台。由 .env 中的 RADIO_PRIORITY_COUNTRIES 設定；修改後請重啟",
+  "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "「僅免費」模式下不使用該令牌——此服務無需密鑰也能使用。已儲存的憑證維持不變。",
+  "RADIO PRIORITY COUNTRIES": "電台優先國家"
 }

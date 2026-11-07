@@ -3905,5 +3905,20 @@
   "Some work could not stop. Check active layers and watches.": "Non è stato possibile interrompere alcune attività. Controlla i livelli e i monitoraggi attivi.",
   "Pausing feeds…": "Sospensione delle fonti…",
   "Pause feeds": "Sospendi fonti",
-  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "Interrompi i flussi in tempo reale, i monitoraggi locali e le analisi in sospeso. Il lavoro salvato resta aperto."
+  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "Interrompi i flussi in tempo reale, i monitoraggi locali e le analisi in sospeso. Il lavoro salvato resta aperto.",
+  "Dehradun": "Dehradun",
+  "Mussoorie": "Mussoorie",
+  "Rishikesh": "Rishikesh",
+  "Delhi": "Delhi",
+  "Mumbai": "Mumbai",
+  "Bengaluru": "Bengaluru",
+  "Chennai": "Chennai",
+  "Kolkata": "Kolkata",
+  "Google 3D tiles unavailable — this area is likely outside Google's photorealistic coverage. If 3D fails elsewhere too, check the key's API restrictions, quota, or network": "Google 3D Tiles non disponibili: quest'area è probabilmente fuori dalla copertura fotorealistica di Google. Se il 3D non funziona nemmeno altrove, controlla le restrizioni API della chiave, la quota o la rete",
+  "This area is likely outside Google's photorealistic coverage, so a Google key would not add 3D buildings here. Esri and OSM imagery cover it": "Quest'area è probabilmente fuori dalla copertura fotorealistica di Google, quindi una chiave Google non aggiungerebbe edifici 3D qui. Le immagini Esri e OSM la coprono",
+  "RADIO_PRIORITY_COUNTRIES is not valid: use up to eight two-letter country codes, such as IN. The radio directory will not start until it is fixed": "RADIO_PRIORITY_COUNTRIES non è valido: usa fino a otto codici paese di due lettere, come IN. L'elenco radio non partirà finché non viene corretto",
+  "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "Non impostato. Aggiungi RADIO_PRIORITY_COUNTRIES=IN a .env per riservare fino a {count} stazioni indiane nell'elenco radio, poi riavvia",
+  "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "Riserva fino a {count} stazioni radio per paese per {countries}. Impostato con RADIO_PRIORITY_COUNTRIES in .env; riavvia dopo averlo cambiato",
+  "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "Token ignorato da Solo gratuito: questo servizio funziona anche senza chiave. Le credenziali salvate restano invariate.",
+  "RADIO PRIORITY COUNTRIES": "PAESI PRIORITARI RADIO"
 }

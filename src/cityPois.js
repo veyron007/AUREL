@@ -3,6 +3,7 @@
  * @description The preset cities and their landmarks — plain data with no
  * Cesium, so modules that only need the names (voice cards) can import it.
  */
+import { INDIA_CITY_POIS } from './cityPoisIndia.js';
 
 /**
  * Points of Interest per city.
@@ -511,4 +512,6 @@ export const CITY_POIS = {
       },
     ],
   },
+  // The Indian presets (src/cityPoisIndia.js), after the original cities.
+  ...INDIA_CITY_POIS,
 };

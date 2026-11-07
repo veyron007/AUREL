@@ -88,6 +88,7 @@ const removeTitle = (title) =>
         </div>
         <p class="key-setup-unlocks">{{ key.unlocks }}</p>
         <p v-if="key.blocked" class="key-setup-policy">{{ t('Paused by Free-only — entitlement or cost not verified. Saved credentials are unchanged.') }}</p>
+        <p v-else-if="key.paused" class="key-setup-policy">{{ t('Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.') }}</p>
         <div v-if="!key.external" class="key-setup-fields">
           <input v-for="envVar in key.envVars" :key="envVar" type="password" autocomplete="off" spellcheck="false" :data-env-var="envVar" :aria-label="envVar" :placeholder="key.set ? t('{envVar} saved — paste to replace', { envVar }) : t('paste {envVar}', { envVar })" v-field-value="view.fields[envVar] ?? ''" @input="controls?.setField(envVar, $event.target.value)" />
           <button v-if="key.managed === 'file'" type="button" class="key-setup-remove" :data-key-setup-remove="JSON.stringify(key.envVars)" :title="removeTitle(key.title)" @click="controls?.remove(key.envVars)">{{ t('REMOVE') }}</button>
@@ -96,6 +97,14 @@ const removeTitle = (title) =>
           <span class="key-setup-cloud-auth-state">{{ view.auth.mode === 'oauth' ? t('VOICE AUTH · CHATGPT OAUTH') : t('VOICE AUTH · API KEY') }}</span>
           <button type="button" class="key-setup-cloud-auth-toggle" data-cloud-voice-auth-toggle="true" :title="view.auth.mode === 'oauth' ? t('Use OPENAI_API_KEY for the next cloud voice session') : t('Use the signed-in local ChatGPT/Codex OAuth session for the next cloud voice session')" :aria-disabled="String(view.auth.busy)" @click="controls?.toggleAuth()">{{ view.auth.mode === 'oauth' ? t('USE API KEY') : t('USE CHATGPT OAUTH') }}</button>
         </div>
+      </section>
+      <!-- Keyless configuration, read-only: set in .env, never through this panel. -->
+      <section v-if="view?.radioPriority" class="key-setup-row" data-key-id="radio-priority" :data-set="String(view.radioPriority.set)">
+        <div class="key-setup-row-head">
+          <span class="key-setup-led" aria-hidden="true"></span>
+          <strong>{{ t('RADIO PRIORITY COUNTRIES') }}</strong>
+        </div>
+        <p :class="view.radioPriority.valid ? 'key-setup-unlocks' : 'key-setup-policy'">{{ view.radioPriority.text }}</p>
       </section>
     </div>
     <div class="key-setup-footer">

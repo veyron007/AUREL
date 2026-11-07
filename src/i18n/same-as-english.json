@@ -212,7 +212,15 @@
     "ΔN",
     "Ⅱ PAUSE",
     "≥ {value} MW",
-    "▲ {frp} MW"
+    "▲ {frp} MW",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Mumbai",
+    "Bengaluru",
+    "Chennai",
+    "Kolkata"
   ],
   "es": [
     "1090 MHz",
@@ -351,7 +359,12 @@
     "Reptiles",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Chennai"
   ],
   "fr": [
     "1090 MHz",
@@ -545,7 +558,15 @@
     "ΔN",
     "Ⅱ PAUSE",
     "≥ {value} MW",
-    "▲ {frp} MW"
+    "▲ {frp} MW",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Mumbai",
+    "Bengaluru",
+    "Chennai",
+    "Kolkata"
   ],
   "it": [
     "1090 MHz",
@@ -725,7 +746,15 @@
     "CC BY 4.0",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Mumbai",
+    "Bengaluru",
+    "Chennai",
+    "Kolkata"
   ],
   "ja": [
     "1090 MHz",
@@ -919,7 +948,12 @@
     "CC BY 4.0",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Mumbai",
+    "Chennai"
   ],
   "ru": [
     "AIS: --",
