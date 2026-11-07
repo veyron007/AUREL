@@ -44,9 +44,13 @@ export function queryDrop(spec, routed, { lon, lat }) {
   if (!trace.cells.length) return { status: 'no-height' };
   const cells = trace.cells.slice(0, MAX_TRACE_CELLS);
   const path = cells.map((cell) => cellCenter(spec, cell));
+  const areas = rowCellAreasKm2(spec);
+  const pathUpKm2 = cells.map(
+    (cell) =>
+      +(routed.accumulation[cell] * areas[Math.floor(cell / spec.cols)]).toFixed(2),
+  );
   const outlet = snapOutlet(spec, routed.accumulation, start, SNAP_RADIUS_CELLS);
   const upstream = upstreamMask(spec, routed.directions, outlet);
-  const areas = rowCellAreasKm2(spec);
   const weights = new Map();
   let areaKm2 = 0;
   for (let cell = 0; cell < upstream.mask.length; cell++) {
@@ -63,6 +67,7 @@ export function queryDrop(spec, routed, { lon, lat }) {
     status: 'ok',
     start: cellCenter(spec, start),
     path,
+    pathUpKm2,
     end: trace.end,
     truncated: cells.length < trace.cells.length,
     steps: cells.length,

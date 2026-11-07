@@ -3,8 +3,7 @@
  *
  * 1. Depressions are filled with Priority-Flood+ε (Barnes, Lehman & Mulla
  *    2014, "Priority-Flood: An optimal depression-filling and watershed-
- *    labeling algorithm", Computers & Geosciences 62, algorithm 3, with the
- *    pit queue folded into the priority queue). Every
+ *    labeling algorithm", Computers & Geosciences 62, algorithm 3; equal-height outlets are expanded together). Every
  *    raised cell is counted so the method card can disclose the fill.
  * 2. Each cell drains to the neighbour with the steepest descent on the filled
  *    surface (O'Callaghan & Mark 1984). Window-edge cells always drain out,
@@ -35,12 +34,10 @@ const RAISE_REPORT_M = 1e-3;
 
 /** Binary min-heap of cell indices keyed by height, ties broken by index. */
 class CellHeap {
-  constructor(keys) {
+  constructor(keys, capacity) {
     this.keys = keys;
-    this.items = [];
-  }
-  get size() {
-    return this.items.length;
+    this.items = new Int32Array(Math.max(16, capacity));
+    this.size = 0;
   }
   less(a, b) {
     const ka = this.keys[a],
@@ -49,32 +46,31 @@ class CellHeap {
   }
   push(cell) {
     const items = this.items;
-    let i = items.push(cell) - 1;
+    let i = this.size++;
     while (i > 0) {
       const parent = (i - 1) >> 1;
-      if (!this.less(items[i], items[parent])) break;
-      [items[i], items[parent]] = [items[parent], items[i]];
+      if (!this.less(cell, items[parent])) break;
+      items[i] = items[parent];
       i = parent;
     }
+    items[i] = cell;
   }
   pop() {
     const items = this.items;
-    const top = items[0],
-      last = items.pop();
-    if (items.length) {
-      items[0] = last;
-      let i = 0;
-      for (;;) {
-        const l = 2 * i + 1,
-          r = l + 1;
-        let m = i;
-        if (l < items.length && this.less(items[l], items[m])) m = l;
-        if (r < items.length && this.less(items[r], items[m])) m = r;
-        if (m === i) break;
-        [items[i], items[m]] = [items[m], items[i]];
-        i = m;
-      }
+    const top = items[0];
+    const last = items[--this.size];
+    const n = this.size;
+    let i = 0;
+    for (;;) {
+      const l = 2 * i + 1;
+      if (l >= n) break;
+      const r = l + 1;
+      const m = r < n && this.less(items[r], items[l]) ? r : l;
+      if (!this.less(items[m], last)) break;
+      items[i] = items[m];
+      i = m;
     }
+    if (n > 0) items[i] = last;
     return top;
   }
 }
@@ -109,7 +105,7 @@ export function fillDepressions(spec, heights, { epsilonM = FILL_EPSILON_M } = {
   const n = cols * rows;
   const filled = Float64Array.from(heights, (v) => (isMissing(v) ? NaN : v));
   const closed = new Uint8Array(n);
-  const open = new CellHeap(filled);
+  const open = new CellHeap(filled, n);
   let validCells = 0;
   for (let row = 0; row < rows; row++)
     for (let col = 0; col < cols; col++) {
@@ -124,11 +120,15 @@ export function fillDepressions(spec, heights, { epsilonM = FILL_EPSILON_M } = {
         open.push(cell);
       }
     }
-  // Raised cells go back on the height-ordered heap rather than a FIFO, so a
-  // flat floods in rings from all of its outlets at once and drains to the
-  // nearest one instead of to whichever outlet happened to be popped first.
-  while (open.size) {
-    const cell = open.pop();
+  // Raised cells go through a FIFO "pit" queue (Barnes 2014). Every heap cell
+  // of the current lowest height is popped as one batch before the queue runs,
+  // so a flat floods in rings from all of its outlets at once and drains to
+  // the nearest one rather than to whichever outlet was popped first.
+  const pit = new Int32Array(n);
+  let pitHead = 0,
+    pitTail = 0;
+  const batch = [];
+  const expand = (cell) => {
     const row = Math.floor(cell / cols),
       col = cell - row * cols;
     const floor = filled[cell] + epsilonM;
@@ -139,9 +139,22 @@ export function fillDepressions(spec, heights, { epsilonM = FILL_EPSILON_M } = {
       const next = r * cols + c;
       if (closed[next]) continue;
       closed[next] = 1;
-      if (filled[next] <= floor) filled[next] = floor;
-      open.push(next);
+      if (filled[next] <= floor) {
+        filled[next] = floor;
+        pit[pitTail++] = next;
+      } else open.push(next);
     }
+  };
+  while (open.size || pitHead < pitTail) {
+    if (pitHead < pitTail) {
+      expand(pit[pitHead++]);
+      continue;
+    }
+    pitHead = pitTail = 0;
+    const level = filled[open.items[0]];
+    batch.length = 0;
+    while (open.size && filled[open.items[0]] === level) batch.push(open.pop());
+    for (const cell of batch) expand(cell);
   }
   let raisedCells = 0,
     maxRaiseM = 0;

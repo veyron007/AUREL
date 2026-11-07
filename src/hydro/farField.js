@@ -103,16 +103,31 @@ export function continueDownstream(network, point, exitUpstreamKm2 = 0) {
 }
 
 /**
- * Named rivers met along a D8 path, in order: each path point takes the name
- * of the nearest named reach vertex within `maxM`.
+ * Named rivers met along a D8 path, in order. Each sampled point takes the
+ * name of the nearest named reach vertex within `maxM`. When the D8 upstream
+ * area at each point is given, only reaches draining within a factor of
+ * AREA_MATCH of it qualify, so a path beside a tributary keeps the main
+ * river's name. A name must also hold for `minRun` consecutive samples.
  */
-export function namesAlong(network, path, { maxM = 600, every = 4 } = {}) {
+export const AREA_MATCH = 3;
+export function namesAlong(
+  network,
+  path,
+  { maxM = 600, every = 4, minRun = 3, upKm2 = null } = {},
+) {
   const named = network.reaches.filter((reach) => reach.name);
-  const names = [];
+  const samples = [];
   for (let i = 0; i < path.length; i += every) {
+    const area = upKm2?.[i];
+    const sized = Number.isFinite(area) && area >= 5;
     let best = null,
       bestDistance = maxM;
-    for (const reach of named)
+    for (const reach of named) {
+      if (
+        sized &&
+        (reach.upKm2 > area * AREA_MATCH || reach.upKm2 < area / AREA_MATCH)
+      )
+        continue;
       for (const vertex of reach.line) {
         const distance = haversineM(path[i], vertex);
         if (distance < bestDistance) {
@@ -120,7 +135,44 @@ export function namesAlong(network, path, { maxM = 600, every = 4 } = {}) {
           bestDistance = distance;
         }
       }
-    if (best && names.at(-1) !== best.name) names.push(best.name);
+    }
+    samples.push(best?.name ?? null);
   }
+  const runs = [];
+  for (const name of samples) {
+    if (runs.at(-1)?.name === name) runs.at(-1).count++;
+    else runs.push({ name, count: 1 });
+  }
+  const kept = runs.filter((run) => run.name && run.count >= minRun);
+  const names = [];
+  for (const { name } of kept.length ? kept : runs.filter((run) => run.name))
+    if (names.at(-1) !== name) names.push(name);
   return names;
+}
+
+/** Ray-casting point-in-ring test on [lon, lat] rings. */
+function inRing(point, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i],
+      [xj, yj] = ring[j];
+    if (
+      yi > point[1] !== yj > point[1] &&
+      point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi
+    )
+      inside = !inside;
+  }
+  return inside;
+}
+
+/** HydroBASINS level-12 unit containing a point, from the bundled subset. */
+export function basinAt(basins, point) {
+  if (basins?.version !== 1 || !Array.isArray(basins.units)) return null;
+  const unit = basins.units.find(
+    (candidate) =>
+      Array.isArray(candidate.ring) && inRing(point, candidate.ring),
+  );
+  return unit
+    ? { id: unit.id, upKm2: unit.upKm2, subKm2: unit.subKm2 }
+    : null;
 }

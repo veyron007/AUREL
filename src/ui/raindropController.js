@@ -298,7 +298,9 @@ export class RaindropController {
     try {
       const watch = createBasinWatch(
         {
-          basinId: `d8-outlet:${outlet[0].toFixed(3)},${outlet[1].toFixed(3)}`,
+          basinId: this.result.basin?.id
+            ? `hybas12:${this.result.basin.id}:${outlet[0].toFixed(3)},${outlet[1].toFixed(3)}`
+            : `d8-outlet:${outlet[0].toFixed(3)},${outlet[1].toFixed(3)}`,
           label:
             this.result.placeName ||
             `${outlet[1].toFixed(3)}°, ${outlet[0].toFixed(3)}°`,

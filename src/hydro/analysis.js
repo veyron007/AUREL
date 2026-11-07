@@ -14,7 +14,7 @@ import {
   decodeHeights,
   sampleMeshGrid,
 } from './demSampler.js';
-import { continueDownstream, namesAlong } from './farField.js';
+import { basinAt, continueDownstream, namesAlong } from './farField.js';
 
 const BUNDLED_MARGIN_CELLS = 10;
 /** Live windows are keyed on a 0.05° lattice so nearby clicks share one fill. */
@@ -50,13 +50,16 @@ export function createRaindropAnalysis({
   client,
   loadBundled = async () => null,
   loadRivers = async () => null,
+  loadBasins = async () => null,
   fetchTile,
   geoid,
 }) {
   let bundled = null,
     bundledTried = false,
     rivers = null,
-    riversTried = false;
+    riversTried = false,
+    basins = null,
+    basinsTried = false;
   const liveMeta = new Map();
 
   async function bundledGrid() {
@@ -84,6 +87,17 @@ export function createRaindropAnalysis({
       rivers = null;
     }
     return rivers;
+  }
+
+  async function basinUnits() {
+    if (basinsTried) return basins;
+    basinsTried = true;
+    try {
+      basins = await loadBasins();
+    } catch {
+      basins = null;
+    }
+    return basins;
   }
 
   async function chooseWindow(point, signal) {
@@ -156,7 +170,9 @@ export function createRaindropAnalysis({
     if (network && drop.end !== 'loop') {
       far = continueDownstream(network, drop.path.at(-1), drop.exitUpstreamKm2);
     }
-    const localNames = network ? namesAlong(network, drop.path) : [];
+    const localNames = network
+      ? namesAlong(network, drop.path, { upKm2: drop.pathUpKm2 })
+      : [];
     const names = [...localNames];
     for (const name of far?.names || []) if (names.at(-1) !== name) names.push(name);
     return {
@@ -188,6 +204,7 @@ export function createRaindropAnalysis({
           : { status: far?.status || 'not-needed' }
         : { status: 'unavailable' },
       rivers: names,
+      basin: basinAt(await basinUnits(), drop.outlet),
     };
   }
 

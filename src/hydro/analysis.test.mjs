@@ -15,6 +15,7 @@ import {
 } from './quantizedMesh.js';
 import { createRaindropAnalysis, insideWithMargin } from './analysis.js';
 import { createHydroClient } from './workerClient.js';
+import { validateRiverSubset } from './farField.js';
 
 const zz = (value) => ((value << 1) ^ (value >> 31)) >>> 0;
 
@@ -146,7 +147,17 @@ const codes = new Uint16Array(
   demBytes.byteOffset,
   demBytes.byteLength / 2,
 );
+const readJson = (name) =>
+  JSON.parse(
+    fs.readFileSync(new URL(`../../public/hydro/${name}`, import.meta.url), 'utf8'),
+  );
 const analysis = createRaindropAnalysis({
+  client: createHydroClient({ createWorker: () => null }),
+  loadBundled: async () => ({ manifest, codes }),
+  loadRivers: async () => validateRiverSubset(readJson('rivers.json')),
+  loadBasins: async () => readJson('basins-doon.json'),
+});
+const offline = createRaindropAnalysis({
   client: createHydroClient({ createWorker: () => null }),
   loadBundled: async () => ({ manifest, codes }),
 });
@@ -164,7 +175,17 @@ test('a Rajpur drop crosses Dehradun, turns east into the Song and reaches the G
   assert.ok(path.some(([lon, lat]) => lon > 78.2 && lat < 30.06));
   assert.equal(result.drop.end, 'edge');
   assert.equal(result.window.resolution.stepArcSec, 3);
-  assert.equal(result.farField.status, 'unavailable', 'no subset bundled in this test');
+  // Names: Rispana, then the Song, then the Ganga, in that order.
+  const song = result.rivers.indexOf('Song'),
+    ganga = result.rivers.indexOf('Ganga');
+  assert.ok(result.rivers.indexOf('Rispana') >= 0);
+  assert.ok(song > result.rivers.indexOf('Rispana') && ganga > song);
+  // HydroRIVERS hands off near the window edge and reaches the ocean.
+  assert.equal(result.farField.status, 'ok');
+  assert.equal(result.farField.end, 'ocean');
+  assert.ok(result.farField.handoffM < 1000);
+  assert.ok(result.farField.lengthKm > 1500);
+  assert.ok(Number.isSafeInteger(result.basin?.id), 'HydroBASINS level-12 unit');
 });
 
 test('a Selaqui drop goes west to the Asan and the Yamuna', async () => {
@@ -174,9 +195,20 @@ test('a Selaqui drop goes west to the Asan and the Yamuna', async () => {
   assert.ok(path.some(([lon, lat]) => lon < 77.75 && lat > 30.4));
   assert.ok(path.at(-1)[0] < 77.61, 'leaves through the western edge');
   assert.ok(result.drop.catchment.areaKm2 > 0);
+  const asan = result.rivers.indexOf('Asan'),
+    yamuna = result.rivers.indexOf('Yamuna');
+  assert.ok(asan >= 0 && yamuna > asan, result.rivers.join(' > '));
+  assert.ok(!result.rivers.includes('Song'));
+});
+
+test('without the HydroSHEDS subset the trace stops at the window and says so', async () => {
+  const result = await offline.analyze({ lon: 78.08, lat: 30.36 });
+  assert.equal(result.farField.status, 'unavailable');
+  assert.deepEqual(result.rivers, []);
+  assert.equal(result.basin, null);
 });
 
 test('outside the bundled grid without terrain access the analysis says so', async () => {
   assert.equal(insideWithMargin(createGridSpec(manifest.grid), { lon: 78.5, lat: 30.3 }), false);
-  await assert.rejects(analysis.analyze({ lon: 78.5, lat: 30.3 }), (error) => error.code === 'offline-outside-pack');
+  await assert.rejects(offline.analyze({ lon: 78.5, lat: 30.3 }), (error) => error.code === 'offline-outside-pack');
 });
