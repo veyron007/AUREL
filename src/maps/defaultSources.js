@@ -13,12 +13,17 @@ import {
 } from './imagery.js';
 import { createWorldTerrain, createKeylessTerrain } from './terrain.js';
 
-/** Select sources and setup guidance without putting provider branches in the controller. */
+/**
+ * Select sources and setup guidance without putting provider branches in the
+ * controller. `cameraPoint` returns where the camera is ({lat, lon} or null),
+ * read when a reason is shown so Google 3D advice can follow coverage.
+ */
 export function createDefaultMapSources({
   googleTileset = null,
   cesiumToken = '',
   googleApiKey = '',
   freeOnly = false,
+  cameraPoint = () => null,
 } = {}) {
   const ionToken = freeOnly ? '' : String(cesiumToken || '').trim();
   const hasIon = Boolean(ionToken);
@@ -57,7 +62,10 @@ export function createDefaultMapSources({
           available: Boolean(allowedTileset),
           unavailableReason: freeOnly
             ? policyReason
-            : () => photorealUnavailableReason(hasIon || hasGoogle),
+            : () =>
+                photorealUnavailableReason(hasIon || hasGoogle, {
+                  at: cameraPoint(),
+                }),
           tileset: allowedTileset,
         };
       if (descriptor.kind === 'offline-overview')

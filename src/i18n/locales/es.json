@@ -4382,5 +4382,20 @@
   "Agreement is not proof: sources can share inputs or errors, so a match does not make a value true.": "La coincidencia no es una prueba: las fuentes pueden compartir entradas o errores, por lo que una coincidencia no hace verdadero un valor.",
   "Shared inputs": "Entradas compartidas",
   "Checked (UTC)": "Comprobado (UTC)",
-  "Check again": "Comprobar de nuevo"
+  "Check again": "Comprobar de nuevo",
+  "Dehradun": "Dehradun",
+  "Mussoorie": "Mussoorie",
+  "Rishikesh": "Rishikesh",
+  "Delhi": "Delhi",
+  "Mumbai": "Bombay",
+  "Bengaluru": "Bangalore",
+  "Chennai": "Chennai",
+  "Kolkata": "Calcuta",
+  "Google 3D tiles unavailable — this area is likely outside Google's photorealistic coverage. If 3D fails elsewhere too, check the key's API restrictions, quota, or network": "Teselas de Google 3D no disponibles: es probable que esta zona esté fuera de la cobertura fotorrealista de Google. Si el 3D también falla en otros lugares, revisa las restricciones de API de la clave, la cuota o la red",
+  "This area is likely outside Google's photorealistic coverage, so a Google key would not add 3D buildings here. Esri and OSM imagery cover it": "Es probable que esta zona esté fuera de la cobertura fotorrealista de Google, así que una clave de Google no añadiría edificios 3D aquí. Las imágenes de Esri y OSM la cubren",
+  "RADIO_PRIORITY_COUNTRIES is not valid: use up to eight two-letter country codes, such as IN. The radio directory will not start until it is fixed": "RADIO_PRIORITY_COUNTRIES no es válido: usa hasta ocho códigos de país de dos letras, como IN. El directorio de radio no arrancará hasta que se corrija",
+  "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "Sin configurar. Añade RADIO_PRIORITY_COUNTRIES=IN a .env para reservar hasta {count} emisoras indias en el directorio de radio y reinicia",
+  "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "Reserva hasta {count} emisoras de radio por país para {countries}. Configurado con RADIO_PRIORITY_COUNTRIES en .env; reinicia después de cambiarlo",
+  "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "Token ignorado por Solo gratis: este servicio funciona sin clave. Las credenciales guardadas no cambian.",
+  "RADIO PRIORITY COUNTRIES": "PAÍSES PRIORITARIOS DE RADIO"
 }

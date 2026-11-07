@@ -1,4 +1,8 @@
 import { createSurfaceKeyboard } from './ui/surfaceKeyboard.js';
+import {
+  freeOnlyRowPolicy,
+  radioPriorityHint,
+} from './providerSettingsPolicy.js';
 import { useProviderSettingsStore } from './ui/stores/providerSettings.js';
 import { applicationPinia } from './ui/vueRuntime.js';
 import {
@@ -266,6 +270,8 @@ export async function initKeySetup({
     chip: null,
     dialog: { hidden: true, visible: false },
     rows: [],
+    // Read-only keyless configuration (RADIO_PRIORITY_COUNTRIES), or null.
+    radioPriority: null,
     // Bumped by a save: the rows render afresh, so no field keeps a key.
     generation: 0,
     fields,
@@ -280,6 +286,7 @@ export async function initKeySetup({
     store.publish({
       ...state,
       chip: state.chip && { ...state.chip },
+      radioPriority: state.radioPriority && { ...state.radioPriority },
       dialog: { ...state.dialog },
       fields: { ...fields },
       auth: { ...state.auth },
@@ -317,9 +324,9 @@ export async function initKeySetup({
     state.freeOnly = status.freeOnly === true;
     state.rows = (status.keys || []).map((key) => ({
       ...presentRow(key),
-      blocked:
-        state.freeOnly && (status.blockedProviders || []).includes(key.id),
+      ...freeOnlyRowPolicy(status, key.id),
     }));
+    state.radioPriority = radioPriorityHint(status.radioPriority);
     state.auth = { ...state.auth, mode: readStoredCloudVoiceAuthMode() };
     publish();
   };

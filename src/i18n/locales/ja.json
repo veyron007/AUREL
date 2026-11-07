@@ -4232,5 +4232,20 @@
   "Agreement is not proof: sources can share inputs or errors, so a match does not make a value true.": "一致は証明ではありません。ソースが入力や誤りを共有していることがあるため、一致しても値が真であるとは限りません。",
   "Shared inputs": "共有される入力",
   "Checked (UTC)": "確認時刻（UTC）",
-  "Check again": "再確認"
+  "Check again": "再確認",
+  "Dehradun": "デヘラードゥーン",
+  "Mussoorie": "マスーリー",
+  "Rishikesh": "リシケシュ",
+  "Delhi": "デリー",
+  "Mumbai": "ムンバイ",
+  "Bengaluru": "ベンガルール",
+  "Chennai": "チェンナイ",
+  "Kolkata": "コルカタ",
+  "Google 3D tiles unavailable — this area is likely outside Google's photorealistic coverage. If 3D fails elsewhere too, check the key's API restrictions, quota, or network": "Google 3D Tilesを利用できません。この地域はGoogleのフォトリアルなカバー範囲外の可能性があります。ほかの場所でも3Dが表示されない場合は、キーのAPI制限、割り当て、ネットワークを確認してください",
+  "This area is likely outside Google's photorealistic coverage, so a Google key would not add 3D buildings here. Esri and OSM imagery cover it": "この地域はGoogleのフォトリアルなカバー範囲外の可能性があるため、Googleキーを追加してもここでは3D建物は表示されません。EsriとOSMの画像はこの地域をカバーしています",
+  "RADIO_PRIORITY_COUNTRIES is not valid: use up to eight two-letter country codes, such as IN. The radio directory will not start until it is fixed": "RADIO_PRIORITY_COUNTRIESが無効です。INのような2文字の国コードを最大8個まで使ってください。修正するまでラジオディレクトリは起動しません",
+  "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "未設定です。.envにRADIO_PRIORITY_COUNTRIES=INを追加すると、ラジオディレクトリにインドの局を最大{count}局確保できます。追加後に再起動してください",
+  "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "{countries}について、国ごとに最大{count}局のラジオ局を確保します。.envのRADIO_PRIORITY_COUNTRIESで設定。変更後は再起動してください",
+  "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "「無料のみ」ではトークンを使用しません — このサービスはキーなしでも動作します。保存済みの認証情報は変更されません。",
+  "RADIO PRIORITY COUNTRIES": "ラジオ優先国"
 }

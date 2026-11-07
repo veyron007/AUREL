@@ -225,7 +225,15 @@
     "Raindrop",
     "{value} mm",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Mumbai",
+    "Bengaluru",
+    "Chennai",
+    "Kolkata"
   ],
   "es": [
     "1090 MHz",
@@ -375,7 +383,12 @@
     "{value} mm",
     "India Meteorological Department",
     "Central Water Commission",
-    "Local"
+    "Local",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Chennai"
   ],
   "fr": [
     "1090 MHz",
@@ -581,7 +594,15 @@
     "Central Water Commission",
     "Local",
     "dramatisation",
-    "note"
+    "note",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Mumbai",
+    "Bengaluru",
+    "Chennai",
+    "Kolkata"
   ],
   "it": [
     "1090 MHz",
@@ -771,7 +792,15 @@
     "{value} mm",
     "Percentile {percentile}",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Delhi",
+    "Mumbai",
+    "Bengaluru",
+    "Chennai",
+    "Kolkata"
   ],
   "ja": [
     "1090 MHz",
@@ -981,7 +1010,12 @@
     "{value} mm",
     "India Meteorological Department",
     "Central Water Commission",
-    "Local"
+    "Local",
+    "Dehradun",
+    "Mussoorie",
+    "Rishikesh",
+    "Mumbai",
+    "Chennai"
   ],
   "ru": [
     "AIS: --",

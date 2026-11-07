@@ -1,4 +1,7 @@
-import { normalizeRadioCountryInput } from '../../../src/data/radioCountry.js';
+import {
+  COUNTRY_RESERVED_STATIONS,
+  parseRadioPriorityCountries,
+} from './priority.js';
 import { lookup as lookupDns } from 'node:dns/promises';
 import { randomUUID } from 'node:crypto';
 
@@ -28,33 +31,10 @@ import {
   RADIO_FALLBACK_MIRRORS,
   RADIO_REJECTED_STATION_COUNT_MAX,
 } from './constants.js';
-const PRIORITY_COUNTRY_LIMIT = 8;
+export { parseRadioPriorityCountries };
 const COUNTRY_QUERY_LIMIT = 200;
-const COUNTRY_RESERVED_STATIONS = 40;
 const REFRESH_RETRY_MS = 60_000;
 const MAX_MIRROR_ATTEMPTS = 3;
-
-/** Validate an operator-owned list; malformed configuration must not silently widen queries. */
-export function parseRadioPriorityCountries(value = '') {
-  const entries = Array.isArray(value) ? value : String(value).split(',');
-  const countries = [];
-  for (const entry of entries) {
-    const input = String(entry).trim().toUpperCase();
-    if (!input) continue;
-    const normalized = normalizeRadioCountryInput(input);
-    if (!/^[A-Z]{2}$/.test(input) || !normalized.valid)
-      throw new TypeError(
-        'RADIO_PRIORITY_COUNTRIES requires ISO alpha-2 country codes',
-      );
-    const code = normalized.code;
-    if (!countries.includes(code)) countries.push(code);
-  }
-  if (countries.length > PRIORITY_COUNTRY_LIMIT)
-    throw new RangeError(
-      'RADIO_PRIORITY_COUNTRIES supports at most eight countries',
-    );
-  return countries;
-}
 
 async function mapRadioConcurrent(values, concurrency, mapper) {
   const results = new Array(values.length);

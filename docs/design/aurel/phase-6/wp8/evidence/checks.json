@@ -1,0 +1,199 @@
+{
+  "results": [
+    {
+      "name": "the Location tray lists all eight Indian presets",
+      "pass": true,
+      "detail": [
+        {
+          "id": "austin",
+          "label": "Austin"
+        },
+        {
+          "id": "sf",
+          "label": "San Francisco"
+        },
+        {
+          "id": "nyc",
+          "label": "New York"
+        },
+        {
+          "id": "tokyo",
+          "label": "Tokyo"
+        },
+        {
+          "id": "london",
+          "label": "London"
+        },
+        {
+          "id": "paris",
+          "label": "Paris"
+        },
+        {
+          "id": "dubai",
+          "label": "Dubai"
+        },
+        {
+          "id": "dc",
+          "label": "Washington DC"
+        },
+        {
+          "id": "tallinn",
+          "label": "Tallinn"
+        },
+        {
+          "id": "dehradun",
+          "label": "Dehradun"
+        },
+        {
+          "id": "mussoorie",
+          "label": "Mussoorie"
+        },
+        {
+          "id": "rishikesh",
+          "label": "Rishikesh"
+        },
+        {
+          "id": "delhi",
+          "label": "Delhi"
+        },
+        {
+          "id": "mumbai",
+          "label": "Mumbai"
+        },
+        {
+          "id": "bengaluru",
+          "label": "Bengaluru"
+        },
+        {
+          "id": "chennai",
+          "label": "Chennai"
+        },
+        {
+          "id": "kolkata",
+          "label": "Kolkata"
+        }
+      ]
+    },
+    {
+      "name": "dehradun preset flies to its landmark",
+      "pass": true,
+      "detail": {
+        "lat": 30.31785090330795,
+        "lon": 78.0413,
+        "height": 1137.2617809925073
+      }
+    },
+    {
+      "name": "mussoorie preset flies to its landmark",
+      "pass": true,
+      "detail": {
+        "lat": 30.38397380050648,
+        "lon": 78.05950307729951,
+        "height": 3354.67649240221
+      }
+    },
+    {
+      "name": "mumbai preset flies to its landmark",
+      "pass": true,
+      "detail": {
+        "lat": 18.932257158322315,
+        "lon": 72.83420947298599,
+        "height": 4545.72899005469
+      }
+    },
+    {
+      "name": "the landmark row shows the Mumbai landmarks",
+      "pass": true,
+      "detail": [
+        "Gateway of India",
+        "Chhatrapati Shivaji Maharaj Terminus",
+        "Marine Drive",
+        "Haji Ali Dargah",
+        "Bandra–Worli Sea Link"
+      ]
+    },
+    {
+      "name": "Google 3D keeps the Free-only policy reason over India",
+      "pass": true,
+      "detail": "Paused by Free-only; saved keys are preserved"
+    },
+    {
+      "name": "Launch Library reads as a paused token, not a blocked service",
+      "pass": true,
+      "detail": "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged."
+    },
+    {
+      "name": "Google Maps still reads as blocked",
+      "pass": true,
+      "detail": "Paused by Free-only — entitlement or cost not verified. Saved credentials are unchanged."
+    },
+    {
+      "name": "the radio priority line is shown read-only",
+      "pass": true,
+      "detail": "RADIO PRIORITY COUNTRIES Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to 40 Indian stations in the radio directory, then restart"
+    },
+    {
+      "name": "preset names follow the UI language",
+      "pass": true,
+      "detail": "Дехрадун"
+    },
+    {
+      "name": "on a phone the Location tray stays hidden (known AUREL layout limit)",
+      "pass": true
+    },
+    {
+      "name": "on a phone the Rishikesh preset flies",
+      "pass": true,
+      "detail": {
+        "lat": 30.118138016366405,
+        "lon": 78.3114405992834,
+        "height": 787.9732273406424
+      }
+    },
+    {
+      "name": "the phone search field stays reachable",
+      "pass": true
+    },
+    {
+      "name": "the phone layout has no horizontal page overflow",
+      "pass": true
+    },
+    {
+      "name": "Free-only lists Launch Library as paused, not blocked",
+      "pass": true,
+      "detail": {
+        "freeOnly": true,
+        "blockedProviders": [
+          "google-maps",
+          "google-maps-server",
+          "cesium-ion",
+          "openai",
+          "gemini",
+          "tomtom",
+          "opensky"
+        ],
+        "pausedCredentials": ["launch-library"]
+      }
+    },
+    {
+      "name": "no paid browser host attempted",
+      "pass": true,
+      "detail": [
+        "services.arcgisonline.com",
+        "terrain.reearth.land",
+        "tile.openstreetmap.org"
+      ]
+    },
+    {
+      "name": "no runtime errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "externalHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ]
+}

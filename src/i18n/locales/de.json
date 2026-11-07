@@ -4307,5 +4307,20 @@
   "Agreement is not proof: sources can share inputs or errors, so a match does not make a value true.": "Übereinstimmung ist kein Beweis: Quellen können dieselben Eingangsdaten oder Fehler teilen, ein Treffer macht einen Wert also nicht wahr.",
   "Shared inputs": "Gemeinsame Eingangsdaten",
   "Checked (UTC)": "Geprüft (UTC)",
-  "Check again": "Erneut prüfen"
+  "Check again": "Erneut prüfen",
+  "Dehradun": "Dehradun",
+  "Mussoorie": "Mussoorie",
+  "Rishikesh": "Rishikesh",
+  "Delhi": "Delhi",
+  "Mumbai": "Mumbai",
+  "Bengaluru": "Bengaluru",
+  "Chennai": "Chennai",
+  "Kolkata": "Kolkata",
+  "Google 3D tiles unavailable — this area is likely outside Google's photorealistic coverage. If 3D fails elsewhere too, check the key's API restrictions, quota, or network": "Google 3D Tiles nicht verfügbar – dieses Gebiet liegt vermutlich außerhalb der fotorealistischen Abdeckung von Google. Fehlt 3D auch anderswo, API-Einschränkungen des Schlüssels, Kontingent oder Netzwerk prüfen",
+  "This area is likely outside Google's photorealistic coverage, so a Google key would not add 3D buildings here. Esri and OSM imagery cover it": "Dieses Gebiet liegt vermutlich außerhalb der fotorealistischen Abdeckung von Google; ein Google-Schlüssel bringt hier keine 3D-Gebäude. Esri- und OSM-Bilder decken es ab",
+  "RADIO_PRIORITY_COUNTRIES is not valid: use up to eight two-letter country codes, such as IN. The radio directory will not start until it is fixed": "RADIO_PRIORITY_COUNTRIES ist ungültig: bis zu acht zweistellige Ländercodes verwenden, etwa IN. Das Radioverzeichnis startet erst, wenn das behoben ist",
+  "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "Nicht gesetzt. RADIO_PRIORITY_COUNTRIES=IN in .env eintragen, um bis zu {count} indische Sender im Radioverzeichnis zu reservieren, dann neu starten",
+  "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "Reserviert bis zu {count} Radiosender je Land für {countries}. Gesetzt über RADIO_PRIORITY_COUNTRIES in .env; nach einer Änderung neu starten",
+  "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "Token durch Nur kostenlos ignoriert — dieser Dienst funktioniert auch ohne Schlüssel. Gespeicherte Zugangsdaten bleiben unverändert.",
+  "RADIO PRIORITY COUNTRIES": "RADIO-PRIORITÄTSLÄNDER"
 }
