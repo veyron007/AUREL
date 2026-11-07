@@ -1,6 +1,9 @@
 import { createFieldbookRepository } from '../fieldbook/repository.js';
 import { FieldbookController } from './fieldbookController.js';
 import { LensController } from './lensController.js';
+import { CorroborationController } from './corroborationController.js';
+import { createSecondSourceClient } from '../corroboration/client.js';
+import { useCorroborationStore } from './stores/corroboration.js';
 import { useFieldbookStore } from './stores/fieldbook.js';
 import { useLensStore } from './stores/lens.js';
 import { useWorkspaceStore } from './stores/workspace.js';
@@ -34,6 +37,9 @@ export function createPersonalWorkspace({
   repository = createFieldbookRepository(),
   subscribeLocationSearch,
   subscribeSelection,
+  subscribeSubjects,
+  readLayer = () => null,
+  secondSourceClient = createSecondSourceClient(),
   subscribeEvidence,
   readLayers,
   readMapSource,
@@ -93,13 +99,22 @@ export function createPersonalWorkspace({
     },
   });
   lens.init();
+  const corroboration = new CorroborationController({
+    store: useCorroborationStore(pinia),
+    client: secondSourceClient,
+    subscribeSubjects,
+    readLayer,
+  });
+  corroboration.init();
   return {
     ready,
     lens,
     fieldbook,
+    corroboration,
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      corroboration.destroy();
       lens.destroy();
       fieldbook.destroy();
     },

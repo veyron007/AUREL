@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "metadata": { "count": 1 },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [78.414, 30.744, -11.0]
+      },
+      "id": "20261010_0000265",
+      "properties": {
+        "source_id": "2072476",
+        "source_catalog": "EMSC-RTS",
+        "lastupdate": "2026-10-10T14:56:43.740449Z",
+        "time": "2026-10-10T14:37:30.0Z",
+        "flynn_region": "UTTARANCHAL, INDIA",
+        "lat": 30.744,
+        "lon": 78.414,
+        "depth": 11.0,
+        "evtype": "ke",
+        "auth": "NDI",
+        "mag": 4.2,
+        "magtype": "m",
+        "unid": "20261010_0000265"
+      }
+    }
+  ]
+}

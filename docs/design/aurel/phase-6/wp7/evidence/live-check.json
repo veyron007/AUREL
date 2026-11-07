@@ -1,0 +1,94 @@
+{
+  "errors": [],
+  "hosts": [
+    "earthquake.usgs.gov",
+    "localhost",
+    "services.arcgisonline.com",
+    "terrain.reearth.land"
+  ],
+  "sizes": {
+    "desktop": {
+      "target": {
+        "id": "us7000twqw",
+        "magnitude": 4.6,
+        "depthKm": 103.682,
+        "lat": -57.9579,
+        "lon": -25.8023,
+        "timeMs": 1794035650868,
+        "place": "South Sandwich Islands region",
+        "x": 719.9999999999997,
+        "y": 450.2224856611398
+      },
+      "card": "Second Source\n\nSingle source\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nUSGS\nPrimary\nMagnitude\n4.6 M\nObserved · USGS · 2026-11-07 07:14:10 UTC\nDepth\n103.68 km\nObserved · USGS · 2026-11-07 07:14:10 UTC\nEMSC\nMatched\n\nSame origin as the primary source; not counted\n\nMagnitude\n4.6 mb\nObserved · EMSC · 2026-11-07 07:14:10 UTC\nMagnitude difference\n0 magnitude units\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nTime offset\n0 s\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nPosition residual\n0 km\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nDepth difference\n0 km\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nSolution authored by NEIC\nGFZ GEOFON\nNo record\nShared inputs\n\nIndependent sources here: 1\n\nEMSC relays the USGS solution for this event, so it is not a second source.\nSeismic agencies compute separate solutions, often from overlapping public station networks.\nSearched ±180 s and 150 km. Agreement means within 15 s, 30 km and 0.4 magnitude units.\n\nCatalogues: USGS; EMSC-CSEM SeismicPortal (CC BY 4.0); GEOFON data centre, GFZ Helmholtz Centre for Geosciences.\n\nChecked (UTC): 2026-11-07 07:45:35 UTC\n\nCheck again",
+      "horizontalOverflow": false,
+      "ledger": {
+        "emsc": {
+          "dispatched": 2,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 2
+        },
+        "geofon": {
+          "dispatched": 2,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 2
+        },
+        "adsb-fi": {
+          "dispatched": 0,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 0
+        },
+        "adsb-lol": {
+          "dispatched": 0,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 0
+        }
+      }
+    },
+    "phone": {
+      "target": {
+        "id": "us7000twqw",
+        "magnitude": 4.6,
+        "depthKm": 103.682,
+        "lat": -57.9579,
+        "lon": -25.8023,
+        "timeMs": 1794035650868,
+        "place": "South Sandwich Islands region",
+        "x": 194.99999999999983,
+        "y": 422.13040131805695
+      },
+      "card": "Second Source\n\nSingle source\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nUSGS\nPrimary\nMagnitude\n4.6 M\nObserved · USGS · 2026-11-07 07:14:10 UTC\nDepth\n103.68 km\nObserved · USGS · 2026-11-07 07:14:10 UTC\nEMSC\nMatched\n\nSame origin as the primary source; not counted\n\nMagnitude\n4.6 mb\nObserved · EMSC · 2026-11-07 07:14:10 UTC\nMagnitude difference\n0 magnitude units\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nTime offset\n0 s\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nPosition residual\n0 km\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nDepth difference\n0 km\nDerived · EMSC − USGS · 2026-11-07 07:14:10 UTC\nSolution authored by NEIC\nGFZ GEOFON\nNo record\nShared inputs\n\nIndependent sources here: 1\n\nEMSC relays the USGS solution for this event, so it is not a second source.\nSeismic agencies compute separate solutions, often from overlapping public station networks.\nSearched ±180 s and 150 km. Agreement means within 15 s, 30 km and 0.4 magnitude units.\n\nCatalogues: USGS; EMSC-CSEM SeismicPortal (CC BY 4.0); GEOFON data centre, GFZ Helmholtz Centre for Geosciences.\n\nChecked (UTC): 2026-11-07 07:45:51 UTC\n\nCheck again",
+      "horizontalOverflow": false,
+      "ledger": {
+        "emsc": {
+          "dispatched": 2,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 2
+        },
+        "geofon": {
+          "dispatched": 2,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 2
+        },
+        "adsb-fi": {
+          "dispatched": 0,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 0
+        },
+        "adsb-lol": {
+          "dispatched": 0,
+          "denied": 0,
+          "failed": 0,
+          "succeeded": 0
+        }
+      }
+    }
+  },
+  "checkedAt": "2026-11-07T07:45:53.054Z"
+}
