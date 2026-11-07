@@ -42,7 +42,7 @@
       "pass": true
     },
     {
-      "name": "horizon ring and peak labels are drawn on the globe",
+      "name": "horizon ring and skyline peak markers are drawn on the globe",
       "pass": true
     },
     {
@@ -58,7 +58,7 @@
       "pass": true
     },
     {
-      "name": "only blocked external hosts, none billable reached",
+      "name": "the DEM host was never contacted (terrain came from the fixture)",
       "pass": true
     }
   ],

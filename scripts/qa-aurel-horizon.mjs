@@ -145,12 +145,17 @@ try {
   );
   check('no guaranteed-view wording', !/guarantee/i.test(text));
   check(
-    'horizon ring and peak labels are drawn on the globe',
+    'horizon ring and skyline peak markers are drawn on the globe',
     await page.evaluate(() => {
-      const source = window.__godsEyeView.viewer.dataSources.getByName('kshitij-horizon')[0];
+      const source = window.__godsEyeView.viewer.dataSources.getByName(
+        'kshitij-horizon',
+      )[0];
       return Boolean(
         source?.entities.getById('kshitij-horizon-ring') &&
-          source.entities.values.some((entity) => entity.label),
+          source.entities.getById('kshitij-horizon-observer') &&
+          source.entities.values.some((entity) =>
+            entity.id.startsWith('kshitij-horizon-node/'),
+          ),
       );
     }),
   );

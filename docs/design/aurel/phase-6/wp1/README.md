@@ -19,7 +19,7 @@ Every result is labelled "geometric visibility, terrain-only". Azimuths are roun
 | --- | --- | --- |
 | Planner card | Plan → Field planner, place scope | Date, shadow time, eye height above the DEM surface, gnomon height, IANA zone; explicit **Compute horizon**, cancellable; nothing is computed on mount or on selection |
 | Lens card | Lens → Overview | The same card and owner; one result is shared by both cards |
-| Globe | `CustomDataSource('kshitij-horizon')` | Brass (`#d6ab55`) ground-clamped skyline trace, one vertex per ray at its blocking terrain, the observer point, and up to six skyline peak labels ("Name · km · az ° · terrain-only"); cleared when the place changes |
+| Globe | `CustomDataSource('kshitij-horizon')` | Brass (`#d6ab55`) ground-clamped skyline trace, one vertex per ray at its blocking terrain, the observer point, and up to six skyline peak markers whose names ("Name · km · az ° · terrain-only") go through the shared world-overlay host, never Cesium labels; cleared when the place changes |
 | Fieldbook | Library → Saved analyses | New analysis kind `horizon` on the observed place: 360 whole-degree angles and distances, Sun/Moon times, shadow, up to 20 peaks, DEM and gazetteer provenance, a fixed class table; strict validation; reopening never refreshes |
 | MCP | `horizon_at` (MCP only, voice off) | Returns the `aurel.horizon` provenance envelope: every number is `{ value, unit, class, source, applicableTime }`; see [TOOLS.md](../../../../TOOLS.md) and [MCP_SETUP.md](../../../../MCP_SETUP.md) |
 
@@ -57,12 +57,12 @@ The plan's demo copy ("Bandarpunch 6,316 m · 68 km · az 41°", "astronomical 0
 | Check | Result |
 | --- | --- |
 | Targeted tests while building | `src/horizon/*.test.mjs` (horizon, ephemeris, peaks, snapshot), `src/regions/peaks.test.mjs`, `server/providers/horizon/horizon.test.mjs`, `src/tools/queries/horizon.test.mjs`, `src/ui/horizonController.test.mjs`, `src/ui/views/panels/horizonCard.test.mjs`: all pass, plus the existing Fieldbook, tools, MCP, Planner, Lens and region-pack suites |
-| `npm test` | FULL_TEST_RESULT |
-| `npm run format:check` | FORMAT_RESULT |
+| `npm test` | **Not green on this machine.** Two full runs of 11,472 tests while seven other sessions were testing (load average 35–50). Run 1: 11,463 passed, 5 failed. One failure was WP1's (`noCesiumLabels.test.mjs`, Cesium labels on the ring), fixed in `3d4f4c76` by moving peak names to the world-overlay host. Run 2: 11,465 passed, 3 failed, 4 skipped. The 3 failures are process timeouts outside WP1 (`geoFileImport` KML deadline `spawnSync … ETIMEDOUT`, two `devCctv` launcher tests over their 30 s budget); their files pass 116/116 in isolation, and run 1's failing set differed. Skips: optional PyOsmium builder (needs `AUREL_PYOSMIUM`), the Windows DACL hardener, and two opt-in perf budgets. The orchestrator should re-run the suite on an idle machine |
+| `npm run format:check` | Passes (2,028 files). `scripts/format-scope.json` on `main` listed two deleted tests (`src/fieldbook/document.test.mjs`, `src/sources/firmsArea.test.mjs`), which made `format:check` fail for every branch; those two lines are removed here |
 | `npm run check:boundaries` | Passes |
 | `npm run i18n` | 11 catalogs complete at 3,662 messages; no unmarked UI text |
-| `scripts/qa-aurel-horizon.mjs` | QA_RESULT. External requests aborted; `/api/horizon/terrain` served by a labelled synthetic DEM; bundled peaks pack from the local server. Evidence: `evidence/checks.json`, `horizon-desktop*.png`, `horizon-mobile.png` |
-| Live browser check | The Lal Tibba flow above against live GLO-30 through the dev server, external browser requests blocked: one terrain request, ring drawn with 6 labels, 0 runtime errors, phone width 390 with no overflow. Evidence: `evidence/live-laltibba.json`, `live-laltibba-desktop.png`, `live-laltibba-desktop-peaks.png`, `live-laltibba-mobile.png` |
+| `scripts/qa-aurel-horizon.mjs` | 14/14 checks pass at 1440×900 and 390×844 (port 4187). External requests aborted; `/api/horizon/terrain` served by a labelled synthetic DEM; bundled peaks pack from the local server. Evidence: `evidence/checks.json`, `horizon-desktop*.png`, `horizon-mobile.png` |
+| Live browser check | The Lal Tibba flow above against live GLO-30 through the dev server, external browser requests blocked: one terrain request, ring, observer point and six skyline peak markers drawn (names through the world-overlay host), 0 runtime errors, phone width 390 with no overflow. Evidence: `evidence/live-laltibba.json`, `live-laltibba-desktop.png`, `live-laltibba-desktop-peaks.png`, `live-laltibba-mobile.png` |
 | Dev server port | 4173 was held by the WP2 session's server, so verification ran on **4187** |
 | Free-only | No key, account or billable host. The DEM bucket is keyless AWS Open Data; the QA run never contacted it |
 | `.env` | Not read, printed or changed |
