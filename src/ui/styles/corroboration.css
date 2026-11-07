@@ -1,0 +1,83 @@
+/* Second Source card inside the Lens Evidence tab. Existing workspace tokens
+   only; status colour is semantic and always paired with text. */
+.corroboration {
+  scroll-margin-top: 56px;
+  margin: 20px 0 16px;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+}
+.corroboration h4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0 0 4px;
+  font: 650 14px/1.4 var(--font-sans);
+}
+.corroboration-status {
+  margin: 8px 0 10px;
+  padding: 8px 12px;
+  border-inline-start: 3px solid var(--state-info, var(--accent));
+  background: var(--workspace-raised, var(--glass-bg));
+  border-radius: 0 8px 8px 0;
+  font: 650 15px/1.4 var(--font-sans);
+}
+.corroboration-status[data-status='agree'] {
+  border-inline-start-color: var(--state-ok, var(--accent));
+}
+.corroboration-status[data-status='disagree'] {
+  border-inline-start-color: var(--state-warn, var(--accent));
+}
+.corroboration-status[data-status='unavailable'] {
+  border-inline-start-color: var(--workspace-muted, var(--text-secondary));
+}
+.corroboration-wording p {
+  margin: 0 0 6px;
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 13px;
+  line-height: 1.55;
+}
+.corroboration-row {
+  padding: 12px 0 4px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+.corroboration-row[data-matched='false'] h4 {
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.corroboration-role {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--workspace-accent, var(--accent));
+}
+.corroboration .lens-details {
+  margin: 4px 0 8px;
+}
+.corroboration .lens-details dd.corroboration-meta {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+  font: 11px/1.45 var(--font-mono);
+  color: var(--workspace-muted, var(--text-secondary));
+  overflow-wrap: normal;
+}
+.corroboration-notes {
+  margin: 6px 0 10px;
+  padding-inline-start: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.corroboration-dependency {
+  margin-top: 12px;
+}
+.corroboration-dependency p {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+.corroboration .lens-attribution a {
+  color: var(--workspace-accent, var(--accent));
+}
+.corroboration .lens-attribution a:focus-visible {
+  outline: 2px solid var(--workspace-accent, var(--accent));
+  outline-offset: 2px;
+}

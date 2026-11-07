@@ -134,6 +134,12 @@ test('an EMSC row authored by NEIC is the USGS solution relayed and is not corro
   assert.equal(card.status, 'single-source');
   const emsc = card.rows.find((row) => row.nodeId === 'emsc');
   assert.deepEqual([emsc.matched, emsc.role], [true, 'dependent']);
+  // Live case 2026-11-07 (us7000twqm, Guam): a catalogue with no record is
+  // not counted, so the relayed solution leaves one independent source.
+  assert.deepEqual(
+    [card.dependency.minIndependent, card.dependency.maxIndependent],
+    [1, 1],
+  );
   assert.ok(
     card.dependency.edges.some(
       (edge) =>

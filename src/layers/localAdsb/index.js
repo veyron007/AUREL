@@ -811,6 +811,41 @@ export function createLocalAdsbLayer({
     },
 
     /**
+     * The local receiver's own report of one address for Second Source, or
+     * null when the receiver has not heard it. Read-only; no request.
+     * @param {string} icao Lowercase ICAO hex.
+     */
+    getCorroborationRecord(icao) {
+      if (!enabled) return null;
+      const marker = markers.get(
+        `${ENTITY_PREFIX}${String(icao || '').toLowerCase()}`,
+      );
+      const record = marker?.record;
+      if (!record) return null;
+      const lat = record.lat ?? marker.lat;
+      const lon = record.lon ?? marker.lon;
+      const at = Number.isFinite(record.lastPositionAt)
+        ? record.lastPositionAt
+        : null;
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) || at === null)
+        return null;
+      return {
+        hex: record.icao,
+        lat,
+        lon,
+        positionTimeMs: at,
+        altBaroFt: Number.isFinite(record.altitudeFt)
+          ? record.altitudeFt
+          : null,
+        groundSpeedKt: Number.isFinite(record.groundSpeedKt)
+          ? record.groundSpeedKt
+          : null,
+        trackDeg: Number.isFinite(record.trackDeg) ? record.trackDeg : null,
+        positionType: 'adsb',
+      };
+    },
+
+    /**
      * Select a heard aircraft's marker and publish its readout card, exactly
      * as a click does. The camera does not follow it.
      * @param {string} icao Lowercase ICAO hex.

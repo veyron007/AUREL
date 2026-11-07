@@ -5,6 +5,7 @@ import { t } from '../../../i18n/index.js';
 import RailPanel from '../../rail/RailPanel.vue';
 import UiButton from '../../kit/UiButton.vue';
 import { useLensStore } from '../../stores/lens.js';
+import CorroborationCard from './CorroborationCard.vue';
 
 const lens = useLensStore();
 const { view } = storeToRefs(lens);
@@ -79,6 +80,7 @@ async function moveTab(event) {
             <p v-if="row.attribution" class="lens-attribution">{{ row.attribution }}</p>
             <p v-if="row.license" class="lens-attribution">{{ row.license }}</p>
           </article>
+          <CorroborationCard />
           <section v-if="feeds.length" class="lens-feed-status">
             <h3>{{ t('Enabled source inventory') }}</h3>
             <p class="lens-explanation">{{ t('These are whole-layer states, not local coverage or observation counts for this place.') }}</p>

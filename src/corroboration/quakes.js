@@ -16,7 +16,9 @@ export const QUAKE_TOLERANCES = Object.freeze({
 });
 
 const QUAKE_SOURCES = Object.freeze([
+  // i18n-ignore: agency names, not UI copy
   { nodeId: 'emsc', label: 'EMSC' },
+  // i18n-ignore: agency names, not UI copy
   { nodeId: 'geofon', label: 'GFZ GEOFON' },
 ]);
 
@@ -215,6 +217,7 @@ export function corroborateQuake(primary, answer, { checkedAt = null } = {}) {
     kind: 'quake',
     primary: {
       nodeId: 'usgs',
+      // i18n-ignore: agency name, not UI copy
       label: 'USGS',
       quantities: [
         quantity({

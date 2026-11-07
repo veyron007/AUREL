@@ -94,6 +94,15 @@ export function assembleCard({
       !group.includes(primary.nodeId) &&
       group.some((id) => independent.some((row) => row.nodeId === id)),
   ).length;
+  // Count only the sources that reported this subject: a catalogue with no
+  // record is not an independent source for it.
+  const reporting = analyseDependencies(
+    [
+      primary.nodeId,
+      ...rows.filter((row) => row.matched).map((row) => row.nodeId),
+    ],
+    extraEdges,
+  );
   const status = !answered.length
     ? 'unavailable'
     : !independent.length
@@ -112,8 +121,8 @@ export function assembleCard({
     rows,
     dependency: {
       independentCorroborators: independentGroups,
-      maxIndependent: analysis.maxIndependent,
-      minIndependent: analysis.minIndependent,
+      maxIndependent: reporting.maxIndependent,
+      minIndependent: reporting.minIndependent,
       edges: analysis.edges.map(({ from, to, relation, certainty }) => ({
         from,
         to,

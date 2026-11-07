@@ -42,6 +42,19 @@ export function createQueries({
     high: t('High confidence detections only'),
   });
 
+  /** Second Source search box: about 3 km and two hours around a detection. */
+  const CORROBORATION_RADIUS_DEG = 0.03;
+  const CORROBORATION_WINDOW_MS = 2 * 3_600_000;
+  const CORROBORATION_LIMIT = 50;
+  const plainFire = (fire) => ({
+    lat: fire.lat,
+    lon: fire.lon,
+    acqMs: Number.isFinite(fire.acqMs) && fire.acqMs > 0 ? fire.acqMs : null,
+    sensor: fire.sensor || null,
+    satellite: fire.satellite || null,
+    frp: Number.isFinite(fire.frp) ? fire.frp : null,
+  });
+
   const methods = {
     /** Return the selected detection as a plain record for application consumers. */
     getSelectedInfo() {
@@ -60,6 +73,44 @@ export function createQueries({
         observedAt:
           Number.isFinite(fire.acqMs) && fire.acqMs > 0 ? fire.acqMs : null,
         source: fire.sensor || fire.satellite || null,
+      };
+    },
+
+    /**
+     * The selected detection, nearby detections of every sensor (ignoring
+     * the display intensity filter, so a weak MODIS pixel still counts) and
+     * per-family totals in the loaded payload. Read-only; no request.
+     */
+    getCorroborationInput() {
+      const fire = layerState._selectedFire;
+      if (!fire) return null;
+      const loadedBySensor = {};
+      const nearby = [];
+      for (const other of layerState._allFires || []) {
+        const family = other.sensor || 'unknown';
+        loadedBySensor[family] = (loadedBySensor[family] || 0) + 1;
+        if (
+          other === fire ||
+          nearby.length >= CORROBORATION_LIMIT ||
+          Math.abs(other.lat - fire.lat) > CORROBORATION_RADIUS_DEG ||
+          Math.abs(other.lon - fire.lon) >
+            CORROBORATION_RADIUS_DEG /
+              Math.max(0.1, Math.cos((fire.lat * Math.PI) / 180)) ||
+          !(
+            Math.abs((other.acqMs || 0) - (fire.acqMs || 0)) <=
+            CORROBORATION_WINDOW_MS
+          )
+        )
+          continue;
+        nearby.push(plainFire(other));
+      }
+      return {
+        id: fireDetectionKey(fire),
+        selected: plainFire(fire),
+        nearby,
+        loadedBySensor,
+        fetchedAt: layerState._lastUpdate ?? null,
+        stale: Boolean(layerState._stale),
       };
     },
 

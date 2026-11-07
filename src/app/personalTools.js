@@ -38,6 +38,38 @@ function selectionRecord(record) {
   });
 }
 
+const plainValue = (value) =>
+  value === null || ['string', 'number', 'boolean'].includes(typeof value);
+
+/** A selected subject as plain data for Second Source; no live scene objects. */
+function subjectRecord(detail) {
+  if (!detail?.layerId) return null;
+  let latitude = detail.latitude ?? detail.lat ?? null;
+  let longitude = detail.longitude ?? detail.lon ?? null;
+  if (
+    (!Number.isFinite(latitude) || !Number.isFinite(longitude)) &&
+    isPickedWorldPosition(detail.position)
+  ) {
+    const point = Cesium.Cartographic.fromCartesian(detail.position);
+    if (point) {
+      latitude = Cesium.Math.toDegrees(point.latitude);
+      longitude = Cesium.Math.toDegrees(point.longitude);
+    }
+  }
+  return {
+    layerId: String(detail.layerId),
+    id: detail.id == null ? null : String(detail.id),
+    label: typeof detail.label === 'string' ? detail.label : null,
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null,
+    properties: Object.fromEntries(
+      Object.entries(detail.properties || {}).filter(([, value]) =>
+        plainValue(value),
+      ),
+    ),
+  };
+}
+
 /** Translate existing application owners into the personal workspace's small API. */
 export function createPersonalToolBindings({
   viewer,
@@ -101,6 +133,30 @@ export function createPersonalToolBindings({
     ];
     events.forEach(([name, handler]) => window.addEventListener(name, handler));
     // Only new user selections reveal Lens; mounting must not steal focus.
+    return own(() =>
+      events.forEach(([name, handler]) =>
+        window.removeEventListener(name, handler),
+      ),
+    );
+  }
+  /** Raw selection subjects (layer, id, properties) for Second Source. */
+  function subscribeSubjects(listener) {
+    if (destroyed || typeof window === 'undefined') return () => {};
+    const selected = (event) => {
+      if (destroyed) return;
+      const subject = subjectRecord(event.detail);
+      if (subject) listener(subject);
+    };
+    const cleared = () => {
+      if (!destroyed) listener(null);
+    };
+    const events = [
+      ['gev:entity-selected', selected],
+      ['gev:awareness-subject-selected', selected],
+      ['gev:entity-selection-cleared', cleared],
+      ['gev:awareness-subject-cleared', cleared],
+    ];
+    events.forEach(([name, handler]) => window.addEventListener(name, handler));
     return own(() =>
       events.forEach(([name, handler]) =>
         window.removeEventListener(name, handler),
@@ -219,6 +275,9 @@ export function createPersonalToolBindings({
     subscribeLocationSearch: (listener) =>
       subscribe(styleManager, 'subscribeLocationSearch', listener),
     subscribeSelection,
+    subscribeSubjects,
+    readLayer: (id) =>
+      destroyed ? null : (dataManager?.layers?.get(id)?.module ?? null),
     subscribeEvidence(listener) {
       const unsubscribers = [
         subscribe(dataManager, 'subscribe', listener),

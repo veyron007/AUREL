@@ -16,7 +16,11 @@ export { createUsgsEarthquakeSource } from './source.js';
 const msg = (text) => text;
 
 /** Own one earthquake display and its refresh lifecycle. */
-export function createEarthquakesLayer({ source, overlayHost } = {}) {
+export function createEarthquakesLayer({
+  source,
+  overlayHost,
+  selection = null,
+} = {}) {
   if (typeof source?.getSnapshot !== 'function')
     throw new TypeError('Earthquakes require a snapshot source');
   if (!overlayHost) throw new TypeError('Earthquakes require an overlay host');
@@ -51,6 +55,7 @@ export function createEarthquakesLayer({ source, overlayHost } = {}) {
 
     enable(viewer) {
       _enabled = true;
+      selection?.install(viewer ?? _viewer);
       // No continuous-render hold: the discs are static geometry now, so the
       // layer has no per-frame animator to keep the render loop alive for.
       if (_dataSource) _dataSource.show = true;
@@ -61,6 +66,8 @@ export function createEarthquakesLayer({ source, overlayHost } = {}) {
       _request?.abort();
       _request = null;
       _enabled = false;
+      selection?.uninstall();
+      selection?.clear();
       if (_dataSource) _dataSource.show = false;
       overlayHost.clearSource(EARTHQUAKE_OVERLAY_SOURCE_ID);
       overlayHost.setVisible(EARTHQUAKE_OVERLAY_SOURCE_ID, false);
@@ -77,6 +84,7 @@ export function createEarthquakesLayer({ source, overlayHost } = {}) {
           return false;
 
         const nextEntities = [];
+        const selectable = [];
         let count = 0;
         const overlayEntries = [];
 
@@ -98,33 +106,36 @@ export function createEarthquakesLayer({ source, overlayHost } = {}) {
           const outlineAlpha = isSignificant ? 1.0 : 0.8;
 
           const position = Cesium.Cartesian3.fromDegrees(lon, lat);
-          nextEntities.push(
-            new Cesium.Entity({
-              id: `earthquake:${stableId}`,
-              position,
-              ellipse: {
-                // Static axes — see the module header. A CallbackProperty here
-                // re-tessellates the clamped ground geometry every frame.
-                semiMajorAxis: baseRadius,
-                semiMinorAxis: baseRadius,
-                material: new Cesium.ColorMaterialProperty(
-                  color.withAlpha(fillAlpha),
-                ),
-                outline: true,
-                outlineColor: color.withAlpha(outlineAlpha),
-                outlineWidth: isSignificant ? 3 : 2,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-              },
-              properties: {
-                // Analyst seam (additive): the USGS event id (e.g. "us7000abcd").
-                usgsId,
-                mag,
-                place,
-                time,
-                depth: depthKm,
-              },
-            }),
-          );
+          const entity = new Cesium.Entity({
+            id: `earthquake:${stableId}`,
+            position,
+            ellipse: {
+              // Static axes — see the module header. A CallbackProperty here
+              // re-tessellates the clamped ground geometry every frame.
+              semiMajorAxis: baseRadius,
+              semiMinorAxis: baseRadius,
+              material: new Cesium.ColorMaterialProperty(
+                color.withAlpha(fillAlpha),
+              ),
+              outline: true,
+              outlineColor: color.withAlpha(outlineAlpha),
+              outlineWidth: isSignificant ? 3 : 2,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            },
+            properties: {
+              // Analyst seam (additive): the USGS event id (e.g. "us7000abcd").
+              usgsId,
+              mag,
+              place,
+              time,
+              depth: depthKm,
+            },
+          });
+          nextEntities.push(entity);
+          selectable.push({
+            entity,
+            row: { stableId, usgsId, lon, lat, depthKm, mag, place, time },
+          });
           overlayEntries.push(
             createEarthquakeOverlayEntry({
               id: String(stableId),
@@ -137,6 +148,7 @@ export function createEarthquakesLayer({ source, overlayHost } = {}) {
 
         _dataSource.entities.removeAll();
         for (const entity of nextEntities) _dataSource.entities.add(entity);
+        selection?.register(selectable, _dataSource);
         if (_enabled) {
           overlayHost.setEntries(
             EARTHQUAKE_OVERLAY_SOURCE_ID,
@@ -168,6 +180,8 @@ export function createEarthquakesLayer({ source, overlayHost } = {}) {
     destroy(viewer = _viewer) {
       _request?.abort();
       _request = null;
+      selection?.uninstall();
+      selection?.clear();
       _viewer = null;
       _enabled = false;
       overlayHost.clearSource(EARTHQUAKE_OVERLAY_SOURCE_ID);
