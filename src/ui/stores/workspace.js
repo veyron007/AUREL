@@ -44,6 +44,7 @@ export function workspaceSheetForPanel(panelId) {
       'planner-panel',
       'chronicle-panel',
       'research-panel',
+      'orbit-witness-panel',
       'watchlist-panel',
       'region-panel',
       'local-commands-panel',

@@ -207,7 +207,7 @@ export function createWatchlistRepository(options = {}) {
             ...definition,
             revision: (old?.definition.revision || 0) + 1,
           },
-          runtime: old?.runtime || emptyWatchRuntime(),
+          runtime: old?.runtime || emptyWatchRuntime(definition.kind),
           lease: null,
         };
       });

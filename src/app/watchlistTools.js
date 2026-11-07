@@ -24,12 +24,20 @@ function savedPlaces(view) {
 }
 
 /** Current saved places seed independent local watch definitions; monitoring is always explicit. */
-export function createWatchlistTools({ pinia, repository, source } = {}) {
+export function createWatchlistTools({
+  pinia,
+  repository,
+  source,
+  sceneSource,
+  onOpenScene,
+} = {}) {
   const library = useFieldbookStore(pinia);
   const controller = new WatchlistController({
     store: useWatchlistsStore(pinia),
     ...(repository ? { repository } : {}),
     ...(source ? { source } : {}),
+    ...(sceneSource ? { sceneSource } : {}),
+    ...(onOpenScene ? { onOpenScene } : {}),
     readSavedPlaces: () => savedPlaces(library.view),
     subscribeSavedPlaces: (listener) =>
       watch(() => library.view, listener, { flush: 'sync' }),

@@ -43,6 +43,7 @@ const COCKPIT_ENTRY_COLLAPSE_PANEL_IDS = Object.freeze([
   'planner-panel',
   'chronicle-panel',
   'research-panel',
+  'orbit-witness-panel',
   'watchlist-panel',
   'region-panel',
   'local-commands-panel',

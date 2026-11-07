@@ -7,6 +7,11 @@ import { createPlannerTools } from './plannerTools.js';
 import { createChronicleTools } from './chronicleTools.js';
 import { createResearchTools } from './researchTools.js';
 import { createWatchlistTools } from './watchlistTools.js';
+import {
+  createOrbitWitnessTools,
+  createSceneWatchlistSource,
+  createChronicleSceneOpener,
+} from './orbitWitnessTools.js';
 import { createRegionTools } from './regionTools.js';
 import { useWorkspaceStore } from '../ui/stores/workspace.js';
 import { initAnnotations } from '../annotations/index.js';
@@ -184,8 +189,23 @@ export function createApplicationTools({
   defer(() => chronicle.destroy());
   const research = createResearchTools({ pinia: applicationPinia() });
   defer(() => research.destroy());
-  const watchlists = createWatchlistTools({ pinia: applicationPinia() });
+  const watchlists = createWatchlistTools({
+    pinia: applicationPinia(),
+    sceneSource: createSceneWatchlistSource(),
+    onOpenScene: createChronicleSceneOpener({
+      lens: personalWorkspace.lens,
+      chronicle: chronicle.controller,
+      workspace: useWorkspaceStore(applicationPinia()),
+    }),
+  });
   defer(() => watchlists.destroy());
+  const orbitWitness = createOrbitWitnessTools({
+    pinia: applicationPinia(),
+    viewer,
+    sceneDirector,
+    watchlists: watchlists.controller,
+  });
+  defer(() => orbitWitness.destroy());
   const regions = createRegionTools({
     pinia: applicationPinia(),
     geoFileImport,

@@ -19,6 +19,7 @@ export const PANEL_RAIL_ITEMS = Object.freeze({
   'region-panel': { icon: 'public', label: msg('Offline region') },
   'research-panel': { icon: 'satellite_alt', label: msg('Research') },
   'chronicle-panel': { icon: 'compare', label: msg('Chronicle') },
+  'orbit-witness-panel': { icon: 'rocket_launch', label: msg('Orbit Witness') },
   'planner-panel': { icon: 'route', label: msg('Field planner') },
   'data-panel': {
     icon: 'layers',

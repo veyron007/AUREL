@@ -8,7 +8,21 @@ const watchlists = useWatchlistsStore();
 const { view } = storeToRefs(watchlists);
 const placeId = ref(''),
   title = ref(''),
+  kind = ref('firms'),
   intervalMinutes = ref(30);
+const intervalChoices = computed(() =>
+  kind.value === 'scene' ? [60, 180, 360, 720] : [30, 60, 180, 360],
+);
+function chooseKind(value) {
+  kind.value = value;
+  intervalMinutes.value = value === 'scene' ? 180 : 30;
+}
+const sceneLabel = (item) =>
+  `${item.platform} · ${item.collection}${
+    item.cloudCover === null
+      ? ` · ${t('scene cloud unknown')}`
+      : ` · ${t('scene cloud {value}%', { value: item.cloudCover })}`
+  }`;
 const selectedPlace = computed(() =>
   view.value?.places?.find((place) => place.id === placeId.value),
 );
@@ -23,14 +37,16 @@ const stateLabel = (state) =>
     'other-tab': t('Active in another tab'),
     'needs-key': t('Saved provider key required'),
   })[state] ?? t('Unknown');
-const coverageLabel = (value) =>
-  ({
-    unknown: t('Unknown'),
-    complete: t('All responded'),
-    partial: t('Partial'),
-    stale: t('Stale'),
-    unavailable: t('Unavailable'),
-  })[value] ?? t('Unknown');
+const coverageLabel = (value, watchKind) =>
+  watchKind === 'scene' && value === 'unavailable'
+    ? t('Catalogues unreachable · availability unknown')
+    : ({
+        unknown: t('Unknown'),
+        complete: t('All responded'),
+        partial: t('Partial'),
+        stale: t('Stale'),
+        unavailable: t('Unavailable'),
+      })[value] ?? t('Unknown');
 const sourceStatus = (value) =>
   ({
     ok: t('Available'),
@@ -38,6 +54,8 @@ const sourceStatus = (value) =>
     'rate-limited': t('Rate limited'),
     timeout: t('Timed out'),
     'invalid-response': t('Invalid response'),
+    partial: t('Partial'),
+    blocked: t('Refused by the local request budget'),
   })[value] ?? t('Unknown');
 const stamp = (value, fallback = t('Unknown')) =>
   value == null
@@ -52,6 +70,7 @@ async function create() {
     placeId: placeId.value,
     title: title.value.trim(),
     intervalMinutes: Number(intervalMinutes.value),
+    kind: kind.value,
   });
   if (success) {
     title.value = '';
@@ -96,6 +115,25 @@ async function create() {
       <details class="watchlist-create-settings" :open="!view?.watches?.length"
         ><summary>{{ t('Add a watch area') }}</summary
         ><form id="watchlist-form" @submit.prevent="create"
+          ><fieldset v-if="view?.sceneWatchAvailable" class="watchlist-kind"
+            ><legend>{{ t('Watch for') }}</legend
+            ><label
+              ><input
+                type="radio"
+                name="watchlist-kind"
+                value="firms"
+                :checked="kind === 'firms'"
+                @change="chooseKind('firms')"
+              />{{ t('FIRMS thermal detections') }}</label
+            ><label
+              ><input
+                type="radio"
+                name="watchlist-kind"
+                value="scene"
+                :checked="kind === 'scene'"
+                @change="chooseKind('scene')"
+              />{{ t('A new satellite scene') }}</label
+            ></fieldset
           ><label for="watchlist-place">{{ t('Saved place') }}</label
           ><select
             id="watchlist-place"
@@ -131,7 +169,7 @@ async function create() {
             v-model.number="intervalMinutes"
             :disabled="view?.busy"
             ><option
-              v-for="minutes in [30, 60, 180, 360]"
+              v-for="minutes in intervalChoices"
               :key="minutes"
               :value="minutes"
               >{{ t('{value} min', { value: minutes }) }}</option
@@ -142,9 +180,13 @@ async function create() {
             {{ selectedPlace.bounds.east }}°,
             {{ selectedPlace.bounds.north }}°</p
           ><p class="watchlist-help">{{
-            t(
-              'Creating an area does not start monitoring. The minimum interval is 30 minutes.',
-            )
+            kind === 'scene'
+              ? t(
+                  'Creating a scene watch does not start monitoring. The minimum interval is 60 minutes.',
+                )
+              : t(
+                  'Creating an area does not start monitoring. The minimum interval is 30 minutes.',
+                )
           }}</p></form
         ></details
       >
@@ -186,22 +228,31 @@ async function create() {
             stateLabel(watch.state)
           }}</span></header
         ><p class="watchlist-source-name"
-          >{{ t('NASA FIRMS thermal detections') }} ·
+          >{{
+            watch.kind === 'scene'
+              ? t('Earth Search and NASA CMR-STAC scenes')
+              : t('NASA FIRMS thermal detections')
+          }}
+          ·
           {{ t('{value} min', { value: watch.intervalMinutes }) }}</p
         >
         <p v-if="watch.reason" class="watchlist-notice">{{ watch.reason }}</p
         ><p v-if="watch.baselinePending" class="watchlist-baseline"
           ><strong>{{ t('Starting record pending') }}</strong
           ><span>{{
-            t(
-              'The first successful check records existing detections. It does not announce them as newly occurring.',
-            )
+            watch.kind === 'scene'
+              ? t(
+                  'The first successful check records the scenes already catalogued. Only scenes catalogued after it are announced, each once.',
+                )
+              : t(
+                  'The first successful check records existing detections. It does not announce them as newly occurring.',
+                )
           }}</span></p
         >
         <dl class="watchlist-metrics"
           ><div
             ><dt>{{ t('Source checks') }}</dt
-            ><dd>{{ coverageLabel(watch.coverage) }}</dd></div
+            ><dd>{{ coverageLabel(watch.coverage, watch.kind) }}</dd></div
           ><div
             ><dt>{{ t('Consecutive errors') }}</dt
             ><dd>{{ watch.errorCount }}</dd></div
@@ -278,10 +329,18 @@ async function create() {
               >{{ t('Check summary') }} · {{ stamp(notification.createdAt) }}</p
             ><dl class="watchlist-summary-counts"
               ><div
-                ><dt>{{ t('Newly occurring') }}</dt
+                ><dt>{{
+                  watch.kind === 'scene'
+                    ? t('Acquired since the last check')
+                    : t('Newly occurring')
+                }}</dt
                 ><dd>{{ notification.newlyOccurredCount }}</dd></div
               ><div
-                ><dt>{{ t('Older observations first retrieved') }}</dt
+                ><dt>{{
+                  watch.kind === 'scene'
+                    ? t('Earlier acquisitions newly catalogued')
+                    : t('Older observations first retrieved')
+                }}</dt
                 ><dd>{{ notification.newlyRetrievedCount }}</dd></div
               ></dl
             ><details class="watchlist-details"
@@ -289,9 +348,18 @@ async function create() {
               ><ul class="watchlist-observations"
                 ><li v-for="item in notification.observations" :key="item.id"
                   ><strong>{{ stamp(item.acquiredAt) }}</strong
-                  ><span
+                  ><span v-if="watch.kind === 'scene'"
+                    >{{ item.sceneId }} · {{ sceneLabel(item) }} ·
+                    {{ t('available product (observed)') }}</span
+                  ><span v-else
                     >{{ item.source }} · {{ item.lat.toFixed(4) }}°,
                     {{ item.lon.toFixed(4) }}°</span
+                  ><button
+                    v-if="watch.kind === 'scene'"
+                    type="button"
+                    data-watch-open-scene
+                    @click="watchlists.act('openScene', watch.id, item.id)"
+                    >{{ t('Open beside the previous scene in Chronicle') }}</button
                   ></li
                 ></ul
               ><p v-if="notification.unlistedCount" class="watchlist-help">{{

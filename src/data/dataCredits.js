@@ -34,6 +34,17 @@ export const OPENMAPTILES_CREDIT = {
   html: 'Vector tiles: <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://openmaptiles.org" target="_blank" rel="noopener">OpenMapTiles</a>',
 };
 
+/** Orbit Witness footprints and scene records; registered when a footprint first renders. */
+export const ORBIT_WITNESS_CREDIT = Object.freeze({
+  key: 'orbit-witness',
+  html:
+    'Orbit Witness: orbits from <a href="https://celestrak.org" target="_blank" rel="noopener">CelesTrak</a> GP (SGP4, modelled); ' +
+    'scene records from <a href="https://earth-search.aws.element84.com/v1" target="_blank" rel="noopener">Element 84 Earth Search</a> and ' +
+    '<a href="https://cmr.earthdata.nasa.gov/stac" target="_blank" rel="noopener">NASA CMR-STAC</a>; ' +
+    'cloud forecast <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0); ' +
+    'Sentinel-2 plans © European Space Agency - ESA, read from your own downloaded file',
+});
+
 /** Conditional Salish Sea coverage; registered when its sightings first render. */
 export const ACARTIA_CREDIT = Object.freeze({
   key: 'acartia',

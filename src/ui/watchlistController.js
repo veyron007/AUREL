@@ -3,8 +3,14 @@ import {
   createWatchDefinition,
   watchBounds,
   reduceWatchCheck,
+  watchKind,
   WATCH_LIMITS,
 } from '../watchlists/model.js';
+import {
+  createSceneWatchDefinition,
+  reduceSceneWatchCheck,
+  SCENE_WATCH_KIND,
+} from '../orbitWitness/sceneWatch.js';
 import { createWatchlistRepository } from '../watchlists/repository.js';
 import { createWatchlistSource } from '../watchlists/source.js';
 
@@ -22,6 +28,8 @@ export class WatchlistController {
   constructor({
     repository = createWatchlistRepository(),
     source = createWatchlistSource(),
+    sceneSource = null,
+    onOpenScene = null,
     readSavedPlaces = () => [],
     subscribeSavedPlaces,
     visibility = defaultVisibility,
@@ -34,6 +42,8 @@ export class WatchlistController {
     Object.assign(this, {
       repository,
       source,
+      sceneSource,
+      onOpenScene,
       readSavedPlaces,
       subscribeSavedPlaces,
       visibility,
@@ -74,6 +84,7 @@ export class WatchlistController {
           'remove',
           'clearNotifications',
           'refresh',
+          'openScene',
         ].map((k) => [k, (...args) => this[k](...args)]),
       ),
     );
@@ -109,6 +120,7 @@ export class WatchlistController {
           record.lease.until > this.now();
       return {
         id: d.id,
+        kind: watchKind(d),
         title: d.title,
         placeName: d.place.name,
         bounds: d.bounds,
@@ -140,6 +152,7 @@ export class WatchlistController {
         !this.busy &&
         this.records.size < WATCH_LIMITS.definitions &&
         places.some((p) => p.available),
+      sceneWatchAvailable: Boolean(this.sceneSource),
       limitations: [
         t(
           'Monitoring runs only while this app is open and visible. Each watch checks no more often than every 30 minutes.',
@@ -149,6 +162,9 @@ export class WatchlistController {
         ),
         t(
           'FIRMS thermal observations are not confirmed fires. Missing detections do not establish that no fire exists.',
+        ),
+        t(
+          'Scene watches check the open STAC catalogues no more often than hourly. A catalogued scene can arrive hours to days after acquisition, and a catalogue outage reads as unknown, not as no scene.',
         ),
       ],
     };
@@ -180,24 +196,33 @@ export class WatchlistController {
       this.present();
     }
   }
-  async create({ placeId, title, intervalMinutes = 30 } = {}) {
+  async create({
+    placeId,
+    place: supplied = null,
+    title,
+    intervalMinutes,
+    kind = 'firms',
+  } = {}) {
     if (!this.live() || this.busy) return false;
+    const scene = kind === SCENE_WATCH_KIND;
+    if (scene && !this.sceneSource) return false;
     this.busy = true;
     this.error = null;
     try {
-      const place = this.readSavedPlaces().find((p) => p.id === placeId);
+      // A scene watch may also start from the place on screen (Orbit Witness).
+      const place =
+        this.readSavedPlaces().find((p) => p.id === placeId) ||
+        (scene ? supplied : null);
       if (!place) throw Error();
-      const definition = createWatchDefinition(
-        {
-          place,
-          title:
-            typeof title === 'string' && title.trim()
-              ? title.trim()
-              : place.name,
-          intervalMinutes,
-        },
-        { now: this.now() },
-      );
+      const fields = {
+        place,
+        title:
+          typeof title === 'string' && title.trim() ? title.trim() : place.name,
+        intervalMinutes: intervalMinutes ?? (scene ? 180 : 30),
+      };
+      const definition = scene
+        ? createSceneWatchDefinition(fields, { now: this.now() })
+        : createWatchDefinition(fields, { now: this.now() });
       const record = await this.repository.save(definition, {
         expectedRevision: null,
       });
@@ -208,9 +233,13 @@ export class WatchlistController {
       );
       return true;
     } catch {
-      this.error = t(
-        'The watchlist could not be saved. Use a saved place within a two-degree area and an interval of at least 30 minutes.',
-      );
+      this.error = scene
+        ? t(
+            'The scene watch could not be saved. Use a place within a two-degree area and an interval of at least 60 minutes.',
+          )
+        : t(
+            'The watchlist could not be saved. Use a saved place within a two-degree area and an interval of at least 30 minutes.',
+          );
       return false;
     } finally {
       this.busy = false;
@@ -412,24 +441,37 @@ export class WatchlistController {
       );
       if (signal.aborted || !this._valid(id, session)) return;
       this.records.set(id, record);
-      const result = await this.source.check(record.definition.bounds, {
-        signal,
-      });
+      const scene = watchKind(record.definition) === SCENE_WATCH_KIND;
+      const result = scene
+        ? await this.sceneSource.check(record.definition, { signal })
+        : await this.source.check(record.definition.bounds, { signal });
       if (signal.aborted || !this._valid(id, session)) return;
-      let runtime = reduceWatchCheck(record.runtime, result.context, {
-        bounds: record.definition.bounds,
+      const options = {
         now: this.now(),
         baseline: session.baselinePending || gap,
         intervalMs: interval,
-      });
+      };
+      let runtime = scene
+        ? reduceSceneWatchCheck(record.runtime, result.context, {
+            ...options,
+            lookbackDays: record.definition.scene.lookbackDays,
+          })
+        : reduceWatchCheck(record.runtime, result.context, {
+            ...options,
+            bounds: record.definition.bounds,
+          });
       if (runtime.lastSuccessAt === record.runtime.lastSuccessAt) {
         runtime = {
           ...runtime,
           errorCount: Math.min(100, record.runtime.errorCount + 1),
         };
-        session.reason = t(
-          'Fresh observations were unavailable; previous summaries were retained.',
-        );
+        session.reason = scene
+          ? t(
+              'The catalogues did not answer; scene availability is unknown. Previous summaries were retained.',
+            )
+          : t(
+              'Fresh observations were unavailable; previous summaries were retained.',
+            );
       }
       const retryAt = result.retryAt;
       if (Number.isFinite(retryAt) && retryAt > this.now())
@@ -505,6 +547,27 @@ export class WatchlistController {
   }
   stop(id) {
     return this._halt(id);
+  }
+  /** Hand a fired scene to Chronicle; the composition decides how it opens. */
+  async openScene(id, observationId) {
+    if (!this.live() || !this.onOpenScene) return false;
+    const record = this.records.get(id);
+    if (watchKind(record?.definition) !== SCENE_WATCH_KIND) return false;
+    const observation = record.runtime.notifications
+      .flatMap((note) => note.observations)
+      .find((row) => row.id === observationId);
+    if (!observation) return false;
+    const result = await this.onOpenScene({
+      place: record.definition.place,
+      observation,
+    });
+    if (!this.live()) return false;
+    this.feedback = result?.ok
+      ? t('The scene opened in Chronicle beside the previous scene.')
+      : result?.message ||
+        t('The scene could not be opened in Chronicle. Try again later.');
+    this.present();
+    return Boolean(result?.ok);
   }
   async _visibilityChanged() {
     if (!this.live()) return;

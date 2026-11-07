@@ -4,6 +4,16 @@ import {
   validateFirmsAreaBounds,
   FIRMS_AREA_SOURCES,
 } from '../sources/firmsArea.js';
+import {
+  SCENE_WATCH_KIND,
+  validateSceneWatchDefinition,
+  validateSceneWatchRuntime,
+  emptySceneWatchRuntime,
+} from '../orbitWitness/sceneWatch.js';
+/** Watch types: FIRMS records carry no kind (version 1); scene watches are version 2. */
+export const WATCH_KINDS = Object.freeze(['firms', SCENE_WATCH_KIND]);
+export const watchKind = (value) =>
+  value?.kind === SCENE_WATCH_KIND ? SCENE_WATCH_KIND : 'firms';
 export const WATCH_LIMITS = Object.freeze({
   definitions: 8,
   active: 4,
@@ -92,6 +102,7 @@ export function createWatchDefinition(
   });
 }
 export function validateWatchDefinition(value) {
+  if (value?.kind !== undefined) return validateSceneWatchDefinition(value);
   fields(value, [
     'version',
     'id',
@@ -135,7 +146,8 @@ export function validateWatchDefinition(value) {
   if (!Number.isSafeInteger(value.revision)) fail();
   return copy(value);
 }
-export function emptyWatchRuntime() {
+export function emptyWatchRuntime(kind = 'firms') {
+  if (kind === SCENE_WATCH_KIND) return emptySceneWatchRuntime();
   return {
     baselineAt: null,
     lastAttemptAt: null,
@@ -174,6 +186,7 @@ function sourceRows(rows) {
   }
 }
 export function validateWatchRuntime(value) {
+  if (value?.kind !== undefined) return validateSceneWatchRuntime(value);
   fields(value, Object.keys(emptyWatchRuntime()));
   for (const key of [
     'baselineAt',
@@ -263,6 +276,7 @@ export function validateWatchRecord(value) {
   fields(value, ['definition', 'runtime', 'lease']);
   const definition = validateWatchDefinition(value.definition),
     runtime = validateWatchRuntime(value.runtime);
+  if (watchKind(definition) !== watchKind(runtime)) fail();
   if (value.lease !== null) {
     fields(value.lease, ['ownerId', 'token', 'until']);
     text(value.lease.ownerId);
