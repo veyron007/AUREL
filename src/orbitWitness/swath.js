@@ -231,7 +231,7 @@ export function findSwathPasses({
 }
 
 function describeCrossing(crossing, solarElevationDeg, swathKm) {
-  const headingDeg = ((crossing.heading * R2D) % 360 + 360) % 360;
+  const headingDeg = (((crossing.heading * R2D) % 360) + 360) % 360;
   return Object.freeze({
     timeMs: crossing.timeMs,
     crossTrackKm: crossing.crossTrackKm,
@@ -277,7 +277,10 @@ export function ringContains(ring, lon, lat) {
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
     const [xi, yi] = ring[i],
       [xj, yj] = ring[j];
-    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi)
+    if (
+      yi > lat !== yj > lat &&
+      lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi
+    )
       inside = !inside;
   }
   return inside;
@@ -288,13 +291,21 @@ export function orbitSamples(satrec, times) {
   return times
     .map((ms) => {
       const nadir = nadirAt(satrec, ms);
-      return nadir ? { ms, ...nadir, heading: headingAt(satrec, ms, nadir) } : null;
+      return nadir
+        ? { ms, ...nadir, heading: headingAt(satrec, ms, nadir) }
+        : null;
     })
     .filter((sample) => sample && sample.heading !== null);
 }
 
 /** Sky passes (elevation ≥ 10°) for a non-imaging spacecraft, bounded like swath search. */
-export function findSkyPasses({ satrec, place, fromMs, days = 3, maxPasses = 12 }) {
+export function findSkyPasses({
+  satrec,
+  place,
+  fromMs,
+  days = 3,
+  maxPasses = 12,
+}) {
   if (!satrec || !validPlace(place))
     throw new TypeError('Sky pass search needs a satellite and a place');
   const endMs = boundedWindow(fromMs, days);

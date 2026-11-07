@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { missionElementSets } from './tle.js';
-import { predictOrbitWitness, cloudAtPass, productForPass, defaultWindow } from './predict.js';
+import {
+  predictOrbitWitness,
+  cloudAtPass,
+  productForPass,
+  defaultWindow,
+} from './predict.js';
 import { parseAcquisitionPlan } from './plan.js';
 import { LANES, FORBIDDEN_CLAIMS } from './lanes.js';
 import { missionById } from './missions.js';
@@ -49,13 +54,27 @@ const cloud = {
 const plans = [
   parseAcquisitionPlan(
     syntheticPlan([
-      { id: '1', start: '2026-11-04T05:30:00.000', end: '2026-11-04T05:52:00.000', ring: boxAround(MUSSOORIE) },
+      {
+        id: '1',
+        start: '2026-11-04T05:30:00.000',
+        end: '2026-11-04T05:52:00.000',
+        ring: boxAround(MUSSOORIE),
+      },
     ]),
     SYNTHETIC_PLAN_NAME,
   ),
 ];
 const { fromMs, days } = defaultWindow(nowMs);
-const result = predictOrbitWitness({ sets, place: MUSSOORIE, fromMs, days, plans, cloud, catalogue, nowMs });
+const result = predictOrbitWitness({
+  sets,
+  place: MUSSOORIE,
+  fromMs,
+  days,
+  plans,
+  cloud,
+  catalogue,
+  nowMs,
+});
 const row = (id) => result.missions.find((item) => item.mission.id === id);
 
 test('every pass carries four separate lanes with their own class, source and time', () => {
@@ -66,17 +85,26 @@ test('every pass carries four separate lanes with their own class, source and ti
       assert.equal(pass.lanes.product.class, 'observed');
       assert.equal(pass.lanes.cloud.class, 'modelled');
       assert.equal(pass.lanes.cloud.unit, '%');
-      assert.ok(pass.lanes.predicted.epoch && pass.lanes.predicted.applicableTime);
+      assert.ok(
+        pass.lanes.predicted.epoch && pass.lanes.predicted.applicableTime,
+      );
       assert.ok(pass.lanes.predicted.source.url.startsWith('https://'));
     }
   assert.deepEqual(
     Object.values(LANES).map((lane) => [lane.id, lane.class]),
-    [['predicted', 'modelled'], ['planned', 'derived'], ['product', 'observed'], ['ride', 'simulated']],
+    [
+      ['predicted', 'modelled'],
+      ['planned', 'derived'],
+      ['product', 'observed'],
+      ['ride', 'simulated'],
+    ],
   );
 });
 
 test('a past pass with its scene catalogued shows the product; plan-confirmed', () => {
-  const pass = row('sentinel-2b').passes.find((item) => item.time.startsWith('2026-11-04'));
+  const pass = row('sentinel-2b').passes.find((item) =>
+    item.time.startsWith('2026-11-04'),
+  );
   assert.equal(pass.lanes.product.status, 'available');
   assert.equal(pass.lanes.product.scene.id, 'S2B_43RGP_20261104_0_L2A');
   assert.equal(pass.lanes.planned.status, 'confirmed');
@@ -96,11 +124,26 @@ test('future passes are pending, with a cloud forecast when in range', () => {
 test('a recent pass without a product reads "not yet", an outage reads "unknown", never "none"', () => {
   const mission = missionById('sentinel-2c');
   const pass = { timeMs: nowMs - 2 * 86400000 };
-  assert.equal(productForPass(mission, pass, catalogue, nowMs).status, 'not-yet');
-  assert.equal(productForPass(mission, { timeMs: nowMs - 9 * 86400000 }, catalogue, nowMs).status, 'not-found');
-  assert.equal(productForPass(mission, pass, { status: 'unavailable', scenes: [] }, nowMs).status, 'unknown');
+  assert.equal(
+    productForPass(mission, pass, catalogue, nowMs).status,
+    'not-yet',
+  );
+  assert.equal(
+    productForPass(mission, { timeMs: nowMs - 9 * 86400000 }, catalogue, nowMs)
+      .status,
+    'not-found',
+  );
+  assert.equal(
+    productForPass(mission, pass, { status: 'unavailable', scenes: [] }, nowMs)
+      .status,
+    'unknown',
+  );
   assert.equal(productForPass(mission, pass, null, nowMs).status, 'unknown');
-  assert.equal(productForPass(mission, pass, { ...catalogue, status: 'partial' }, nowMs).status, 'unknown');
+  assert.equal(
+    productForPass(mission, pass, { ...catalogue, status: 'partial' }, nowMs)
+      .status,
+    'unknown',
+  );
 });
 
 test('cloud cover joins the nearest forecast hour or says why it cannot', () => {
@@ -108,15 +151,29 @@ test('cloud cover joins the nearest forecast hour or says why it cannot', () => 
   assert.equal(at.applicableTime, '2026-11-08T06:00:00.000Z');
   assert.equal(cloudAtPass(null, nowMs).status, 'unknown');
   assert.equal(cloudAtPass({ status: 'blocked' }, nowMs).status, 'unknown');
-  assert.equal(cloudAtPass(cloud, Date.parse('2026-12-30T00:00:00Z')).status, 'beyond-forecast');
+  assert.equal(
+    cloudAtPass(cloud, Date.parse('2026-12-30T00:00:00Z')).status,
+    'beyond-forecast',
+  );
 });
 
 test('missing element sets are reported per mission, and the ISS has no imaging lanes', () => {
-  const partial = predictOrbitWitness({ sets: sets.slice(0, 1), place: MUSSOORIE, fromMs, days, nowMs });
-  assert.equal(partial.missions.find((item) => item.mission.id === 'landsat-9').status, 'no-elements');
+  const partial = predictOrbitWitness({
+    sets: sets.slice(0, 1),
+    place: MUSSOORIE,
+    fromMs,
+    days,
+    nowMs,
+  });
+  assert.equal(
+    partial.missions.find((item) => item.mission.id === 'landsat-9').status,
+    'no-elements',
+  );
   const iss = row('iss');
   assert.ok(iss.passes.length > 0);
-  assert.ok(iss.passes.every((pass) => pass.lanes.product.status === 'not-applicable'));
+  assert.ok(
+    iss.passes.every((pass) => pass.lanes.product.status === 'not-applicable'),
+  );
 });
 
 test('no Orbit Witness string claims a photograph from a pass', () => {
@@ -125,10 +182,20 @@ test('no Orbit Witness string claims a photograph from a pass', () => {
     .filter((file) => file.endsWith('.js'))
     .map((file) => readFileSync(new URL(file, dir), 'utf8'));
   sources.push(
-    readFileSync(new URL('../ui/views/panels/OrbitWitnessPanel.vue', import.meta.url), 'utf8'),
-    readFileSync(new URL('../ui/orbitWitnessController.js', import.meta.url), 'utf8'),
+    readFileSync(
+      new URL('../ui/views/panels/OrbitWitnessPanel.vue', import.meta.url),
+      'utf8',
+    ),
+    readFileSync(
+      new URL('../ui/orbitWitnessController.js', import.meta.url),
+      'utf8',
+    ),
   );
-  const text = sources.join('\n').toLowerCase().replace(/forbidden_claims[\s\S]*?\]\);/i, '');
-  for (const word of FORBIDDEN_CLAIMS) assert.equal(text.includes(word), false, word);
+  const text = sources
+    .join('\n')
+    .toLowerCase()
+    .replace(/forbidden_claims[\s\S]*?\]\);/i, '');
+  for (const word of FORBIDDEN_CLAIMS)
+    assert.equal(text.includes(word), false, word);
   assert.ok(S2B_SCENE.id);
 });

@@ -9,7 +9,10 @@ export const SCENE_QUERY_LIMITS = Object.freeze({
   pageSize: 100,
   maxScenes: 200,
 });
-export const CATALOGUE_SOURCES = Object.freeze(['earth-search', 'cmr-stac-lpcloud']);
+export const CATALOGUE_SOURCES = Object.freeze([
+  'earth-search',
+  'cmr-stac-lpcloud',
+]);
 export const CATALOGUE_STATUSES = Object.freeze([
   'ok',
   'partial',
@@ -36,8 +39,12 @@ const finiteIn = (value, min, max) =>
   Number.isFinite(value) && value >= min && value <= max;
 
 /** Validate a scene search: a small box and a past window of whole UTC days. */
-export function validateSceneQuery({ bbox, from, to }, { now = Date.now() } = {}) {
-  if (!Array.isArray(bbox) || bbox.length !== 4) invalid('Expected a bounding box');
+export function validateSceneQuery(
+  { bbox, from, to },
+  { now = Date.now() } = {},
+) {
+  if (!Array.isArray(bbox) || bbox.length !== 4)
+    invalid('Expected a bounding box');
   const [west, south, east, north] = bbox;
   if (
     !finiteIn(west, -180, 180) ||
@@ -53,7 +60,9 @@ export function validateSceneQuery({ bbox, from, to }, { now = Date.now() } = {}
   if (!DAY.test(from) || !DAY.test(to)) invalid('Expected UTC days');
   const fromMs = Date.parse(`${from}T00:00:00Z`),
     toMs = Date.parse(`${to}T00:00:00Z`);
-  const today = Date.parse(new Date(now).toISOString().slice(0, 10) + 'T00:00:00Z');
+  const today = Date.parse(
+    new Date(now).toISOString().slice(0, 10) + 'T00:00:00Z',
+  );
   if (
     !Number.isFinite(fromMs) ||
     !Number.isFinite(toMs) ||
@@ -62,7 +71,13 @@ export function validateSceneQuery({ bbox, from, to }, { now = Date.now() } = {}
     (toMs - fromMs) / DAY_MS + 1 > SCENE_QUERY_LIMITS.maxDays
   )
     invalid('The window must be 1–14 past UTC days');
-  return { bbox: [west, south, east, north], from, to, fromMs, toMs: toMs + DAY_MS - 1 };
+  return {
+    bbox: [west, south, east, north],
+    from,
+    to,
+    fromMs,
+    toMs: toMs + DAY_MS - 1,
+  };
 }
 
 function ringFromGeometry(geometry) {
@@ -77,7 +92,9 @@ function ringFromGeometry(geometry) {
   const points = ring
     .filter((_, i) => i % step === 0 || i === ring.length - 1)
     .map((p) => [Number(p?.[0]), Number(p?.[1])]);
-  return points.every(([lon, lat]) => finiteIn(lon, -180, 180) && finiteIn(lat, -90, 90))
+  return points.every(
+    ([lon, lat]) => finiteIn(lon, -180, 180) && finiteIn(lat, -90, 90),
+  )
     ? points
     : null;
 }
@@ -94,7 +111,8 @@ export function normalizeStacItem(item, source) {
   const collection = item?.collection;
   if (!id || COLLECTIONS[collection] !== source) return null;
   const datetime = item?.properties?.datetime;
-  if (typeof datetime !== 'string' || !Number.isFinite(Date.parse(datetime))) return null;
+  if (typeof datetime !== 'string' || !Number.isFinite(Date.parse(datetime)))
+    return null;
   const cloud = Number(item?.properties?.['eo:cloud_cover']);
   const platform =
     typeof item?.properties?.platform === 'string'
@@ -108,7 +126,11 @@ export function normalizeStacItem(item, source) {
     datetime: new Date(Date.parse(datetime)).toISOString(),
     cloudCover: finiteIn(cloud, 0, 100) ? Math.round(cloud * 10) / 10 : null,
     productId:
-      collection === 'HLSS30_2.0' ? 'S30' : collection === 'HLSL30_2.0' ? 'L30' : null,
+      collection === 'HLSS30_2.0'
+        ? 'S30'
+        : collection === 'HLSL30_2.0'
+          ? 'L30'
+          : null,
     footprint: ringFromGeometry(item?.geometry),
   };
 }
@@ -116,7 +138,10 @@ export function normalizeStacItem(item, source) {
 /** Validate the `/api/orbit-witness/scenes` payload; returns a detached copy. */
 export function validateCataloguePayload(value) {
   if (!value || value.version !== 1 || !Array.isArray(value.sources)) invalid();
-  if (typeof value.retrievedAt !== 'string' || !Number.isFinite(Date.parse(value.retrievedAt)))
+  if (
+    typeof value.retrievedAt !== 'string' ||
+    !Number.isFinite(Date.parse(value.retrievedAt))
+  )
     invalid();
   const sources = value.sources.map((row) => {
     if (
@@ -126,10 +151,18 @@ export function validateCataloguePayload(value) {
       row.count < 0
     )
       invalid();
-    return { id: row.id, status: row.status, count: row.count, truncated: Boolean(row.truncated) };
+    return {
+      id: row.id,
+      status: row.status,
+      count: row.count,
+      truncated: Boolean(row.truncated),
+    };
   });
   if (new Set(sources.map((row) => row.id)).size !== sources.length) invalid();
-  if (!Array.isArray(value.scenes) || value.scenes.length > SCENE_QUERY_LIMITS.maxScenes)
+  if (
+    !Array.isArray(value.scenes) ||
+    value.scenes.length > SCENE_QUERY_LIMITS.maxScenes
+  )
     invalid();
   const scenes = value.scenes.map((row) => {
     const scene = normalizeStacItem(
@@ -141,20 +174,30 @@ export function validateCataloguePayload(value) {
           'eo:cloud_cover': row?.cloudCover,
           platform: row?.platform,
         },
-        geometry: row?.footprint ? { type: 'Polygon', coordinates: [row.footprint] } : null,
+        geometry: row?.footprint
+          ? { type: 'Polygon', coordinates: [row.footprint] }
+          : null,
       },
       row?.source,
     );
     if (!scene) invalid();
     return scene;
   });
-  const ok = sources.filter((row) => row.status === 'ok' && !row.truncated).length;
-  const answered = sources.filter((row) => ['ok', 'partial'].includes(row.status)).length;
+  const ok = sources.filter(
+    (row) => row.status === 'ok' && !row.truncated,
+  ).length;
+  const answered = sources.filter((row) =>
+    ['ok', 'partial'].includes(row.status),
+  ).length;
   return {
     version: 1,
     retrievedAt: new Date(Date.parse(value.retrievedAt)).toISOString(),
     status:
-      ok === CATALOGUE_SOURCES.length ? 'ok' : answered ? 'partial' : 'unavailable',
+      ok === CATALOGUE_SOURCES.length
+        ? 'ok'
+        : answered
+          ? 'partial'
+          : 'unavailable',
     sources,
     scenes,
   };
@@ -163,13 +206,24 @@ export function validateCataloguePayload(value) {
 /** Validate the `/api/orbit-witness/cloud` payload. */
 export function validateCloudPayload(value) {
   if (!value || value.version !== 1) invalid();
-  if (!['ok', 'stale', 'unavailable', 'blocked'].includes(value.status)) invalid();
+  if (!['ok', 'stale', 'unavailable', 'blocked'].includes(value.status))
+    invalid();
   if (!['ok', 'stale'].includes(value.status))
-    return { status: value.status, reason: String(value.reason || '').slice(0, 80), hours: [] };
-  if (!Array.isArray(value.hours) || !value.hours.length || value.hours.length > 400) invalid();
+    return {
+      status: value.status,
+      reason: String(value.reason || '').slice(0, 80),
+      hours: [],
+    };
+  if (
+    !Array.isArray(value.hours) ||
+    !value.hours.length ||
+    value.hours.length > 400
+  )
+    invalid();
   const hours = value.hours.map((row) => {
     const timeMs = Date.parse(row?.time);
-    if (!Number.isFinite(timeMs) || !finiteIn(row?.cloudCoverPct, 0, 100)) invalid();
+    if (!Number.isFinite(timeMs) || !finiteIn(row?.cloudCoverPct, 0, 100))
+      invalid();
     return { timeMs, cloudCoverPct: row.cloudCoverPct };
   });
   return {

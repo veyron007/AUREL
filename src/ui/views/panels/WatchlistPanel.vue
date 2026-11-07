@@ -70,7 +70,7 @@ async function create() {
     placeId: placeId.value,
     title: title.value.trim(),
     intervalMinutes: Number(intervalMinutes.value),
-    kind: kind.value,
+    ...(kind.value === 'scene' ? { kind: 'scene' } : {}),
   });
   if (success) {
     title.value = '';

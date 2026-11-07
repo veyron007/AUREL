@@ -17,11 +17,15 @@ export const PLAN_LIMITS = Object.freeze({
 const NOMINAL = 'NOBS';
 
 const value = (block, name) =>
-  new RegExp(`<Data name="${name}">\\s*<value>([^<]*)</value>`).exec(block)?.[1]?.trim() ??
-  null;
+  new RegExp(`<Data name="${name}">\\s*<value>([^<]*)</value>`)
+    .exec(block)?.[1]
+    ?.trim() ?? null;
 /** ESA writes times without a zone; the plan is in UTC. */
 function utc(text) {
-  if (typeof text !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(text))
+  if (
+    typeof text !== 'string' ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(text)
+  )
     return null;
   const ms = Date.parse(`${text}Z`);
   return Number.isFinite(ms) ? ms : null;
@@ -37,7 +41,10 @@ function ring(block) {
   return points.length >= 4 &&
     points.every(
       ([lon, lat]) =>
-        Number.isFinite(lon) && Number.isFinite(lat) && Math.abs(lon) <= 180 && Math.abs(lat) <= 90,
+        Number.isFinite(lon) &&
+        Number.isFinite(lat) &&
+        Math.abs(lon) <= 180 &&
+        Math.abs(lat) <= 90,
     )
     ? points
     : null;
@@ -69,7 +76,9 @@ export function parseAcquisitionPlan(text, fileName) {
     throw new TypeError('Plan file is missing or larger than 8 MiB');
   const identity = planIdentityFromName(fileName);
   if (!identity)
-    throw new TypeError('Expected an ESA Sentinel-2 acquisition plan file name');
+    throw new TypeError(
+      'Expected an ESA Sentinel-2 acquisition plan file name',
+    );
   if (!/<kml[\s>]/.test(text) || !/S2 Planned Observations/.test(text))
     throw new TypeError('This file is not an ESA Sentinel-2 acquisition plan');
   const blocks = text.split('<Placemark>').slice(1);
@@ -80,7 +89,8 @@ export function parseAcquisitionPlan(text, fileName) {
     const startMs = utc(value(block, 'ObservationTimeStart'));
     const endMs = utc(value(block, 'ObservationTimeStop'));
     const polygon = ring(block);
-    if (startMs === null || endMs === null || endMs < startMs || !polygon) continue;
+    if (startMs === null || endMs === null || endMs < startMs || !polygon)
+      continue;
     datatakes.push(
       Object.freeze({
         id: value(block, 'ID') || `${startMs}`,
@@ -102,7 +112,8 @@ export function parseAcquisitionPlan(text, fileName) {
 /** Nominal datatakes (the only mode ESA distributes to users) covering a place. */
 export function plannedOverPlace(plan, place) {
   return plan.datatakes.filter(
-    (take) => take.mode === NOMINAL && ringContains(take.ring, place.lon, place.lat),
+    (take) =>
+      take.mode === NOMINAL && ringContains(take.ring, place.lon, place.lat),
   );
 }
 
@@ -114,7 +125,8 @@ export function plannedOverPlace(plan, place) {
  * - `no-plan`: no loaded plan covers that time (Landsat has none admitted).
  */
 export function crossCheckPass(mission, pass, plans, place) {
-  if (!mission.planSatellite) return { status: 'not-published', datatake: null };
+  if (!mission.planSatellite)
+    return { status: 'not-published', datatake: null };
   const relevant = plans.filter(
     (plan) =>
       plan.satellite === mission.planSatellite &&
@@ -135,11 +147,21 @@ export function crossCheckPass(mission, pass, plans, place) {
         fileName: plan.fileName,
       };
   }
-  return { status: 'contradicted', datatake: null, fileName: relevant[0].fileName };
+  return {
+    status: 'contradicted',
+    datatake: null,
+    fileName: relevant[0].fileName,
+  };
 }
 
 /** Planned nominal datatakes over the place with no predicted pass beside them. */
-export function unmatchedPlannedTakes(mission, passes, plans, place, { fromMs, toMs }) {
+export function unmatchedPlannedTakes(
+  mission,
+  passes,
+  plans,
+  place,
+  { fromMs, toMs },
+) {
   if (!mission.planSatellite) return [];
   return plans
     .filter((plan) => plan.satellite === mission.planSatellite)

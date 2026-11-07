@@ -77,7 +77,7 @@ export class OrbitWitnessController {
     this.sets = null;
     this.setsAt = 0;
     this.footprintPassId = null;
-    this.ride = null;
+    this.riding = null;
     this.request = null;
     this.destroyed = false;
   }
@@ -121,11 +121,11 @@ export class OrbitWitnessController {
     this.present();
   }
   _directorChanged() {
-    if (!this.ride || !this.director) return;
-    if (this.director.running && !this.ride.started)
-      this.ride = { ...this.ride, started: true };
-    else if (!this.director.running && this.ride.started) {
-      this.ride = null;
+    if (!this.riding || !this.director) return;
+    if (this.director.running && !this.riding.started)
+      this.riding = { ...this.riding, started: true };
+    else if (!this.director.running && this.riding.started) {
+      this.riding = null;
       this.present();
     }
   }
@@ -317,7 +317,7 @@ export class OrbitWitnessController {
       this.present();
       return false;
     }
-    this.ride = {
+    this.riding = {
       passId,
       started: false,
       mission: built.found.mission.label,
@@ -330,7 +330,7 @@ export class OrbitWitnessController {
     const started = await this.director.ride(built.scene);
     if (!this.live()) return false;
     if (!started) {
-      this.ride = null;
+      this.riding = null;
       this.error = t(
         'The Scene Director could not start the ride. Stop any running scene and retry.',
       );
@@ -340,7 +340,7 @@ export class OrbitWitnessController {
   }
   stopRide() {
     this.director?.stop?.();
-    this.ride = null;
+    this.riding = null;
     this.present();
   }
   async watch() {
@@ -442,11 +442,11 @@ export class OrbitWitnessController {
         datatakes: plan.datatakes.length,
       })),
       missions: this._rows(),
-      ride: this.ride
+      ride: this.riding
         ? {
-            passId: this.ride.passId,
-            caption: this.ride.caption,
-            mission: this.ride.mission,
+            passId: this.riding.passId,
+            caption: this.riding.caption,
+            mission: this.riding.mission,
           }
         : null,
       canWatch: Boolean(this.createWatch && this._selection()),

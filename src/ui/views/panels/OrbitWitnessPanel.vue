@@ -239,7 +239,7 @@ async function plansChosen(event) {
             ></li
           >
         </ul>
-        <p class="orbit-witness-credit">© European Space Agency - ESA</p></details
+        <p class="orbit-witness-credit" translate="no">© European Space Agency - ESA</p></details
       >
       <dl v-if="view?.window" class="orbit-witness-sources"
         ><div

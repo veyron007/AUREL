@@ -20,6 +20,7 @@ const sentinel2 = (id, label, norad, extra = {}) =>
     planSatellite: label.replace('Sentinel-', 'S'),
     hlsProduct: 'S30',
     factSource: Object.freeze({
+      // i18n-ignore: source credit, a proper name
       label: 'ESA SentiWiki, Sentinel-2 mission',
       url: ESA_S2_MISSION,
     }),
@@ -38,6 +39,7 @@ const landsat = (id, label, norad, url) =>
     stacPlatform: id,
     planSatellite: null,
     hlsProduct: 'L30',
+    // i18n-ignore: source credit, a proper name
     factSource: Object.freeze({ label: `USGS, ${label} mission`, url }),
   });
 
@@ -51,6 +53,7 @@ export const ORBIT_WITNESS_MISSIONS = Object.freeze([
   landsat('landsat-9', 'Landsat 9', 49260, USGS_LANDSAT_9),
   Object.freeze({
     id: 'iss',
+    // i18n-ignore: spacecraft name
     label: 'ISS',
     norad: 25544,
     family: 'iss',
@@ -60,6 +63,7 @@ export const ORBIT_WITNESS_MISSIONS = Object.freeze([
     stacPlatform: null,
     planSatellite: null,
     hlsProduct: null,
+    // i18n-ignore: source credit, a proper name
     factSource: Object.freeze({ label: 'NASA, ISS', url: NASA_ISS }),
   }),
 ]);

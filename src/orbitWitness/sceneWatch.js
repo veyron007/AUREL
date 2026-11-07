@@ -214,8 +214,7 @@ function validateObservation(row) {
   timestamp(row.acquiredAt);
   if (row.cloudCover !== null) num(row.cloudCover, 0, 100);
   if (!CATALOGUE_SOURCES.includes(row.source)) fail();
-  if (row.productId !== null && !['S30', 'L30'].includes(row.productId))
-    fail();
+  if (row.productId !== null && !['S30', 'L30'].includes(row.productId)) fail();
 }
 
 export function validateSceneWatchRuntime(value) {

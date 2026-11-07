@@ -339,9 +339,6 @@
   margin-top: 4px;
 }
 @media (max-width: 720px) {
-  .orbit-witness-legend {
-    grid-template-columns: minmax(0, 1fr);
-  }
   #orbit-witness-ride-caption {
     top: 8px;
     flex-wrap: wrap;

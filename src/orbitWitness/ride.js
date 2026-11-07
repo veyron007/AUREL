@@ -7,6 +7,7 @@
  */
 import { orbitSamples, destination, swathFootprint } from './swath.js';
 import { LANES } from './lanes.js';
+import { msg } from '../i18n/marker.js';
 
 export const RIDE_SCENE_PREFIX = 'orbit-witness-ride';
 /** Orbit seconds before the crossing at which the ride shots are placed. */
@@ -28,11 +29,13 @@ const headingDeg = (rad) => (((rad * R2D) % 360) + 360) % 360;
  */
 export function rideProvenance(translate, { epochMs, sceneId = null }) {
   return [
-    translate('Dramatised ride'),
-    translate('orbit propagated, epoch {epoch}', { epoch: minuteStamp(epochMs) }),
+    translate(msg('Dramatised ride')),
+    translate(msg('orbit propagated, epoch {epoch}'), {
+      epoch: minuteStamp(epochMs),
+    }),
     sceneId
-      ? translate('Image: observed {scene}', { scene: sceneId })
-      : translate('Image: none catalogued'),
+      ? translate(msg('Image: observed {scene}'), { scene: sceneId })
+      : translate(msg('Image: none catalogued')),
   ].join(' · ');
 }
 
@@ -68,15 +71,18 @@ export function buildRideScene({
   );
   if (samples.length !== RIDE_OFFSETS_SEC.length)
     throw new Error('The orbit could not be propagated for this pass');
-  const provenance = rideProvenance(translate, { epochMs: set.epochMs, sceneId });
+  const provenance = rideProvenance(translate, {
+    epochMs: set.epochMs,
+    sceneId,
+  });
   const id = `${RIDE_SCENE_PREFIX}-${mission.id}-${pass.timeMs}`;
   const poses = samples.map((sample) => pose(sample));
   const shots = poses.slice(1).map((camera, index) => ({
     id: `${id}-ride-${index + 1}`,
     title: `${
       RIDE_OFFSETS_SEC[index + 1] === 0
-        ? translate('At the predicted crossing second')
-        : translate('{seconds} s before the predicted crossing', {
+        ? translate(msg('At the predicted crossing second'))
+        : translate(msg('{seconds} s before the predicted crossing'), {
             seconds: -RIDE_OFFSETS_SEC[index + 1],
           })
     } · ${provenance}`,
@@ -88,7 +94,7 @@ export function buildRideScene({
   const last = poses[poses.length - 1];
   shots.push({
     id: `${id}-drop`,
-    title: `${translate('Footprint over {place} at {time}', {
+    title: `${translate(msg('Footprint over {place} at {time}'), {
       place: place.name || `${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}`,
       time: minuteStamp(pass.timeMs),
     })} · ${provenance}`,
@@ -107,7 +113,7 @@ export function buildRideScene({
   });
   const scene = {
     id,
-    title: `${translate('Ride this pass')} · ${mission.label} · ${minuteStamp(pass.timeMs)} · ${translate('dramatisation')}`,
+    title: `${translate(msg('Ride this pass'))} · ${mission.label} · ${minuteStamp(pass.timeMs)} · ${translate(msg('dramatisation'))}`,
     releaseLayerIds: [],
     appliedShotPacks: [],
     shots,
@@ -122,7 +128,9 @@ export function buildRideScene({
     class: LANES.ride.class,
     label: provenance,
     dramatisation: translate(
-      'Camera path and pacing are dramatised: about {factor}× faster than the orbit, beside a modelled position.',
+      msg(
+        'Camera path and pacing are dramatised: about {factor}× faster than the orbit, beside a modelled position.',
+      ),
       { factor: Math.round(30 / RIDE_SHOT_SEC) },
     ),
     mission: { id: mission.id, label: mission.label, norad: mission.norad },
@@ -140,7 +148,11 @@ export function buildRideScene({
           class: LANES.predicted.class,
           swathKm: mission.swathKm,
           ring: footprint,
-          note: translate('Nominal swath around the predicted crossing; not a product footprint.'),
+          note: translate(
+            msg(
+              'Nominal swath around the predicted crossing; not a product footprint.',
+            ),
+          ),
         }
       : null,
     image: sceneId
@@ -156,5 +168,9 @@ export function withRideScene(project, scene) {
   const scenes = (project?.scenes || []).filter(
     (row) => !String(row.id).startsWith(RIDE_SCENE_PREFIX),
   );
-  return { ...project, version: Math.max(6, project?.version || 6), scenes: [...scenes, scene] };
+  return {
+    ...project,
+    version: Math.max(6, project?.version || 6),
+    scenes: [...scenes, scene],
+  };
 }

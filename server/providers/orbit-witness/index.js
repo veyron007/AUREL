@@ -135,11 +135,15 @@ function readFeatures(upstream, json) {
   const scenes = json.features
     .map((item) => normalizeStacItem(item, upstream.id))
     .filter(Boolean);
+  // Both catalogues emit a `next` link even on a short final page, so a link
+  // alone means nothing: trust numberMatched, else a full page plus `next`.
   const matched = Number(json.numberMatched);
-  const truncated =
-    (Number.isFinite(matched) && matched > json.features.length) ||
-    (Array.isArray(json.links) &&
-      json.links.some((link) => link?.rel === 'next'));
+  const hasNext =
+    Array.isArray(json.links) &&
+    json.links.some((link) => link?.rel === 'next');
+  const truncated = Number.isFinite(matched)
+    ? matched > json.features.length
+    : json.features.length >= SCENE_QUERY_LIMITS.pageSize && hasNext;
   return {
     id: upstream.id,
     status: truncated ? 'partial' : 'ok',
@@ -240,7 +244,12 @@ export function createSceneCatalogueMiddleware({
     if (url.pathname !== '/api/orbit-witness/scenes') return next();
     if (admitSameSiteKeyless(req, res)) return;
     if (req.method !== 'GET')
-      return respond(res, 405, { error: 'Method not allowed' }, { Allow: 'GET' });
+      return respond(
+        res,
+        405,
+        { error: 'Method not allowed' },
+        { Allow: 'GET' },
+      );
     let query;
     try {
       query = parseSceneRequest(url, now());
@@ -379,7 +388,9 @@ export function createCloudForecastMiddleware({
     } catch (error) {
       return fallback(
         old,
-        error?.code === 'rate-limited' ? 'rate-limited' : 'upstream-unavailable',
+        error?.code === 'rate-limited'
+          ? 'rate-limited'
+          : 'upstream-unavailable',
       );
     }
   }
@@ -394,7 +405,12 @@ export function createCloudForecastMiddleware({
     if (url.pathname !== '/api/orbit-witness/cloud') return next();
     if (admitSameSiteKeyless(req, res)) return;
     if (req.method !== 'GET')
-      return respond(res, 405, { error: 'Method not allowed' }, { Allow: 'GET' });
+      return respond(
+        res,
+        405,
+        { error: 'Method not allowed' },
+        { Allow: 'GET' },
+      );
     let point;
     try {
       point = parseCloudRequest(url);

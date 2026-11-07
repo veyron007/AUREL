@@ -7,7 +7,11 @@ import {
 } from './orbitWitnessTools.js';
 import { RIDE_SCENE_PREFIX } from '../orbitWitness/ride.js';
 
-const place = { id: 'mussoorie', name: 'Mussoorie', coordinates: [78.0644, 30.4598] };
+const place = {
+  id: 'mussoorie',
+  name: 'Mussoorie',
+  coordinates: [78.0644, 30.4598],
+};
 const observation = {
   id: 'earth-search:S2A_43RGP_20261111_0_L2A',
   sceneId: 'S2A_43RGP_20261111_0_L2A',
@@ -69,15 +73,26 @@ test('a fired scene opens in Chronicle beside the previous scene of the same pro
 });
 
 test('when HLS has not caught up, Chronicle says so instead of comparing', async () => {
-  const fake = chronicle([{ id: 'S30:2026-11-04', requestedDate: '2026-11-04' }]);
-  const open = createChronicleSceneOpener({ lens: { select() {} }, chronicle: fake, workspace: null });
+  const fake = chronicle([
+    { id: 'S30:2026-11-04', requestedDate: '2026-11-04' },
+  ]);
+  const open = createChronicleSceneOpener({
+    lens: { select() {} },
+    chronicle: fake,
+    workspace: null,
+  });
   const result = await open({ place, observation });
   assert.equal(result.ok, false);
   assert.match(result.message, /not in NASA CMR yet/);
-  assert.equal(fake.calls.some(([name]) => name === 'compare'), false);
+  assert.equal(
+    fake.calls.some(([name]) => name === 'compare'),
+    false,
+  );
   const none = await createChronicleSceneOpener({
     lens: null,
-    chronicle: chronicle([{ id: 'S30:2026-11-11', requestedDate: '2026-11-11' }]),
+    chronicle: chronicle([
+      { id: 'S30:2026-11-11', requestedDate: '2026-11-11' },
+    ]),
   })({ place, observation });
   assert.match(none.message, /No earlier S30/);
 });
@@ -88,15 +103,30 @@ test('the ride director adds one ride scene through the validated snapshot path'
   const director = createRideDirector({
     running: false,
     subscribe: () => () => {},
-    getProjectSnapshot: () => ({ version: 6, scenes: [{ id: `${RIDE_SCENE_PREFIX}-old`, shots: [] }, { id: 'mine', shots: [] }] }),
+    getProjectSnapshot: () => ({
+      version: 6,
+      scenes: [
+        { id: `${RIDE_SCENE_PREFIX}-old`, shots: [] },
+        { id: 'mine', shots: [] },
+      ],
+    }),
     restoreProjectSnapshot: async (project) => (restored.push(project), true),
     startScene: (id) => (started.push(id), new Promise(() => {})),
     stopScene() {},
   });
-  assert.equal(await director.ride({ id: `${RIDE_SCENE_PREFIX}-new`, shots: [] }), true);
-  assert.deepEqual(restored[0].scenes.map((scene) => scene.id), ['mine', `${RIDE_SCENE_PREFIX}-new`]);
+  assert.equal(
+    await director.ride({ id: `${RIDE_SCENE_PREFIX}-new`, shots: [] }),
+    true,
+  );
+  assert.deepEqual(
+    restored[0].scenes.map((scene) => scene.id),
+    ['mine', `${RIDE_SCENE_PREFIX}-new`],
+  );
   assert.deepEqual(started, [`${RIDE_SCENE_PREFIX}-new`]);
   assert.equal(createRideDirector(null), null);
-  const busy = createRideDirector({ running: true, getProjectSnapshot: () => ({ scenes: [] }) });
+  const busy = createRideDirector({
+    running: true,
+    getProjectSnapshot: () => ({ scenes: [] }),
+  });
   assert.equal(await busy.ride({ id: 'x' }), false);
 });

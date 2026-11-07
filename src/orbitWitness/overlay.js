@@ -4,14 +4,19 @@
  * (observed, solid). Owns one data source; nothing else is touched.
  */
 import * as Cesium from 'cesium';
-import { registerDynamicCredit, ORBIT_WITNESS_CREDIT } from '../data/dataCredits.js';
+import {
+  registerDynamicCredit,
+  ORBIT_WITNESS_CREDIT,
+} from '../data/dataCredits.js';
 import { governorRequestRender } from '../renderGovernor.js';
 
 const BRASS = '#d6ab55';
 const PETROL = '#7fc3c4';
 
 function ringPositions(ring) {
-  return Cesium.Cartesian3.fromDegreesArray(ring.flatMap(([lon, lat]) => [lon, lat]));
+  return Cesium.Cartesian3.fromDegreesArray(
+    ring.flatMap(([lon, lat]) => [lon, lat]),
+  );
 }
 
 export function createOrbitWitnessOverlay(viewer) {
@@ -29,7 +34,12 @@ export function createOrbitWitnessOverlay(viewer) {
     /**
      * @param {{ predicted?: Array<[number, number]>|null, observed?: Array<[number, number]>|null, label?: string, place?: { lat: number, lon: number } }} shapes
      */
-    async show({ predicted = null, observed = null, label = '', place = null } = {}) {
+    async show({
+      predicted = null,
+      observed = null,
+      label = '',
+      place = null,
+    } = {}) {
       const target = await ensure();
       if (!target) return false;
       target.entities.removeAll();

@@ -2,13 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { missionElementSets } from './tle.js';
 import { missionById } from './missions.js';
-import { buildRideScene, withRideScene, rideProvenance, RIDE_SCENE_PREFIX } from './ride.js';
-import { validateSceneDocument, stringifySceneDocument } from '../director/document.js';
+import {
+  buildRideScene,
+  withRideScene,
+  rideProvenance,
+  RIDE_SCENE_PREFIX,
+} from './ride.js';
+import {
+  validateSceneDocument,
+  stringifySceneDocument,
+} from '../director/document.js';
 import { ringContains } from './swath.js';
 import { FIXTURE_TLE, MUSSOORIE, S2B_SCENE } from './testFixtures.mjs';
 
-const translate = (text, params = {}) => text.replace(/\{(\w+)\}/g, (_, key) => String(params[key]));
-const set = missionElementSets(FIXTURE_TLE).find((row) => row.missionId === 'sentinel-2b');
+const translate = (text, params = {}) =>
+  text.replace(/\{(\w+)\}/g, (_, key) => String(params[key]));
+const set = missionElementSets(FIXTURE_TLE).find(
+  (row) => row.missionId === 'sentinel-2b',
+);
 const input = {
   mission: missionById('sentinel-2b'),
   pass: { timeMs: Date.parse('2026-10-25T05:40:29Z') },
@@ -31,7 +42,10 @@ test('the ride is a valid director scene whose every shot says dramatised and na
     assert.match(shot.title, /Image: observed S2B_43RGP_20261025_0_L2A/);
   }
   // The export (scene JSON) carries the same label.
-  assert.match(stringifySceneDocument(project), /orbit propagated, epoch 2026-11-06 20:45 UTC/);
+  assert.match(
+    stringifySceneDocument(project),
+    /orbit propagated, epoch 2026-11-06 20:45 UTC/,
+  );
 });
 
 test('the camera follows the propagated orbit and ends over the place', () => {
@@ -40,7 +54,9 @@ test('the camera follows the propagated orbit and ends over the place', () => {
   assert.equal(last.pitch, -90);
   assert.ok(Math.abs(last.lat - MUSSOORIE.lat) < 1e-9);
   const ride = scene.shots.slice(0, -1);
-  assert.ok(ride.every((shot) => shot.camera.alt > 780000 && shot.camera.alt < 800000));
+  assert.ok(
+    ride.every((shot) => shot.camera.alt > 780000 && shot.camera.alt < 800000),
+  );
   // Descending: each ride pose is further south than the last.
   assert.ok(ride.every((shot) => shot.camera.lat < shot.move.from.lat));
 });
@@ -65,12 +81,26 @@ test('without a catalogued scene the image lane says none, and a new ride replac
   assert.equal(record.image.sceneId, null);
   const user = { id: 'mine', title: 'Mine', shots: [] };
   const once = withRideScene({ version: 6, scenes: [user] }, scene);
-  const twice = withRideScene(once, { ...scene, id: `${RIDE_SCENE_PREFIX}-other` });
-  assert.deepEqual(twice.scenes.map((row) => row.id), ['mine', `${RIDE_SCENE_PREFIX}-other`]);
-  assert.equal(rideProvenance(translate, { epochMs: set.epochMs }).includes('none catalogued'), true);
+  const twice = withRideScene(once, {
+    ...scene,
+    id: `${RIDE_SCENE_PREFIX}-other`,
+  });
+  assert.deepEqual(
+    twice.scenes.map((row) => row.id),
+    ['mine', `${RIDE_SCENE_PREFIX}-other`],
+  );
+  assert.equal(
+    rideProvenance(translate, { epochMs: set.epochMs }).includes(
+      'none catalogued',
+    ),
+    true,
+  );
 });
 
 test('a ride that cannot be propagated throws instead of inventing a path', () => {
-  const broken = { ...set, satrec: { ...set.satrec, error: 1, no: Number.NaN } };
+  const broken = {
+    ...set,
+    satrec: { ...set.satrec, error: 1, no: Number.NaN },
+  };
   assert.throws(() => buildRideScene({ ...input, set: broken }));
 });

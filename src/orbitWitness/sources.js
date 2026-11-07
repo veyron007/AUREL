@@ -35,7 +35,11 @@ async function getJson(transport, url, signal, timeoutMs) {
 }
 
 /** Catalogue search over Earth Search and CMR-STAC. Outage → status "unavailable". */
-export function createSceneCatalogueSource({ fetchImpl, timeoutMs = 25000, now = Date.now } = {}) {
+export function createSceneCatalogueSource({
+  fetchImpl,
+  timeoutMs = 25000,
+  now = Date.now,
+} = {}) {
   const transport = transportOf(fetchImpl);
   return {
     async search({ bbox, from, to }, { signal } = {}) {
@@ -47,7 +51,12 @@ export function createSceneCatalogueSource({ fetchImpl, timeoutMs = 25000, now =
       });
       try {
         return validateCataloguePayload(
-          await getJson(transport, `/api/orbit-witness/scenes?${params}`, signal, timeoutMs),
+          await getJson(
+            transport,
+            `/api/orbit-witness/scenes?${params}`,
+            signal,
+            timeoutMs,
+          ),
         );
       } catch (error) {
         if (signal?.aborted) throw error;
@@ -55,7 +64,8 @@ export function createSceneCatalogueSource({ fetchImpl, timeoutMs = 25000, now =
           version: 1,
           retrievedAt: new Date(now()).toISOString(),
           status: 'unavailable',
-          reason: error?.code === 'RATE_LIMITED' ? 'rate-limited' : 'unavailable',
+          reason:
+            error?.code === 'RATE_LIMITED' ? 'rate-limited' : 'unavailable',
           retryAfter: error?.retryAfter ?? null,
           sources: [],
           scenes: [],
@@ -66,16 +76,32 @@ export function createSceneCatalogueSource({ fetchImpl, timeoutMs = 25000, now =
 }
 
 /** Hourly cloud cover through the shared Open-Meteo field-context ledger. */
-export function createCloudForecastSource({ fetchImpl, timeoutMs = 20000 } = {}) {
+export function createCloudForecastSource({
+  fetchImpl,
+  timeoutMs = 20000,
+} = {}) {
   const transport = transportOf(fetchImpl);
   return {
     async forecast({ lat, lon }, { signal } = {}) {
-      if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180)
+      if (
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lon) ||
+        Math.abs(lat) > 90 ||
+        Math.abs(lon) > 180
+      )
         throw new TypeError('Expected a place');
-      const params = new URLSearchParams({ lat: lat.toFixed(4), lon: lon.toFixed(4) });
+      const params = new URLSearchParams({
+        lat: lat.toFixed(4),
+        lon: lon.toFixed(4),
+      });
       try {
         return validateCloudPayload(
-          await getJson(transport, `/api/orbit-witness/cloud?${params}`, signal, timeoutMs),
+          await getJson(
+            transport,
+            `/api/orbit-witness/cloud?${params}`,
+            signal,
+            timeoutMs,
+          ),
         );
       } catch (error) {
         if (signal?.aborted) throw error;

@@ -3,11 +3,7 @@
  * records into per-mission lanes. Pure: inputs in, frozen rows out.
  */
 import { ORBIT_WITNESS_MISSIONS } from './missions.js';
-import {
-  findSwathPasses,
-  findSkyPasses,
-  PASS_SEARCH_LIMITS,
-} from './swath.js';
+import { findSwathPasses, findSkyPasses, PASS_SEARCH_LIMITS } from './swath.js';
 import { epochAgeDays, epochConfidence } from './tle.js';
 import { crossCheckPass, unmatchedPlannedTakes } from './plan.js';
 import { LANES, LANE_SOURCES } from './lanes.js';
@@ -44,7 +40,10 @@ export function cloudAtPass(forecast, timeMs) {
     };
   let best = null;
   for (const hour of forecast.hours) {
-    if (!best || Math.abs(hour.timeMs - timeMs) < Math.abs(best.timeMs - timeMs))
+    if (
+      !best ||
+      Math.abs(hour.timeMs - timeMs) < Math.abs(best.timeMs - timeMs)
+    )
       best = hour;
   }
   if (!best || Math.abs(best.timeMs - timeMs) > HOUR_MS)
@@ -190,7 +189,11 @@ function missionRows(mission, set, input) {
     unplanned: unmatchedPlannedTakes(mission, search.passes, plans, place, {
       fromMs,
       toMs: fromMs + days * DAY_MS,
-    }).map((take) => ({ ...take, start: iso(take.startMs), end: iso(take.endMs) })),
+    }).map((take) => ({
+      ...take,
+      start: iso(take.startMs),
+      end: iso(take.endMs),
+    })),
     truncated: search.truncated,
   };
 }
