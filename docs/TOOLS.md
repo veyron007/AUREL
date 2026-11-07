@@ -294,6 +294,7 @@ and the development server's internal routes. See SECURITY.md.
 | `get_cyclones` | `cyclones` | Active NHC/CPHC tropical cyclones, optionally in an area |
 | `get_fire_perimeters` | `perimeters` | Mapped WFIGS wildfire perimeters in an area, largest first |
 | `get_terrain_height` | `terrain` | Ground, geoid and ellipsoid heights at up to 20 points |
+| `horizon_at` | `horizon` | Kshitij terrain horizon at a point (Copernicus GLO-30, refraction k = 0.13): 360 whole-degree angles and distances, named OSM peaks on the skyline with azimuth, distance, DEM height and OSM `ele`, astronomical against terrain-clipped sunrise, sunset and moonrise, and an optional gnomon shadow. Returns the `aurel.horizon` provenance envelope: every number carries unit, class, source and applicable time. Geometric visibility, terrain-only. MCP only |
 | `find_military_installations` | `installations` | OpenStreetMap military sites in an area of at most 10° per side |
 | `get_map_features` | `features` | Administrative areas, named places or monuments at a location (needs Overpass) |
 | `situation_brief` | `weather` | Weather, earthquakes, fires, aircraft, ships and cyclones for an area, by section |

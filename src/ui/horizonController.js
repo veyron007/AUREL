@@ -8,7 +8,10 @@ import { validateHorizonSnapshot } from '../fieldbook/horizonAnalysis.js';
 const DEFAULT_TIME_ZONE = 'Asia/Kolkata';
 
 /** Default shadow time: local noon of the chosen date. */
-export function horizonDefaults(now = Date.now(), timeZone = DEFAULT_TIME_ZONE) {
+export function horizonDefaults(
+  now = Date.now(),
+  timeZone = DEFAULT_TIME_ZONE,
+) {
   return {
     localDate: localDateAt(now, timeZone),
     shadowTime: '12:00',
@@ -102,7 +105,9 @@ export class HorizonController {
       this.cancel();
       this._reset();
       if (this.subject)
-        this.error = t('The place changed. Compute the horizon for the new place.');
+        this.error = t(
+          'The place changed. Compute the horizon for the new place.',
+        );
       this.subject = null;
     }
     this.present();
@@ -138,7 +143,12 @@ export class HorizonController {
     this.request = request;
     const generation = ++this.generation;
     this._reset();
-    Object.assign(this, { busy: true, status: 'loading', error: null, feedback: null });
+    Object.assign(this, {
+      busy: true,
+      status: 'loading',
+      error: null,
+      feedback: null,
+    });
     this.present();
     try {
       const place = this._place();
@@ -161,7 +171,8 @@ export class HorizonController {
         },
         { signal: request.signal },
       );
-      if (generation !== this.generation || request.signal.aborted) return false;
+      if (generation !== this.generation || request.signal.aborted)
+        return false;
       this.subject = place;
       this.result = result;
       this.envelope = toProvenanceEnvelope(result);
@@ -169,7 +180,8 @@ export class HorizonController {
       this.drawHorizon(result);
       return true;
     } catch (error) {
-      if (request.signal.aborted || generation !== this.generation) return false;
+      if (request.signal.aborted || generation !== this.generation)
+        return false;
       this.status = 'error';
       this.error =
         error instanceof Error && error.message

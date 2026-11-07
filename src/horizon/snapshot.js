@@ -23,12 +23,16 @@ export const HORIZON_SNAPSHOT_CLASSES = Object.freeze({
   'shadow.shadow*': 'derived · m, deg · local-ephemeris',
   'peaks.demM': 'observed · m · copernicus-glo30',
   'peaks.osmEleM': 'note · m · osm-peaks',
-  'peaks.azimuthDeg,distanceKm,apparentElevationDeg': 'derived · deg, km · osm-peaks+copernicus-glo30',
+  'peaks.azimuthDeg,distanceKm,apparentElevationDeg':
+    'derived · deg, km · osm-peaks+copernicus-glo30',
 });
 export const HORIZON_SNAPSHOT_METHOD =
   'Kshitij DEM ray-march, refraction k = 0.13; NOAA solar and Almanac lunar ephemeris';
 
-export function toHorizonSnapshot(result, { capturedAt = new Date().toISOString() } = {}) {
+export function toHorizonSnapshot(
+  result,
+  { capturedAt = new Date().toISOString() } = {},
+) {
   const shadow = result.shadow;
   return {
     version: 1,

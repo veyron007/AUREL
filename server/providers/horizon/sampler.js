@@ -28,7 +28,17 @@ export const SAMPLING_NOTE =
 /** Full-grid width of a GLO-30 tile by latitude band (readme table). */
 export function tileWidth(south) {
   const a = Math.abs(south < 0 ? south + 1 : south);
-  return a < 50 ? 3600 : a < 60 ? 2400 : a < 70 ? 1800 : a < 80 ? 1200 : a < 85 ? 720 : 360;
+  return a < 50
+    ? 3600
+    : a < 60
+      ? 2400
+      : a < 70
+        ? 1800
+        : a < 80
+          ? 1200
+          : a < 85
+            ? 720
+            : 360;
 }
 
 function levelFor(distanceM) {
@@ -38,8 +48,16 @@ function levelFor(distanceM) {
 /** Blocks needed to cover a lat/lon box at one level. */
 export function blocksForBox(level, box, blockSize = 1024) {
   const out = [];
-  for (let south = Math.floor(box.south); south <= Math.floor(box.north); south++)
-    for (let west = Math.floor(box.west); west <= Math.floor(box.east); west++) {
+  for (
+    let south = Math.floor(box.south);
+    south <= Math.floor(box.north);
+    south++
+  )
+    for (
+      let west = Math.floor(box.west);
+      west <= Math.floor(box.east);
+      west++
+    ) {
       const width = tileWidth(south) / 2 ** level,
         height = 3600 / 2 ** level;
       const x0 = Math.max(0, Math.floor((box.west - west) * width)),
@@ -48,8 +66,16 @@ export function blocksForBox(level, box, blockSize = 1024) {
         y1 = Math.min(height - 1, Math.floor((south + 1 - box.south) * height));
       if (x0 > x1 || y0 > y1) continue;
       const name = tileName(south + 0.5, west + 0.5);
-      for (let by = Math.floor(y0 / blockSize); by <= Math.floor(y1 / blockSize); by++)
-        for (let bx = Math.floor(x0 / blockSize); bx <= Math.floor(x1 / blockSize); bx++)
+      for (
+        let by = Math.floor(y0 / blockSize);
+        by <= Math.floor(y1 / blockSize);
+        by++
+      )
+        for (
+          let bx = Math.floor(x0 / blockSize);
+          bx <= Math.floor(x1 / blockSize);
+          bx++
+        )
           out.push({ name, level, bx, by });
     }
   return out;
@@ -57,7 +83,8 @@ export function blocksForBox(level, box, blockSize = 1024) {
 
 function boxAround(lat, lon, radiusM) {
   const dLat = radiusM / M_PER_DEG,
-    dLon = radiusM / (M_PER_DEG * Math.max(0.05, Math.cos((lat * Math.PI) / 180)));
+    dLon =
+      radiusM / (M_PER_DEG * Math.max(0.05, Math.cos((lat * Math.PI) / 180)));
   return {
     south: Math.max(-89.999, lat - dLat),
     north: Math.min(89.999, lat + dLat),
@@ -66,31 +93,43 @@ function boxAround(lat, lon, radiusM) {
   };
 }
 
-/** Lookup over loaded blocks; absent tiles read as 0 m per the dataset readme. */
+/** Numeric tile key from a GLO-30 tile name (south-west corner). */
+function tileKeyOf(name) {
+  const south = Number(name.slice(23, 25)) * (name[22] === 'S' ? -1 : 1),
+    west = Number(name.slice(30, 33)) * (name[29] === 'W' ? -1 : 1);
+  return (south + 90) * 360 + (west + 180);
+}
+const blockKey = (tileKey, level, bx, by) =>
+  ((tileKey * 4 + level) * 8 + bx) * 8 + by;
+
+/**
+ * Lookup over loaded blocks with numeric keys (this runs for millions of
+ * cells per horizon); absent tiles read as 0 m per the dataset readme.
+ */
 function createLookup(blocks, absentTiles, blockSize) {
   const index = new Map();
   for (const block of blocks)
-    if (block) index.set(`${block.name}|${block.level}|${block.bx}|${block.by}`, block);
-  function locate(level, lat, lon) {
-    const name = tileName(lat, lon);
-    if (absentTiles.has(name)) return { absent: true };
+    if (block)
+      index.set(
+        blockKey(tileKeyOf(block.name), block.level, block.bx, block.by),
+        block,
+      );
+  const absent = new Set([...absentTiles].map(tileKeyOf));
+  function cell(level, lat, lon) {
     const south = Math.floor(lat),
       west = Math.floor(lon);
+    const tileKey = (south + 90) * 360 + (west + 180);
+    if (absent.has(tileKey)) return 0;
     const width = tileWidth(south) / 2 ** level,
       height = 3600 / 2 ** level;
     const gx = Math.floor((lon - west) * width),
       gy = Math.floor((south + 1 - lat) * height);
-    const block = index.get(
-      `${name}|${level}|${Math.floor(gx / blockSize)}|${Math.floor(gy / blockSize)}`,
-    );
-    if (!block) return null;
-    return { block, x: gx - block.bx * blockSize, y: gy - block.by * blockSize };
-  }
-  function cell(level, lat, lon) {
-    const at = locate(level, lat, lon);
-    if (!at) return VOID;
-    if (at.absent) return 0;
-    const { block, x, y } = at;
+    const bx = Math.floor(gx / blockSize),
+      by = Math.floor(gy / blockSize);
+    const block = index.get(blockKey(tileKey, level, bx, by));
+    if (!block) return VOID;
+    const x = gx - bx * blockSize,
+      y = gy - by * blockSize;
     if (x < 0 || y < 0 || x >= block.width || y >= block.height) return VOID;
     return block.data[y * block.width + x];
   }
@@ -118,7 +157,10 @@ function createLookup(blocks, absentTiles, blockSize) {
       v11 = at(x0 + 1, y0 + 1);
     if ([v00, v10, v01, v11].includes(VOID)) return cell(level, lat, lon);
     return Math.round(
-      v00 * (1 - tx) * (1 - ty) + v10 * tx * (1 - ty) + v01 * (1 - tx) * ty + v11 * tx * ty,
+      v00 * (1 - tx) * (1 - ty) +
+        v10 * tx * (1 - ty) +
+        v01 * (1 - tx) * ty +
+        v11 * tx * ty,
     );
   }
   /** Highest valid cell within ±halfM of (lat, lon); VOID if none. */
@@ -131,7 +173,9 @@ function createLookup(blocks, absentTiles, blockSize) {
       nx = Math.min(MAX_POOL_SIDE, 2 * Math.ceil(halfM / cellLonM) + 1);
     const stepLat = (2 * halfM) / M_PER_DEG / Math.max(1, ny - 1),
       stepLon =
-        (2 * halfM) / (M_PER_DEG * Math.cos((lat * Math.PI) / 180)) / Math.max(1, nx - 1);
+        (2 * halfM) /
+        (M_PER_DEG * Math.cos((lat * Math.PI) / 180)) /
+        Math.max(1, nx - 1);
     const lat0 = lat - (stepLat * (ny - 1)) / 2,
       lon0 = lon - (stepLon * (nx - 1)) / 2;
     let best = VOID;
@@ -151,18 +195,31 @@ function createLookup(blocks, absentTiles, blockSize) {
  *   readBlock:(name:string, level:number, bx:number, by:number)=>Promise<object|null>,
  *   blockSize?:number }} input
  */
-export async function samplePolarGrid({ lat, lon, radiusM, readBlock, blockSize = 1024 }) {
+export async function samplePolarGrid({
+  lat,
+  lon,
+  radiusM,
+  readBlock,
+  blockSize = 1024,
+}) {
   const distances = radialDistances(radiusM);
   const requests = [];
   for (const entry of SAMPLING_LEVELS) {
     if (entry.fromM >= radiusM) continue;
     const outer = Math.min(radiusM, entry.toM) + 2000;
-    requests.push(...blocksForBox(entry.level, boxAround(lat, lon, outer), blockSize));
+    requests.push(
+      ...blocksForBox(entry.level, boxAround(lat, lon, outer), blockSize),
+    );
   }
   const absentTiles = new Set(),
     blocks = [];
   for (const request of requests) {
-    const block = await readBlock(request.name, request.level, request.bx, request.by);
+    const block = await readBlock(
+      request.name,
+      request.level,
+      request.bx,
+      request.by,
+    );
     if (block === null) absentTiles.add(request.name);
     else blocks.push(block);
   }
@@ -184,12 +241,16 @@ export async function samplePolarGrid({ lat, lon, radiusM, readBlock, blockSize 
     }
   }
   const used = blocks.filter(Boolean);
-  const tiles = [...new Map(used.map((b) => [b.name, b])).values()].map((b) => ({
-    name: b.name,
-    etag: b.etag ?? null,
-    retrievedAt: b.retrievedAt ?? null,
-  }));
-  const dates = used.map((b) => Date.parse(b.retrievedAt)).filter(Number.isFinite);
+  const tiles = [...new Map(used.map((b) => [b.name, b])).values()].map(
+    (b) => ({
+      name: b.name,
+      etag: b.etag ?? null,
+      retrievedAt: b.retrievedAt ?? null,
+    }),
+  );
+  const dates = used
+    .map((b) => Date.parse(b.retrievedAt))
+    .filter(Number.isFinite);
   return {
     distances,
     heights,
@@ -197,7 +258,9 @@ export async function samplePolarGrid({ lat, lon, radiusM, readBlock, blockSize 
     voidSamples,
     absentTiles: [...absentTiles].sort(),
     tiles,
-    retrievedAt: dates.length ? new Date(Math.min(...dates)).toISOString() : null,
+    retrievedAt: dates.length
+      ? new Date(Math.min(...dates)).toISOString()
+      : null,
     fromCache: used.filter((b) => b.cached).length,
     fetched: used.filter((b) => !b.cached).length,
   };

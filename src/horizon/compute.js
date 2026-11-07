@@ -73,7 +73,13 @@ export function computeHorizon({
   const observer = { lat: meta.observer.lat, lon: meta.observer.lon };
   const eyeM = meta.observer.groundM + observerHeightM;
   const horizon = marchHorizon(grid, eyeM, HORIZON_REFRACTION_K);
-  const events = horizonEvents({ observer, eyeM, horizon, localDate, timeZone });
+  const events = horizonEvents({
+    observer,
+    eyeM,
+    horizon,
+    localDate,
+    timeZone,
+  });
   const shadow = shadowInstant
     ? shadowAt({ observer, eyeM, horizon, at: shadowInstant, gnomonM })
     : null;

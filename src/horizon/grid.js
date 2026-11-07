@@ -32,14 +32,19 @@ export function base64ToInt16(text, expectedLength) {
   if (binary.length !== expectedLength * 2)
     throw new Error('Invalid horizon grid.');
   const view = new DataView(new ArrayBuffer(binary.length));
-  for (let i = 0; i < binary.length; i++) view.setUint8(i, binary.charCodeAt(i));
+  for (let i = 0; i < binary.length; i++)
+    view.setUint8(i, binary.charCodeAt(i));
   const values = new Int16Array(expectedLength);
-  for (let i = 0; i < expectedLength; i++) values[i] = view.getInt16(i * 2, true);
+  for (let i = 0; i < expectedLength; i++)
+    values[i] = view.getInt16(i * 2, true);
   return values;
 }
 
 const finite = (value, min, max) =>
-  typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
+  typeof value === 'number' &&
+  Number.isFinite(value) &&
+  value >= min &&
+  value <= max;
 const shortText = (value, max = 600) =>
   typeof value === 'string' && value.length > 0 && value.length <= max;
 
@@ -52,7 +57,11 @@ export function decodeGridPayload(payload) {
   const fail = () => {
     throw new Error('Invalid horizon terrain response.');
   };
-  if (!payload || typeof payload !== 'object' || payload.version !== GRID_VERSION)
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    payload.version !== GRID_VERSION
+  )
     fail();
   const { observer, radiusM, source } = payload;
   if (
@@ -78,7 +87,10 @@ export function decodeGridPayload(payload) {
     !shortText(source.license) ||
     !shortText(source.link) ||
     !shortText(source.applicableTime, 120) ||
-    !(source.retrievedAt === null || Number.isFinite(Date.parse(source.retrievedAt))) ||
+    !(
+      source.retrievedAt === null ||
+      Number.isFinite(Date.parse(source.retrievedAt))
+    ) ||
     !Array.isArray(source.tiles) ||
     source.tiles.length > 64
   )
@@ -90,7 +102,10 @@ export function decodeGridPayload(payload) {
     payload.distancesM.some((value, index) => value !== distances[index])
   )
     fail();
-  const heights = base64ToInt16(payload.heights, AZIMUTH_COUNT * distances.length);
+  const heights = base64ToInt16(
+    payload.heights,
+    AZIMUTH_COUNT * distances.length,
+  );
   return {
     grid: { heights, distances },
     meta: {

@@ -119,8 +119,7 @@ export function validatePeaksManifest(value) {
   )
     fail('license');
   text(value.license.attribution);
-  if (!Array.isArray(value.assets) || value.assets.length !== 1)
-    fail('assets');
+  if (!Array.isArray(value.assets) || value.assets.length !== 1) fail('assets');
   const [asset] = value.assets;
   fields(asset, ['id', 'path', 'format', 'byteLength', 'sha256']);
   validateAssetPath(asset.path);
@@ -235,6 +234,7 @@ export async function verifyPeaksPack(
 export function peakSourceRecord(manifest) {
   return {
     id: 'osm-peaks',
+    // i18n-ignore: provenance source name built from the pack manifest
     label: `OpenStreetMap natural=peak (${manifest.name})`,
     license: manifest.license.id,
     attribution: manifest.license.attribution,

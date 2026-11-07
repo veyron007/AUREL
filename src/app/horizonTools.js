@@ -27,7 +27,12 @@ export function horizonRingPositions(result) {
   const points = [];
   result.horizon.distanceM.forEach((distance, index) => {
     if (distance === null) return;
-    const point = destination(lat, lon, result.horizon.azimuthsDeg[index], distance);
+    const point = destination(
+      lat,
+      lon,
+      result.horizon.azimuthsDeg[index],
+      distance,
+    );
     points.push([point.lon, point.lat]);
   });
   if (points.length > 2) points.push(points[0]);
@@ -74,7 +79,10 @@ export function createHorizonBindings({
         });
       source.entities.add({
         id: 'kshitij-horizon-observer',
-        position: Cartesian3.fromDegrees(result.observer.lon, result.observer.lat),
+        position: Cartesian3.fromDegrees(
+          result.observer.lon,
+          result.observer.lat,
+        ),
         point: {
           pixelSize: 10,
           color: colour,

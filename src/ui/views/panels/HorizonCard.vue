@@ -3,12 +3,20 @@ import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { t } from '../../../i18n/index.js';
 import { useHorizonStore } from '../../stores/horizon.js';
-import { horizonDefaults } from '../../horizonController.js';
 
 const props = defineProps({ surface: { type: String, default: 'lens' } });
 const horizon = useHorizonStore();
 const { view } = storeToRefs(horizon);
-const form = ref({ ...horizonDefaults() });
+/** Today in the default zone, local noon for the shadow, 1.7 m eye, 1 m gnomon. */
+const form = ref({
+  localDate: new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date()),
+  shadowTime: '12:00',
+  timeZone: 'Asia/Kolkata',
+  observerHeightM: 1.7,
+  gnomonM: 1,
+});
 const id = (name) => `horizon-${props.surface}-${name}`;
 const env = computed(() => view.value?.envelope ?? null);
 const zone = computed(() => env.value?.query.timeZone ?? form.value.timeZone);

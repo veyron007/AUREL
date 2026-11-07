@@ -18,7 +18,9 @@ export const roundAzimuth = (value) =>
 export const roundAngle = (value) =>
   value === null || value === undefined ? null : Math.round(value * 10) / 10;
 export const roundKm = (metres) =>
-  metres === null || metres === undefined ? null : Math.round(metres / 100) / 10;
+  metres === null || metres === undefined
+    ? null
+    : Math.round(metres / 100) / 10;
 export const roundMetres = (value) =>
   value === null || value === undefined ? null : Math.round(value);
 /** ISO instant to the nearest minute. */
@@ -53,6 +55,7 @@ function sources(result) {
     },
     {
       id: SOURCE_IDS.ephemeris,
+      // i18n-ignore: provenance source name in the agent envelope
       label: 'Local ephemeris',
       license: 'Computed on this device',
       attribution: null,
@@ -81,8 +84,20 @@ function peakRow(row, demTime, peakTime) {
     name: row.name,
     nameHi: row.nameHi,
     state: row.state,
-    azimuthDeg: quantity(roundAzimuth(row.azimuthDeg), 'deg', 'derived', SOURCE_IDS.peaks, peakTime),
-    distanceKm: quantity(roundKm(row.distanceM), 'km', 'derived', SOURCE_IDS.peaks, peakTime),
+    azimuthDeg: quantity(
+      roundAzimuth(row.azimuthDeg),
+      'deg',
+      'derived',
+      SOURCE_IDS.peaks,
+      peakTime,
+    ),
+    distanceKm: quantity(
+      roundKm(row.distanceM),
+      'km',
+      'derived',
+      SOURCE_IDS.peaks,
+      peakTime,
+    ),
     apparentElevationDeg: quantity(
       roundAngle(row.apparentElevationDeg),
       'deg',
@@ -90,9 +105,27 @@ function peakRow(row, demTime, peakTime) {
       SOURCE_IDS.dem,
       demTime,
     ),
-    clearanceDeg: quantity(roundAngle(row.clearanceDeg), 'deg', 'derived', SOURCE_IDS.dem, demTime),
-    demHeightM: quantity(roundMetres(row.demM), 'm', 'observed', SOURCE_IDS.dem, demTime),
-    osmEleM: quantity(roundMetres(row.osmEleM), 'm', 'note', SOURCE_IDS.peaks, peakTime),
+    clearanceDeg: quantity(
+      roundAngle(row.clearanceDeg),
+      'deg',
+      'derived',
+      SOURCE_IDS.dem,
+      demTime,
+    ),
+    demHeightM: quantity(
+      roundMetres(row.demM),
+      'm',
+      'observed',
+      SOURCE_IDS.dem,
+      demTime,
+    ),
+    osmEleM: quantity(
+      roundMetres(row.osmEleM),
+      'm',
+      'note',
+      SOURCE_IDS.peaks,
+      peakTime,
+    ),
   };
 }
 
@@ -117,8 +150,20 @@ export function toProvenanceEnvelope(result) {
     observer: {
       lat: result.observer.lat,
       lon: result.observer.lon,
-      groundM: quantity(roundMetres(result.observer.groundM), 'm', 'observed', SOURCE_IDS.dem, demTime),
-      eyeM: quantity(roundMetres(result.observer.eyeM), 'm', 'derived', SOURCE_IDS.dem, demTime),
+      groundM: quantity(
+        roundMetres(result.observer.groundM),
+        'm',
+        'observed',
+        SOURCE_IDS.dem,
+        demTime,
+      ),
+      eyeM: quantity(
+        roundMetres(result.observer.eyeM),
+        'm',
+        'derived',
+        SOURCE_IDS.dem,
+        demTime,
+      ),
     },
     horizon: {
       azimuthStepDeg: 1,
@@ -138,15 +183,37 @@ export function toProvenanceEnvelope(result) {
       ),
     },
     sun: {
-      astronomicalRise: time(result.sun.astronomicalRise, 'modelled', SOURCE_IDS.ephemeris),
-      astronomicalSet: time(result.sun.astronomicalSet, 'modelled', SOURCE_IDS.ephemeris),
+      astronomicalRise: time(
+        result.sun.astronomicalRise,
+        'modelled',
+        SOURCE_IDS.ephemeris,
+      ),
+      astronomicalSet: time(
+        result.sun.astronomicalSet,
+        'modelled',
+        SOURCE_IDS.ephemeris,
+      ),
       terrainRise: time(result.sun.terrainRise, 'derived', DERIVED_SOURCE),
       terrainSet: time(result.sun.terrainSet, 'derived', DERIVED_SOURCE),
-      directSunMinutes: quantity(result.sun.directSunMinutes, 'min', 'derived', DERIVED_SOURCE, day),
+      directSunMinutes: quantity(
+        result.sun.directSunMinutes,
+        'min',
+        'derived',
+        DERIVED_SOURCE,
+        day,
+      ),
     },
     moon: {
-      astronomicalRise: time(result.moon.astronomicalRise, 'modelled', SOURCE_IDS.ephemeris),
-      astronomicalSet: time(result.moon.astronomicalSet, 'modelled', SOURCE_IDS.ephemeris),
+      astronomicalRise: time(
+        result.moon.astronomicalRise,
+        'modelled',
+        SOURCE_IDS.ephemeris,
+      ),
+      astronomicalSet: time(
+        result.moon.astronomicalSet,
+        'modelled',
+        SOURCE_IDS.ephemeris,
+      ),
       terrainRise: time(result.moon.terrainRise, 'derived', DERIVED_SOURCE),
       terrainSet: time(result.moon.terrainSet, 'derived', DERIVED_SOURCE),
     },
@@ -154,19 +221,45 @@ export function toProvenanceEnvelope(result) {
       ? {
           at: roundTime(shadow.at),
           timeSource: 'entered on this device',
-          sunAltitudeDeg: quantity(roundAngle(shadow.sunAltitudeDeg), 'deg', 'modelled', SOURCE_IDS.ephemeris, shadowTime),
-          sunAzimuthDeg: quantity(roundAzimuth(shadow.sunAzimuthDeg), 'deg', 'modelled', SOURCE_IDS.ephemeris, shadowTime),
-          terrainHorizonDeg: quantity(roundAngle(shadow.terrainHorizonDeg), 'deg', 'derived', SOURCE_IDS.dem, demTime),
+          sunAltitudeDeg: quantity(
+            roundAngle(shadow.sunAltitudeDeg),
+            'deg',
+            'modelled',
+            SOURCE_IDS.ephemeris,
+            shadowTime,
+          ),
+          sunAzimuthDeg: quantity(
+            roundAzimuth(shadow.sunAzimuthDeg),
+            'deg',
+            'modelled',
+            SOURCE_IDS.ephemeris,
+            shadowTime,
+          ),
+          terrainHorizonDeg: quantity(
+            roundAngle(shadow.terrainHorizonDeg),
+            'deg',
+            'derived',
+            SOURCE_IDS.dem,
+            demTime,
+          ),
           sunlit: shadow.sunlit,
           gnomonM: quantity(shadow.gnomonM, 'm', 'note', 'user', shadowTime),
           shadowLengthM: quantity(
-            shadow.shadowLengthM === null ? null : Math.round(shadow.shadowLengthM * 100) / 100,
+            shadow.shadowLengthM === null
+              ? null
+              : Math.round(shadow.shadowLengthM * 100) / 100,
             'm',
             'derived',
             DERIVED_SOURCE,
             shadowTime,
           ),
-          shadowAzimuthDeg: quantity(roundAzimuth(shadow.shadowAzimuthDeg), 'deg', 'derived', SOURCE_IDS.ephemeris, shadowTime),
+          shadowAzimuthDeg: quantity(
+            roundAzimuth(shadow.shadowAzimuthDeg),
+            'deg',
+            'derived',
+            SOURCE_IDS.ephemeris,
+            shadowTime,
+          ),
         }
       : null,
     peaks: {
@@ -175,7 +268,13 @@ export function toProvenanceEnvelope(result) {
       listed: result.peaks.listed.map((row) => peakRow(row, demTime, peakTime)),
     },
     dem: {
-      voidSamples: quantity(result.dem.voidSamples, 'samples', 'observed', SOURCE_IDS.dem, demTime),
+      voidSamples: quantity(
+        result.dem.voidSamples,
+        'samples',
+        'observed',
+        SOURCE_IDS.dem,
+        demTime,
+      ),
       absentTiles: [...result.dem.absentTiles],
       levels: result.dem.levels.map((level) => ({ ...level })),
       sampling: result.dem.sampling,

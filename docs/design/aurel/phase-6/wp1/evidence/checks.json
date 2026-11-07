@@ -1,0 +1,83 @@
+{
+  "fixture": "Synthetic DEM (labelled) served for /api/horizon/terrain; bundled OSM peaks pack from the local server. No DEM host, credential or paid provider contacted.",
+  "viewports": [
+    "1440x900",
+    "390x844"
+  ],
+  "checks": [
+    {
+      "name": "mount performs no horizon request",
+      "pass": true
+    },
+    {
+      "name": "selecting a place computes nothing by itself",
+      "pass": true
+    },
+    {
+      "name": "one bounded terrain request for the pin",
+      "pass": true
+    },
+    {
+      "name": "labelled geometric visibility, terrain-only",
+      "pass": true
+    },
+    {
+      "name": "sunrise card shows astronomical against terrain-clearing time",
+      "pass": true
+    },
+    {
+      "name": "shadow card for the chosen time",
+      "pass": true
+    },
+    {
+      "name": "peaks list names the summit with azimuth, distance, DEM and OSM ele",
+      "pass": true
+    },
+    {
+      "name": "DEM source, void count and refraction are shown",
+      "pass": true
+    },
+    {
+      "name": "no guaranteed-view wording",
+      "pass": true
+    },
+    {
+      "name": "horizon ring and peak labels are drawn on the globe",
+      "pass": true
+    },
+    {
+      "name": "Fieldbook keeps a horizon analysis snapshot",
+      "pass": true
+    },
+    {
+      "name": "phone horizon card is visible with no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "no browser runtime errors",
+      "pass": true
+    },
+    {
+      "name": "only blocked external hosts, none billable reached",
+      "pass": true
+    }
+  ],
+  "measurements": {
+    "phone": {
+      "width": 346,
+      "right": 368,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "wide": []
+    }
+  },
+  "errors": [],
+  "requested": [
+    "?lat=30.4597&lon=78.1058&radiusKm=200"
+  ],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ]
+}

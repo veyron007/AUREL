@@ -14,16 +14,8 @@ import {
   MIN_RADIUS_KM,
 } from '../../../src/horizon/constants.js';
 import { GRID_VERSION, int16ToBase64 } from '../../../src/horizon/grid.js';
-import {
-  createByteBudget,
-  createGlo30Reader,
-  GLO30_SOURCE,
-} from './glo30.js';
-import {
-  samplePolarGrid,
-  SAMPLING_LEVELS,
-  SAMPLING_NOTE,
-} from './sampler.js';
+import { createByteBudget, createGlo30Reader, GLO30_SOURCE } from './glo30.js';
+import { samplePolarGrid, SAMPLING_LEVELS, SAMPLING_NOTE } from './sampler.js';
 
 const NUMBER = /^-?\d{1,3}(?:\.\d{1,7})?$/;
 export function parseTerrainQuery(url) {
@@ -54,7 +46,10 @@ export function parseTerrainQuery(url) {
 }
 
 /** Build the response payload for one bounded query. */
-export function createHorizonTerrainService({ reader = createGlo30Reader(), sample = samplePolarGrid } = {}) {
+export function createHorizonTerrainService({
+  reader = createGlo30Reader(),
+  sample = samplePolarGrid,
+} = {}) {
   const recent = new Map(),
     inflight = new Map();
   async function compute({ lat, lon, radiusKm }) {
@@ -63,7 +58,8 @@ export function createHorizonTerrainService({ reader = createGlo30Reader(), samp
       lat,
       lon,
       radiusM: radiusKm * 1000,
-      readBlock: (name, level, bx, by) => reader.readBlock(name, level, bx, by, { budget }),
+      readBlock: (name, level, bx, by) =>
+        reader.readBlock(name, level, bx, by, { budget }),
       blockSize: reader.blockSize,
     });
     return {
@@ -76,21 +72,25 @@ export function createHorizonTerrainService({ reader = createGlo30Reader(), samp
       heights: int16ToBase64(result.heights),
       voidSamples: result.voidSamples,
       absentTiles: result.absentTiles,
-      levels: SAMPLING_LEVELS.filter((entry) => entry.fromM < radiusKm * 1000).map(
-        (entry) => ({
-          level: entry.level,
-          fromM: entry.fromM,
-          toM: Math.min(entry.toM, radiusKm * 1000),
-          resolutionArcSec: entry.resolutionArcSec,
-        }),
-      ),
+      levels: SAMPLING_LEVELS.filter(
+        (entry) => entry.fromM < radiusKm * 1000,
+      ).map((entry) => ({
+        level: entry.level,
+        fromM: entry.fromM,
+        toM: Math.min(entry.toM, radiusKm * 1000),
+        resolutionArcSec: entry.resolutionArcSec,
+      })),
       sampling: SAMPLING_NOTE,
       source: {
         ...GLO30_SOURCE,
         retrievedAt: result.retrievedAt,
         tiles: result.tiles,
       },
-      transfer: { ...budget.snapshot(), fetchedBlocks: result.fetched, cachedBlocks: result.fromCache },
+      transfer: {
+        ...budget.snapshot(),
+        fetchedBlocks: result.fetched,
+        cachedBlocks: result.fromCache,
+      },
     };
   }
   return {
@@ -111,12 +111,20 @@ export function createHorizonTerrainService({ reader = createGlo30Reader(), samp
 }
 
 const ERRORS = {
-  'range-budget-exceeded': [503, 'The DEM read budget for this request was exceeded.'],
+  'range-budget-exceeded': [
+    503,
+    'The DEM read budget for this request was exceeded.',
+  ],
   'rate-limited': [429, 'The DEM host is limiting requests; try again later.'],
-  'invalid-range-response': [502, 'The DEM host returned an unexpected response.'],
+  'invalid-range-response': [
+    502,
+    'The DEM host returned an unexpected response.',
+  ],
 };
 
-export function createHorizonMiddleware({ service = createHorizonTerrainService() } = {}) {
+export function createHorizonMiddleware({
+  service = createHorizonTerrainService(),
+} = {}) {
   const admit = makeRateLimiter({ windowMs: 60000, max: 12, globalMax: 24 });
   return async function horizonMiddleware(req, res, next = () => {}) {
     let url;
@@ -143,7 +151,8 @@ export function createHorizonMiddleware({ service = createHorizonTerrainService(
       query = parseTerrainQuery(url);
     } catch {
       return respond(400, {
-        error: 'Expected lat (±85), lon (±180) and an integer radiusKm from 10 to 200.',
+        error:
+          'Expected lat (±85), lon (±180) and an integer radiusKm from 10 to 200.',
       });
     }
     if (!admit(clientKey(req))) {
@@ -165,7 +174,10 @@ export function createHorizonMiddleware({ service = createHorizonTerrainService(
 
 export function horizonProxy(options = {}) {
   const middleware = createHorizonMiddleware(options);
-  const install = (server) => server.middlewares.use(middleware);
+  // A block body: Vite calls a function returned from configureServer.
+  const install = (server) => {
+    server.middlewares.use(middleware);
+  };
   return {
     name: 'kshitij-horizon-terrain',
     configureServer: install,

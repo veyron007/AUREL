@@ -1,5 +1,10 @@
 /** Spherical geodesy for bounded horizon rays (≤ 200 km), shared by server and browser. */
-import { EARTH_RADIUS_M, FIRST_SAMPLE_M, NEAR_STEP_M, RADIAL_GROWTH } from './constants.js';
+import {
+  EARTH_RADIUS_M,
+  FIRST_SAMPLE_M,
+  NEAR_STEP_M,
+  RADIAL_GROWTH,
+} from './constants.js';
 
 const RAD = Math.PI / 180;
 
@@ -44,7 +49,7 @@ export function bearingDeg(a, b) {
     x =
       Math.cos(phi1) * Math.sin(phi2) -
       Math.sin(phi1) * Math.cos(phi2) * Math.cos(dlon);
-  return ((Math.atan2(y, x) / RAD) % 360 + 360) % 360;
+  return (((Math.atan2(y, x) / RAD) % 360) + 360) % 360;
 }
 
 /**
@@ -56,7 +61,7 @@ export function radialDistances(radiusM) {
   if (!Number.isFinite(radiusM) || radiusM < FIRST_SAMPLE_M * 2)
     throw new Error('Invalid horizon radius.');
   const distances = [];
-  for (let d = FIRST_SAMPLE_M; d < radiusM; ) {
+  for (let d = FIRST_SAMPLE_M; d < radiusM;) {
     distances.push(Math.round(d * 10) / 10);
     d += Math.max(NEAR_STEP_M, d * RADIAL_GROWTH);
   }
@@ -66,7 +71,8 @@ export function radialDistances(radiusM) {
 
 /** Spacing around distance index `index`, metres (half to each neighbour). */
 export function radialStepAt(distances, index) {
-  const before = index > 0 ? distances[index] - distances[index - 1] : distances[0];
+  const before =
+    index > 0 ? distances[index] - distances[index - 1] : distances[0];
   const after =
     index < distances.length - 1
       ? distances[index + 1] - distances[index]

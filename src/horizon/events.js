@@ -1,5 +1,8 @@
 /** Terrain-clipped rise, set and shadow from a computed horizon. */
-import { calculateDaylight, resolveLocalDateTime } from '../planner/daylight.js';
+import {
+  calculateDaylight,
+  resolveLocalDateTime,
+} from '../planner/daylight.js';
 import { bodyPosition, refractionScale } from './ephemeris.js';
 import { horizonAt } from './rayMarch.js';
 
@@ -53,7 +56,11 @@ export function scanVisibility(test, start, end) {
     previousAt = start,
     previous = test(start),
     since = previous ? start : null;
-  for (let at = start + MINUTE; previousAt < end; at = Math.min(at + MINUTE, end)) {
+  for (
+    let at = start + MINUTE;
+    previousAt < end;
+    at = Math.min(at + MINUTE, end)
+  ) {
     const current = test(at);
     if (current !== previous) {
       const event = refine(test, previousAt, at);
@@ -102,7 +109,13 @@ const iso = (ms) => (ms === null ? null : new Date(ms).toISOString());
  * horizon, standard refraction) against terrain-clipped (the computed
  * horizon, refraction scaled for the observer's altitude).
  */
-export function horizonEvents({ observer, eyeM, horizon, localDate, timeZone }) {
+export function horizonEvents({
+  observer,
+  eyeM,
+  horizon,
+  localDate,
+  timeZone,
+}) {
   const [start, end] = localDayBounds(localDate, timeZone);
   const scale = refractionScale(eyeM);
   const daylight = calculateDaylight({
@@ -116,8 +129,16 @@ export function horizonEvents({ observer, eyeM, horizon, localDate, timeZone }) 
     start,
     end,
   );
-  const directSun = scanVisibility(centreTest(observer, horizon, scale), start, end);
-  const flatMoon = scanVisibility(limbTest('moon', observer, null, 1), start, end);
+  const directSun = scanVisibility(
+    centreTest(observer, horizon, scale),
+    start,
+    end,
+  );
+  const flatMoon = scanVisibility(
+    limbTest('moon', observer, null, 1),
+    start,
+    end,
+  );
   const terrainMoon = scanVisibility(
     limbTest('moon', observer, horizon, scale),
     start,

@@ -33,7 +33,8 @@ export const horizonAt = defineTool({
         type: 'number',
         minimum: 0,
         maximum: 500,
-        description: 'Eye height above the DEM surface in metres (default 1.7).',
+        description:
+          'Eye height above the DEM surface in metres (default 1.7).',
       },
       date: {
         type: 'string',
@@ -92,7 +93,9 @@ export const horizonAt = defineTool({
     const skyline = envelope.peaks.listed.filter((p) => p.state === 'skyline');
     const named = skyline
       .slice(0, 3)
-      .map((p) => `${p.name} az ${p.azimuthDeg.value}° ${p.distanceKm.value} km`)
+      .map(
+        (p) => `${p.name} az ${p.azimuthDeg.value}° ${p.distanceKm.value} km`,
+      )
       .join('; ');
     return {
       summary:

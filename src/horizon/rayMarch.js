@@ -38,7 +38,8 @@ export function assertGrid(grid) {
     grid.distances.length < 2 ||
     grid.heights.length !== AZIMUTH_COUNT * grid.distances.length ||
     !grid.distances.every(
-      (d, i) => Number.isFinite(d) && d > 0 && (i === 0 || d > grid.distances[i - 1]),
+      (d, i) =>
+        Number.isFinite(d) && d > 0 && (i === 0 || d > grid.distances[i - 1]),
     )
   )
     throw new Error('Invalid horizon grid.');
@@ -109,7 +110,13 @@ export function horizonAt(horizon, azimuthDeg) {
  * Highest apparent elevation along ray `ray` among samples nearer than
  * `beforeM`, used to decide whether a peak clears its foreground.
  */
-export function nearerMaximum(grid, ray, beforeM, eyeM, k = HORIZON_REFRACTION_K) {
+export function nearerMaximum(
+  grid,
+  ray,
+  beforeM,
+  eyeM,
+  k = HORIZON_REFRACTION_K,
+) {
   const n = grid.distances.length,
     index = ((ray % AZIMUTH_COUNT) + AZIMUTH_COUNT) % AZIMUTH_COUNT;
   let best = null;

@@ -35,6 +35,7 @@ export function syntheticPayload({
     sampling: 'synthetic test grid',
     source: {
       id: DEM_SOURCE_ID,
+      // i18n-ignore: test fixture data
       label: 'Synthetic DEM',
       attribution: 'test fixture',
       license: 'test fixture',

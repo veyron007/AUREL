@@ -15,6 +15,7 @@ import { blocksForBox, samplePolarGrid, tileWidth } from './sampler.js';
 import {
   createHorizonMiddleware,
   createHorizonTerrainService,
+  horizonProxy,
   parseTerrainQuery,
 } from './index.js';
 import { decodeGridPayload } from '../../../src/horizon/grid.js';
@@ -265,4 +266,13 @@ test('middleware answers only its path, refuses bad input and maps errors', asyn
   });
   assert.equal(failed.status, 503);
   assert.match(failed.body.error, /budget/);
+});
+
+test('the Vite plugin installs middleware and returns no post hook', () => {
+  const used = [];
+  const plugin = horizonProxy();
+  const server = { middlewares: { use: (fn) => (used.push(fn), () => {}) } };
+  assert.equal(plugin.configureServer(server), undefined);
+  assert.equal(plugin.configurePreviewServer(server), undefined);
+  assert.equal(used.length, 2);
 });

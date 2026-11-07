@@ -57,6 +57,15 @@ Diego in God's Eye View with military flights on."*
   the live globe; the first load takes 10–20 seconds.
 - Claude Code and the Codex CLI answer with data and a link.
 
+For the Kshitij horizon engine, ask: *"Use horizon_at for 30.4597, 78.1058 on
+2026-12-21 at 12:30. Which peaks are on the skyline, and when does the Sun clear
+the terrain?"* The tool reads `/api/horizon/terrain` from the running app, so
+the first call for an area fetches about 30 MB of Copernicus DEM tiles (keyless,
+cached afterwards) and can take a minute. Its answer is an `aurel.horizon`
+envelope labelled "geometric visibility, terrain-only": every number carries its
+unit, class (observed, modelled, derived or note), source and applicable time.
+Trees, buildings, haze and cloud are not modelled.
+
 ## Troubleshooting
 
 - **The server does not appear:** run the command from step 2 in a terminal;

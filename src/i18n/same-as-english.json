@@ -36,7 +36,8 @@
     "iNaturalist",
     "iNaturalist ↗",
     "{source} HTTP {status}",
-    "▲ {frp} MW"
+    "▲ {frp} MW",
+    "{value}°"
   ],
   "de": [
     "1090 MHz",
@@ -212,7 +213,9 @@
     "ΔN",
     "Ⅱ PAUSE",
     "≥ {value} MW",
-    "▲ {frp} MW"
+    "▲ {frp} MW",
+    "{value}°",
+    "Radius"
   ],
   "es": [
     "1090 MHz",
@@ -351,7 +354,10 @@
     "Reptiles",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "{value}°",
+    "{hours} h {minutes} min",
+    "Marginal"
   ],
   "fr": [
     "1090 MHz",
@@ -545,7 +551,10 @@
     "ΔN",
     "Ⅱ PAUSE",
     "≥ {value} MW",
-    "▲ {frp} MW"
+    "▲ {frp} MW",
+    "{value}°",
+    "{hours} h {minutes} min",
+    "Date"
   ],
   "it": [
     "1090 MHz",
@@ -725,7 +734,9 @@
     "CC BY 4.0",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "{value}°",
+    "{hours} h {minutes} min"
   ],
   "ja": [
     "1090 MHz",
@@ -780,7 +791,8 @@
     "ΔE",
     "ΔN",
     "≥ {value} MW",
-    "▲ {frp} MW"
+    "▲ {frp} MW",
+    "{value}°"
   ],
   "pt": [
     "1090 MHz",
@@ -919,7 +931,9 @@
     "CC BY 4.0",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "{value}°",
+    "{hours} h {minutes} min"
   ],
   "ru": [
     "AIS: --",
@@ -942,7 +956,8 @@
     "WHOT/BHOT",
     "acartia.io ↗",
     "iNaturalist",
-    "iNaturalist ↗"
+    "iNaturalist ↗",
+    "{value}°"
   ],
   "uk": [
     "AIS: --",
@@ -960,7 +975,8 @@
     "WHOT/BHOT",
     "acartia.io ↗",
     "iNaturalist",
-    "iNaturalist ↗"
+    "iNaturalist ↗",
+    "{value}°"
   ],
   "zh-CN": [
     "1090 MHz",
@@ -1023,7 +1039,8 @@
     "CC BY 4.0",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "{value}°"
   ],
   "zh-Hant": [
     "1090 MHz",
@@ -1086,6 +1103,7 @@
     "CC BY 4.0",
     "acartia.io ↗",
     "iNaturalist ↗",
-    "iNaturalist"
+    "iNaturalist",
+    "{value}°"
   ]
 }

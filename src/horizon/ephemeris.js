@@ -40,13 +40,15 @@ export function sunCoordinates(ms) {
   const omega = 125.04 - 1934.136 * T;
   const apparentLongitude = trueLongitude - 0.00569 - 0.00478 * sin(omega);
   const meanObliquity =
-    23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60;
+    23 +
+    (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60;
   const obliquity = meanObliquity + 0.00256 * cos(omega);
-  const declination =
-    Math.asin(sin(obliquity) * sin(apparentLongitude)) * DEG;
+  const declination = Math.asin(sin(obliquity) * sin(apparentLongitude)) * DEG;
   const rightAscension = wrap(
-    Math.atan2(cos(obliquity) * sin(apparentLongitude), cos(apparentLongitude)) *
-      DEG,
+    Math.atan2(
+      cos(obliquity) * sin(apparentLongitude),
+      cos(apparentLongitude),
+    ) * DEG,
   );
   const y = Math.tan((obliquity / 2) * RAD) ** 2;
   const equationOfTimeMin =
@@ -57,8 +59,7 @@ export function sunCoordinates(ms) {
       4 * e * y * sin(M) * cos(2 * L0) -
       0.5 * y * y * sin(4 * L0) -
       1.25 * e * e * sin(2 * M));
-  const distanceAu =
-    (1.000001018 * (1 - e * e)) / (1 + e * cos(trueAnomaly));
+  const distanceAu = (1.000001018 * (1 - e * e)) / (1 + e * cos(trueAnomaly));
   return {
     apparentLongitude: wrap(apparentLongitude),
     declination,
@@ -83,7 +84,10 @@ export function horizontal(rightAscension, declination, lat, lon, ms) {
     Math.asin(
       Math.max(
         -1,
-        Math.min(1, sin(lat) * sin(declination) + cos(lat) * cos(declination) * cos(H)),
+        Math.min(
+          1,
+          sin(lat) * sin(declination) + cos(lat) * cos(declination) * cos(H),
+        ),
       ),
     ) * DEG;
   const azimuth = wrap(
@@ -144,7 +148,7 @@ export function refractionScale(altitudeM = 0) {
 export function refractionDeg(trueAltitude, scale = 1) {
   if (trueAltitude > 89.9) return 0;
   const h = Math.max(-2, trueAltitude);
-  return ((1.02 / Math.tan((h + 10.3 / (h + 5.11)) * RAD)) / 60) * scale;
+  return (1.02 / Math.tan((h + 10.3 / (h + 5.11)) * RAD) / 60) * scale;
 }
 
 /**
@@ -153,8 +157,15 @@ export function refractionDeg(trueAltitude, scale = 1) {
  * @returns {{ altitude: number, azimuth: number, trueAltitude: number,
  *   semidiameterDeg: number }}
  */
-export function bodyPosition(body, lat, lon, ms, { altitudeM = 0, scale } = {}) {
-  const coordinates = body === 'moon' ? moonCoordinates(ms) : sunCoordinates(ms);
+export function bodyPosition(
+  body,
+  lat,
+  lon,
+  ms,
+  { altitudeM = 0, scale } = {},
+) {
+  const coordinates =
+    body === 'moon' ? moonCoordinates(ms) : sunCoordinates(ms);
   const { altitude: geocentric, azimuth } = horizontal(
     coordinates.rightAscension,
     coordinates.declination,
@@ -167,7 +178,10 @@ export function bodyPosition(body, lat, lon, ms, { altitudeM = 0, scale } = {}) 
       ? Math.asin(sin(coordinates.parallaxDeg) * cos(geocentric)) * DEG
       : 0;
   const trueAltitude = geocentric - parallax;
-  const refraction = refractionDeg(trueAltitude, scale ?? refractionScale(altitudeM));
+  const refraction = refractionDeg(
+    trueAltitude,
+    scale ?? refractionScale(altitudeM),
+  );
   return {
     altitude: trueAltitude + refraction,
     azimuth,

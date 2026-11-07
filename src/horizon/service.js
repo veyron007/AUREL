@@ -55,7 +55,9 @@ export function normalizeHorizonRequest(input = {}) {
   if (shadowAt !== null && !Number.isFinite(Date.parse(shadowAt)))
     throw new Error('Shadow time must be an ISO instant.');
   if (!Number.isFinite(gnomonM) || gnomonM <= 0 || gnomonM > MAX_GNOMON_M)
-    throw new Error(`Gnomon height must be above 0 and at most ${MAX_GNOMON_M} m.`);
+    throw new Error(
+      `Gnomon height must be above 0 and at most ${MAX_GNOMON_M} m.`,
+    );
   if (
     !Number.isInteger(radiusKm) ||
     radiusKm < MIN_RADIUS_KM ||

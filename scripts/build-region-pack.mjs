@@ -400,13 +400,16 @@ export async function buildPeaksPack({
   python = 'python3',
   extent = DEFAULT_PEAK_EXTENT,
 }) {
-  if (!output) throw new Error('Provide a local .osm.pbf input and output directory');
+  if (!output)
+    throw new Error('Provide a local .osm.pbf input and output directory');
   validatePeakExtent(extent);
   const extractSha256 = await checkedInput(input);
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'aurel-region-peaks-'));
   try {
     const rawPath = path.join(temp, 'peaks.json');
-    const helper = fileURLToPath(new URL('./regions/peaks.py', import.meta.url));
+    const helper = fileURLToPath(
+      new URL('./regions/peaks.py', import.meta.url),
+    );
     const { stdout } = await run(
       python,
       [helper, path.resolve(input), rawPath, JSON.stringify(extent)],
@@ -452,7 +455,9 @@ if (
   if (!['core', 'peaks'].includes(theme))
     throw new Error('Unknown --theme; expected core or peaks');
   const manifest =
-    theme === 'peaks' ? await buildPeaksPack(rest) : await buildRegionPack(rest);
+    theme === 'peaks'
+      ? await buildPeaksPack(rest)
+      : await buildRegionPack(rest);
   console.log(
     JSON.stringify({
       id: manifest.id,
