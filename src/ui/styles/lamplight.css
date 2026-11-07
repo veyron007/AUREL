@@ -1,0 +1,1114 @@
+/* LAMPLIGHT — the default theme.
+   "The parlor with one lamp lit": the globe is the only bright thing. Command
+   surfaces (dock, rails, top bar, dialogs) are oxblood lacquer glass;
+   information surfaces (panel bodies, lists, inspector, sheets) are petrol
+   wallpaper. Brass under lamplight is the only interactive colour; teal is
+   the focus ring and scroll thumb only. Presentation only: geometry pinned by
+   tests, behaviour, map data colours and the Cyber theme are untouched.
+
+   Guarding: re-expressed AUREL rules use the zero-specificity guard
+   :where(:root:not([data-ui-theme='cyber'])) so they keep AUREL's exact
+   specificity (battles already won stay won, and nothing new is won). Rules
+   AUREL already guarded keep the plain guard. Nothing here reaches Cyber. */
+
+/* Cyber baseline: tokens cyber.css never sets kept at their previous AUREL
+   values, so the Cyber theme renders exactly as before. */
+:root {
+  --menu-bg: #1a1e1f;
+  --font-sans:
+    'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --dock-label-color: #c8c6bb;
+  --dock-label-font-size: 0.65rem;
+  --dock-label-font-weight: 600;
+  --dock-label-letter-spacing: 0.035rem;
+  --aurel-ink: #171b1c;
+  --aurel-raised: #252a2a;
+  --aurel-line: rgba(224, 214, 189, 0.18);
+  --aurel-muted: #aeb3ac;
+  --aurel-burgundy: #743d4b;
+}
+
+/* Lamplight token root: the only place literal palette values live. */
+:root:not([data-ui-theme='cyber']) {
+  color-scheme: dark;
+  --bg-dark: #141011;
+  --glass-bg: rgba(34, 21, 19, 0.94);
+  --surface-info: rgba(20, 44, 50, 0.94);
+  --surface-info-raised: #1f373e;
+  --raised: #2f2a2a;
+  --menu-bg: #3a3435;
+  --glass-border: rgba(242, 235, 221, 0.15);
+  --glass-border-hover: rgba(214, 171, 85, 0.62);
+  --accent: #d6ab55;
+  --accent-hover: #e4bd6a;
+  --accent-dim: rgba(214, 171, 85, 0.14);
+  --accent-glow: rgba(214, 171, 85, 0.24);
+  --accent-strong: rgba(214, 171, 85, 0.55);
+  --accent-secondary: #6fa7b1;
+  --accent-tertiary: #5a2016;
+  --text-primary: #f2ebdd;
+  --text-secondary: #c7c1b5;
+  --text-dim: #a7a39b;
+  --state-ok: #a6bf8e;
+  --state-warn: #e38f45;
+  --state-error: #e8836d;
+  --state-info: #6fa7b1;
+  --state-busy: #d6ab55;
+  --scroll-thumb: rgba(111, 167, 177, 0.45);
+  --scroll-track: rgba(242, 235, 221, 0.05);
+  --panel-radius: 10px;
+  --btn-radius: 6px;
+  --font-sans:
+    'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --dock-label-color: #d2cbbd;
+  --dock-label-font-size: 0.65rem;
+  --dock-label-font-weight: 600;
+  --dock-label-letter-spacing: 0.05rem;
+  --panel-surface-title: var(--accent);
+  --panel-surface-font: var(--font-sans);
+  --panel-surface-shadow:
+    0 24px 56px rgba(18, 7, 5, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --panel-surface-detail-base:
+    linear-gradient(130deg, rgba(214, 171, 85, 0.06), transparent 36%),
+    linear-gradient(310deg, rgba(90, 32, 22, 0.22), transparent 50%);
+  --panel-surface-detail: var(--panel-surface-detail-base);
+  --panel-surface-error: var(--state-error);
+  --bg-panel: #211513;
+  --text-warning: var(--state-warn);
+  --hud-ink: #f2ebdd;
+  --hud-accent: #d6ab55;
+  --hud-glow: rgba(214, 171, 85, 0.35);
+  --hud-line: rgba(242, 235, 221, 0.25);
+  --divider-gradient: linear-gradient(
+    90deg,
+    rgba(214, 171, 85, 0.55),
+    rgba(214, 171, 85, 0.18) 58%,
+    transparent
+  );
+  --divider-shadow: 0 0 7px rgba(214, 171, 85, 0.22);
+  --slider-track: rgba(242, 235, 221, 0.1);
+  --focus-ring: rgba(111, 167, 177, 0.9);
+  --eyebrow-font: 500 10px/1.4 var(--font-mono);
+  /* Lamplight-local helpers. */
+  --hairline: rgba(242, 235, 221, 0.06);
+  --hover-wash: rgba(242, 235, 221, 0.04);
+  --raised-edge: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --glow-wash: rgba(214, 171, 85, 0.06);
+  --subtitle-ink: #d4d1c5;
+  --map-legibility: 0 2px 16px rgba(0, 0, 0, 0.9);
+  --hud-legibility: 0 1px 5px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.9);
+  /* Aliases for sheets that still reference the AUREL names. */
+  --aurel-ink: var(--bg-dark);
+  --aurel-raised: var(--raised);
+  --aurel-line: var(--glass-border);
+  --aurel-muted: var(--text-secondary);
+  --aurel-burgundy: var(--accent-tertiary);
+}
+
+/* Workspace (Observatory and any future appearance): workspace tokens follow
+   Lamplight. Field and Instrument are excluded so their palettes stand. */
+:root:not([data-ui-theme='cyber'])
+  body[data-workspace-appearance]:not(
+    [data-workspace-appearance='field'],
+    [data-workspace-appearance='instrument']
+  ) {
+  --workspace-surface: var(--surface-info);
+  --workspace-raised: var(--surface-info-raised);
+  --workspace-border: var(--glass-border);
+  --workspace-text: var(--text-primary);
+  --workspace-muted: var(--text-secondary);
+  --workspace-accent: var(--accent);
+  --workspace-selection: var(--accent-dim);
+  --workspace-shadow: var(--panel-surface-shadow);
+  --workspace-chrome: rgba(34, 21, 19, 0.94);
+  --glass-bg: var(--workspace-chrome);
+  --menu-bg: #3a3435;
+  --text-dim: #a7a39b;
+  --panel-surface-title: var(--accent);
+  --panel-surface-detail: var(--panel-surface-detail-base);
+}
+
+/* Field and Instrument keep their own palettes; information surfaces follow
+   the appearance instead of painting petrol into a light workspace. */
+:root:not([data-ui-theme='cyber'])
+  body:is(
+    [data-workspace-appearance='field'],
+    [data-workspace-appearance='instrument']
+  ) {
+  --workspace-chrome: var(--workspace-surface);
+  --surface-info: var(--workspace-surface);
+  --surface-info-raised: var(--workspace-raised);
+  --raised: var(--workspace-raised);
+}
+
+/* Title bar: a quiet wordmark with one static scanline. */
+:where(:root:not([data-ui-theme='cyber'])) #title-bar h1 {
+  position: relative;
+  gap: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-shadow: var(--map-legibility);
+}
+:where(:root:not([data-ui-theme='cyber'])) #title-bar h1::after {
+  content: '';
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 46%;
+  height: 1px;
+  background: var(--bg-dark);
+  opacity: 0.7;
+  pointer-events: none;
+}
+:where(:root:not([data-ui-theme='cyber'])) #title-bar .title-logo {
+  width: 48px;
+  filter: none;
+}
+:where(:root:not([data-ui-theme='cyber'])) #title-bar .subtitle {
+  margin-top: 7px;
+  color: var(--subtitle-ink);
+  font: 400 10px/1.4 var(--font-sans);
+  letter-spacing: 0.1em;
+  text-transform: none;
+  text-shadow: var(--map-legibility);
+}
+:where(:root:not([data-ui-theme='cyber'])) .aurel-wordmark {
+  color: var(--text-primary);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+}
+
+/* Loader: the same wordmark over ink, tagline in secondary type. */
+:where(:root:not([data-ui-theme='cyber'])) .loader-content .aurel-wordmark {
+  font-family: var(--font-sans);
+  font-size: 24px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .aurel-loader-tagline {
+  color: var(--text-secondary);
+  font: 13px/1.6 var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber'])) .loader-status {
+  color: var(--text-dim);
+}
+
+/* Style indicator: the active style name in brass, without a glow. */
+:where(:root:not([data-ui-theme='cyber'])) #style-indicator {
+  text-shadow: var(--map-legibility);
+}
+:where(:root:not([data-ui-theme='cyber'])) #style-indicator .indicator-value {
+  color: var(--accent);
+  text-shadow: var(--map-legibility);
+}
+
+/* Panel rail: oxblood glass with a brass seam on the open panel. */
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail {
+  padding: 5px;
+  border-color: var(--glass-border);
+  border-radius: var(--panel-radius);
+  background: var(--glass-bg);
+  box-shadow: var(--panel-surface-shadow);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail--expanded {
+  border-radius: var(--panel-radius);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail--expanded .ui-rail__item {
+  border-radius: var(--btn-radius);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item {
+  color: var(--text-secondary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--glass-border-hover);
+  background-color: var(--hover-wash);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item--on,
+:where(:root:not([data-ui-theme='cyber']))
+  .ui-rail__item--on:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: transparent;
+  background: var(--accent-dim);
+  box-shadow:
+    inset 3px 0 var(--accent),
+    0 0 0 1px var(--accent-dim);
+}
+
+/* Tooltips: menu level, the lightest surface. */
+:where(:root:not([data-ui-theme='cyber'])) .ui-tooltip__tip {
+  padding: 8px 11px;
+  color: var(--text-primary);
+  background: var(--menu-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--panel-surface-shadow);
+}
+
+/* Panel headers stay on glass; titles read as mono eyebrows. */
+:where(:root:not([data-ui-theme='cyber'])) [data-panel-header] {
+  border-bottom-color: var(--glass-border);
+  padding-bottom: 10px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .panel-surface-title {
+  color: var(--panel-surface-title);
+}
+
+/* Mono eyebrows: panel and section titles, kickers, group headings. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is(
+    .panel-surface-title,
+    .first-run-kicker,
+    .key-setup-kicker,
+    .data-layer-group-heading,
+    .locale-picker-heading
+  ) {
+  font: var(--eyebrow-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.panel-title, .layers-title, .cctv-title, .scenes-title) {
+  color: var(--text-primary);
+}
+
+/* Panel bodies are petrol wallpaper: the information layer. */
+:where(:root:not([data-ui-theme='cyber'])) [data-panel-body] {
+  line-height: 1.6;
+  background: var(--surface-info);
+  border-radius: calc(var(--panel-radius) - 4px);
+}
+:where(:root:not([data-ui-theme='cyber'])) :is(.ui-panel, [data-panel-popup]) {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber'])) [data-panel-popup] {
+  background: var(--menu-bg);
+  box-shadow: var(--panel-surface-shadow);
+}
+
+/* Action buttons: raised chips; hover moves only the hairline. */
+:where(:root:not([data-ui-theme='cyber'])) :is(.gev-action-button, .scene-btn) {
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  border-color: var(--glass-border);
+  border-radius: var(--btn-radius);
+  background: var(--raised);
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.gev-action-button, .scene-btn):hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--glass-border-hover);
+  background: var(--raised);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.gev-action-button--danger, .scene-btn-danger) {
+  color: var(--state-error);
+}
+
+/* Fields: raised level, inset edge, teal ring on keyboard focus. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is([data-panel-surface], [data-panel-popup], #key-setup, #gev-chat-panel)
+  :is(
+    input:not([type='range']):not([type='checkbox']):not([type='color']),
+    textarea,
+    select
+  ) {
+  color: var(--text-primary);
+  background-color: var(--raised);
+  border-color: var(--glass-border);
+  border-radius: var(--btn-radius);
+  box-shadow: var(--raised-edge);
+  font-family: var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is([data-panel-surface], [data-panel-popup], #key-setup, #gev-chat-panel)
+  :is(input, textarea, select):focus-visible {
+  border-color: var(--focus-ring);
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is([data-panel-surface], #key-setup, #gev-chat-panel)
+  :is(input, textarea)::placeholder {
+  color: var(--text-dim);
+  opacity: 1;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(input[type='checkbox'], input[type='range']) {
+  accent-color: var(--accent);
+}
+
+/* Top-centre map actions: glass buttons, brass underline when pressed. */
+:where(:root:not([data-ui-theme='cyber'])) #top-center-actions {
+  gap: 6px;
+}
+:where(:root:not([data-ui-theme='cyber'])) #top-center-actions button {
+  color: var(--text-secondary);
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--panel-surface-shadow);
+}
+:where(:root:not([data-ui-theme='cyber'])) #top-center-actions button:hover {
+  color: var(--text-primary);
+  border-color: var(--glass-border-hover);
+}
+:where(:root:not([data-ui-theme='cyber'])) #tilt-map-view[aria-pressed='true'] {
+  color: var(--accent);
+  box-shadow: inset 0 -3px var(--accent);
+}
+
+/* Command dock shell: the main lacquer surface. */
+:where(:root:not([data-ui-theme='cyber'])) #command-dock {
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: var(--panel-surface-detail-base), var(--glass-bg);
+  box-shadow: var(--panel-surface-shadow);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  > :is(#location-bar, #control-panel) {
+  background: transparent;
+  border-color: var(--glass-border);
+}
+:where(:root:not([data-ui-theme='cyber'])) #command-dock > #gev-voice-control {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-tertiary) 45%, transparent),
+      transparent 70%
+    ),
+    var(--raised);
+  border-color: var(--glass-border);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  > #gev-voice-control[data-chat-open='true'] {
+  border-color: var(--accent-strong);
+  box-shadow:
+    var(--raised-edge),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Dock tray labels take the shared label tokens. */
+:where(:root:not([data-ui-theme='cyber'])) #command-dock .panel-title,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  .location-toolbar-label {
+  font-family: var(--font-sans);
+  font-size: var(--dock-label-font-size);
+  font-weight: var(--dock-label-font-weight);
+  letter-spacing: var(--dock-label-letter-spacing);
+  color: var(--dock-label-color);
+}
+:where(:root:not([data-ui-theme='cyber'])) #command-dock .panel-title::after,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  .location-toolbar-label::after {
+  color: var(--accent);
+}
+
+/* Dock popovers: petrol interiors at the menu shadow. */
+:where(:root:not([data-ui-theme='cyber'])) #command-dock .dock-popover-content {
+  border-color: var(--glass-border);
+  border-radius: var(--panel-radius);
+  background: var(--surface-info);
+  box-shadow: var(--panel-surface-shadow);
+}
+
+/* Dock pills and style buttons: raised chips, brass underline when active. */
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.location-pill, .poi-pill, .style-btn) {
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  border-color: var(--glass-border);
+  background-color: var(--raised);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.location-pill, .poi-pill, .style-btn):hover {
+  color: var(--text-primary);
+  border-color: var(--glass-border-hover);
+  background-color: var(--raised);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.location-pill, .poi-pill, .style-btn).active {
+  color: var(--accent);
+  border-color: var(--glass-border);
+  background: var(--accent-dim);
+  box-shadow: inset 0 -3px var(--accent);
+}
+
+/* Dock search field: raised, with the teal ring left to its pinned rule. */
+:where(:root:not([data-ui-theme='cyber'])) #command-dock #location-search {
+  color: var(--text-primary);
+  background: var(--raised);
+  border-color: var(--glass-border);
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #location-search::placeholder {
+  color: var(--text-dim);
+}
+
+/* Voice orbit and chat button: brass instruments in a raised socket. */
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.gev-mic-label, .gev-chat-label) {
+  color: var(--dock-label-color);
+  letter-spacing: 0.04em;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(#gev-voice-button, #gev-chat-button) {
+  color: var(--accent);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-chat-button
+  > svg {
+  color: var(--accent);
+  filter: none;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-control
+  .gev-mic-orbit,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-chat-button
+  > svg {
+  border-color: var(--accent-strong);
+  background: var(--raised);
+  box-shadow:
+    0 0 0 3px var(--bg-dark),
+    0 0 0 4px var(--accent-dim),
+    var(--raised-edge),
+    0 3px 7px rgba(0, 0, 0, 0.4);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-button:hover
+  .gev-mic-orbit,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-chat-button:hover:not(:disabled)
+  > svg,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-control[data-assistant-mode='chat']
+  #gev-chat-button
+  > svg {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px var(--accent-dim),
+    0 0 16px var(--accent-dim);
+}
+
+/* First-run launcher and provider settings: glass dialogs. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#first-run-launcher, #key-setup) {
+  padding: 24px;
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  background: var(--panel-surface-detail-base), var(--glass-bg);
+  box-shadow: var(--panel-surface-shadow);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-scanline, .key-setup-scanline) {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-strong),
+    transparent
+  );
+  box-shadow: none;
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-header {
+  gap: 18px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .aurel-welcome-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font: 300 15px var(--font-sans);
+  letter-spacing: 0.25em;
+}
+:where(:root:not([data-ui-theme='cyber'])) .aurel-welcome-brand img {
+  object-fit: contain;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-kicker, .key-setup-kicker) {
+  color: var(--text-dim);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#first-run-launcher, #key-setup)
+  h2 {
+  margin-top: 18px;
+  font-family: var(--font-sans);
+  font-size: clamp(23px, 2.3vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#first-run-description, #key-setup-description) {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* First-run mission choices: raised cards; hover is a hairline only. */
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices {
+  margin-top: 18px;
+  gap: 8px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices button {
+  min-height: 66px;
+  padding: 12px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  background: var(--raised);
+  box-shadow: var(--raised-edge);
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices button:hover,
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button:focus-visible {
+  border-color: var(--glass-border-hover);
+  background: var(--raised);
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button
+  > .material-symbols-outlined:first-child {
+  color: var(--accent);
+  font-size: 23px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices strong {
+  color: var(--text-primary);
+  font: 600 12px/1.5 var(--font-sans);
+  letter-spacing: 0.02em;
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices small {
+  color: var(--text-secondary);
+  font: 11px/1.5 var(--font-sans);
+  margin-top: 3px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-arrow {
+  color: var(--text-dim);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button:is(:hover, :focus-visible)
+  .first-run-arrow {
+  color: var(--accent);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button.first-run-explore {
+  border-style: solid;
+  background: var(--surface-info);
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-suppress, .first-run-dismiss) {
+  color: var(--text-secondary);
+  font: 11px/1.5 var(--font-sans);
+  letter-spacing: 0;
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-dismiss:hover,
+:where(:root:not([data-ui-theme='cyber'])) .first-run-dismiss:focus-visible {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-note, .key-setup-note) {
+  color: var(--text-secondary);
+  font: 11px/1.6 var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #first-run-launcher[data-state='loading']
+  .first-run-note {
+  color: var(--accent);
+}
+
+/* Provider rows: raised cards; the apply button is the solid brass primary. */
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-row {
+  padding: 14px;
+  border-color: var(--glass-border);
+  border-radius: var(--panel-radius);
+  background: var(--raised);
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-row-head strong {
+  color: var(--text-primary);
+  font: 600 12px var(--font-sans);
+  letter-spacing: 0.02em;
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-unlocks {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.key-setup-get, .key-setup-close) {
+  color: var(--accent);
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-get:hover,
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-get:focus-visible {
+  color: var(--accent-hover);
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-fields input {
+  min-height: 38px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-apply {
+  background: var(--accent);
+  color: var(--bg-dark);
+  border-color: var(--accent);
+  border-radius: var(--btn-radius);
+  font: 700 12px var(--font-sans);
+  letter-spacing: 0.04em;
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-apply:hover,
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-apply:focus-visible {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--bg-dark);
+}
+
+/* Provider chip in the corner actions. */
+:where(:root:not([data-ui-theme='cyber'])) #key-setup-chip {
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+  background: var(--glass-bg);
+  border-radius: 8px;
+  letter-spacing: 0.035em;
+}
+:where(:root:not([data-ui-theme='cyber'])) #key-setup-chip:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #key-setup-chip
+  .material-symbols-outlined {
+  color: var(--accent);
+}
+
+/* Cloud sign-in toggle: a secondary raised button. */
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-cloud-auth-toggle {
+  color: var(--text-primary);
+  background: var(--raised);
+  border-color: var(--glass-border);
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-cloud-auth-toggle:hover,
+:where(:root:not([data-ui-theme='cyber']))
+  .key-setup-cloud-auth-toggle:focus-visible {
+  color: var(--text-primary);
+  border-color: var(--glass-border-hover);
+}
+
+/* Assistant chat panel, form, suggestions and messages. */
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-panel {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--panel-surface-shadow);
+}
+:where(:root:not([data-ui-theme='cyber'])) .gev-chat-header strong {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .gev-chat-header p {
+  color: var(--text-secondary);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-form {
+  border-color: var(--glass-border);
+  background: var(--raised);
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-form:focus-within {
+  border-color: var(--focus-ring);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-suggestions button {
+  color: var(--text-secondary);
+  border-color: var(--glass-border);
+  background: var(--raised);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-suggestions button:hover {
+  color: var(--text-primary);
+  border-color: var(--glass-border-hover);
+  background: var(--raised);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #gev-chat-panel
+  :is(.gev-chat-message > span, #gev-chat-input, #gev-chat-mini-text) {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .gev-chat-message[data-role='assistant']
+  small {
+  background: var(--raised) url('/aurel-mark.svg') center / 1.45rem 1.45rem
+    no-repeat;
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-send {
+  background: var(--accent);
+  color: var(--bg-dark);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-send:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+/* Global loading feed: glass card, secondary type. */
+:where(:root:not([data-ui-theme='cyber'])) #global-loading-status {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-secondary);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#global-loading-label, #global-loading-detail) {
+  color: var(--text-secondary);
+}
+
+/* Intel HUD (tactical/minimal): ivory ink, brass mode marks, steady digits.
+   Specialised sonar/cyber variants and map overlays are not restyled. */
+:root:not([data-ui-theme='cyber'])
+  #intel-hud:is([data-variant='tactical'], [data-variant='minimal'])
+  * {
+  color: var(--hud-ink);
+  text-shadow: var(--hud-legibility);
+}
+:root:not([data-ui-theme='cyber'])
+  #intel-hud:is([data-variant='tactical'], [data-variant='minimal'])
+  :is(.hud-mode, .hud-bracket) {
+  color: var(--hud-accent);
+}
+:root:not([data-ui-theme='cyber']) #intel-hud #hud-rec-dot {
+  color: var(--state-error);
+}
+:root:not([data-ui-theme='cyber']) #intel-hud .hud-summary {
+  letter-spacing: 0.06em;
+}
+:root:not([data-ui-theme='cyber']) #intel-hud {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Data Layers: group headings are mono eyebrows. */
+:where(:root:not([data-ui-theme='cyber'])) .data-layer-group-heading {
+  color: var(--text-dim);
+  border-color: var(--hairline);
+}
+
+/* Data Layers: the list is petrol; each row reads as one unit (detail 9). */
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-list {
+  background: var(--surface-info);
+  border-radius: calc(var(--panel-radius) - 4px);
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-row {
+  padding: 9px 10px 10px;
+  border: 1px solid transparent;
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-row + .data-toggle-row {
+  border-top-color: var(--hairline);
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-meta {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-row:hover {
+  background: var(--hover-wash);
+  border-color: var(--glass-border-hover);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .data-toggle-row:has(.data-toggle-btn.active) {
+  background: var(--accent-dim);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+/* Rail panel titles: label type on the shared tokens (already guarded). */
+:root:not([data-ui-theme='cyber'])
+  :is(#left-panel-stack, #right-context-rail)
+  :is(.panel-header > .panel-title, .pp-header-label) {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: var(--dock-label-font-weight);
+  letter-spacing: 0.06em;
+}
+
+/* Telemetry readouts: mono, tabular digits, live values in primary ink. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is(
+    .frame-rate-readout,
+    .pp-value,
+    .param-value,
+    .panel-mini-value,
+    .watchlist-coordinates,
+    .region-result-coordinate,
+    .planner-coordinate,
+    .lens-coordinates,
+    .fieldbook-coordinates
+  ) {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(
+    .watchlist-coordinates,
+    .region-result-coordinate,
+    .planner-coordinate,
+    .lens-coordinates,
+    .fieldbook-coordinates
+  ) {
+  color: var(--text-primary);
+  font-size: 11px;
+}
+
+/* Mobile shell: glass tab bar, brass underline on the open tab. */
+:where(:root:not([data-ui-theme='cyber'])) body.mobile-shell #mobile-tab-bar {
+  background: var(--glass-bg);
+  border-top-color: var(--glass-border);
+}
+:where(:root:not([data-ui-theme='cyber'])) body.mobile-shell .mobile-tab {
+  min-height: 44px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell
+  .mobile-tab[aria-expanded='true'] {
+  color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: inset 0 -3px var(--accent);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell
+  #top-center-actions
+  button {
+  border-radius: 9px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell
+  #command-dock
+  :is(.location-pill, .poi-pill, .style-btn) {
+  min-height: 44px;
+}
+
+/* The mobile rail is the scroll container. Do not let a flex-shrunk legacy
+   layer panel paint its full-height child underneath Utilities and Authoring.
+   Geometry fix shared with Cyber, so it stays unguarded as it was. */
+body.mobile-shell[data-mobile-sheet='layers'] #left-panel-stack > #data-panel {
+  flex: 0 0 auto;
+  height: auto;
+  max-height: none;
+}
+body.mobile-shell[data-mobile-sheet='layers']
+  #left-panel-stack
+  > #data-panel:not(.collapsed)
+  .data-panel-inner {
+  max-height: max(140px, calc(var(--mobile-sheet-max-height) - 140px));
+}
+
+/* Mobile sheets are petrol information surfaces. */
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell[data-mobile-sheet]
+  :is(#left-panel-stack, #right-context-rail),
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell[data-mobile-sheet='search']
+  #command-dock,
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell[data-mobile-sheet='more']
+  #command-dock {
+  background: var(--surface-info);
+  border-color: var(--glass-border);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell[data-mobile-sheet]
+  :is(#left-panel-stack, #right-context-rail) {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile sheet grab handle (layers, cameras, context). */
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell:is(
+    [data-mobile-sheet='layers'],
+    [data-mobile-sheet='cameras'],
+    [data-mobile-sheet='context']
+  )
+  :is(#left-panel-stack, #right-context-rail)::before {
+  content: '';
+  display: block;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin: 6px auto 4px;
+  border-radius: 2px;
+  background: var(--accent-dim);
+}
+
+/* Locale picker: glass button, menu-level popup, brass seam on the active. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.locale-picker-button, .locale-picker-popup) {
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: var(--panel-surface-shadow);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-popup {
+  background: var(--menu-bg);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-button:hover,
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-button:focus-visible,
+:where(:root:not([data-ui-theme='cyber']))
+  .locale-picker.is-open
+  .locale-picker-button {
+  background: var(--glass-bg);
+  border-color: var(--glass-border-hover);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-globe {
+  color: var(--accent);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-heading {
+  color: var(--text-secondary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-option.is-active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+/* Fine instrumentation detail, without labels or simulated activity. */
+:root:not([data-ui-theme='cyber']) .panel-header::after {
+  background: var(--divider-gradient);
+}
+:root:not([data-ui-theme='cyber']) :is(.panel-glow, .title-glow) {
+  background: radial-gradient(
+    ellipse at top,
+    var(--glow-wash),
+    transparent 70%
+  );
+}
+:where(:root:not([data-ui-theme='cyber'])) .brand-logo {
+  aspect-ratio: 1;
+}
+
+/* Teal keyboard ring on surfaces whose focus rules are not pinned by tests:
+   rails, workspace, first-run, key setup, chat, list rows, locale picker. */
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item:focus-visible,
+:where(:root:not([data-ui-theme='cyber']))
+  body[data-workspace-appearance]
+  #aurel-workspace
+  :is(button, select, summary):focus-visible,
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#key-setup, #key-setup-chip, #gev-chat-panel, .locale-picker)
+  :is(button, a, input, select, textarea, [tabindex]):focus-visible,
+:where(:root:not([data-ui-theme='cyber'])) #key-setup-chip:focus-visible,
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-button:focus-visible {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button:focus-visible,
+:where(:root:not([data-ui-theme='cyber']))
+  .data-toggle-list
+  :is(button, input, [tabindex]):focus-visible,
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-option:focus-visible {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: -3px;
+}
+
+/* Responsive refinements preserve the existing mobile shell and its owners. */
+@media (max-width: 620px) {
+  :where(:root:not([data-ui-theme='cyber'])) #title-bar h1 {
+    font-size: 21px;
+    gap: 9px;
+    letter-spacing: 0.22em;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) #title-bar .title-logo {
+    width: 36px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) #title-bar .subtitle {
+    font-size: 9px;
+    letter-spacing: 0.025em;
+  }
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(#first-run-launcher, #key-setup) {
+    padding: 17px;
+    border-radius: 14px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) .first-run-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) .aurel-welcome-brand {
+    font-size: 13px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) .first-run-choices button {
+    min-height: 62px;
+    padding: 10px;
+  }
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(#first-run-launcher, #key-setup)
+    h2 {
+    margin-top: 12px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) #command-dock .panel-title,
+  :where(:root:not([data-ui-theme='cyber']))
+    #command-dock
+    .location-toolbar-label {
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) .key-setup-row {
+    padding: 11px;
+  }
+}
+@media (max-height: 650px) {
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(#first-run-launcher, #key-setup) {
+    padding: 16px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) #first-run-launcher h2 {
+    margin-top: 9px;
+    font-size: 23px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) .first-run-choices {
+    margin-top: 10px;
+    gap: 6px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) .first-run-choices button {
+    min-height: 52px;
+    padding: 8px 12px;
+  }
+  :where(:root:not([data-ui-theme='cyber'])) .first-run-footer {
+    margin-top: 10px;
+    padding-top: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(
+      #first-run-launcher,
+      #key-setup,
+      .first-run-choices button,
+      .ui-rail,
+      .ui-rail__item
+    ) {
+    transition-duration: 0.01ms;
+  }
+}

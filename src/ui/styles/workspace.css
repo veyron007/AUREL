@@ -85,7 +85,7 @@ body[data-workspace-appearance] .workspace-topbar {
   align-items: center;
   gap: 18px;
   padding: 12px 20px 12px min(65vw, 880px);
-  background: var(--workspace-surface);
+  background: var(--workspace-chrome, var(--workspace-surface));
   border-bottom: 1px solid var(--workspace-border);
   box-shadow: 0 3px 20px #0002;
 }
@@ -112,7 +112,7 @@ body[data-workspace-appearance] .workspace-nav {
   display: grid;
   gap: 6px;
   padding: 6px;
-  background: var(--workspace-surface);
+  background: var(--workspace-chrome, var(--workspace-surface));
   border: 1px solid var(--workspace-border);
   border-radius: 15px;
   box-shadow: var(--workspace-shadow);
@@ -148,7 +148,7 @@ body[data-workspace-appearance] .workspace-tools {
   max-height: calc(100dvh - 206px);
   padding: 12px;
   overflow: auto;
-  background: var(--workspace-surface);
+  background: var(--workspace-chrome, var(--workspace-surface));
   border: 1px solid var(--workspace-border);
   border-radius: 14px;
   box-shadow: var(--workspace-shadow);
@@ -248,7 +248,7 @@ body[data-workspace-appearance] .aurel-search-feedback:has(:not(:empty)) {
 }
 body[data-workspace-appearance] #aurel-search .location-search-error {
   margin: 0;
-  color: #f5a497;
+  color: var(--state-error, #f5a497);
   font-size: 13px;
 }
 body[data-workspace-appearance='field'] #aurel-search .location-search-error {
@@ -278,20 +278,20 @@ body[data-workspace-appearance] #style-indicator {
   bottom: 104px;
   inset-inline-end: 20px;
   padding: 8px 12px;
-  background: #181d1eea;
-  border: 1px solid #414844;
+  background: var(--workspace-chrome, var(--workspace-surface));
+  border: 1px solid var(--workspace-border);
   border-radius: 8px;
   text-shadow: none;
 }
 body[data-workspace-appearance] #style-indicator .indicator-label {
   font-size: 10px;
   letter-spacing: 0.05em;
-  color: #b8c0b7;
+  color: var(--workspace-muted);
 }
 body[data-workspace-appearance] #style-indicator .indicator-value {
   font-size: 12px;
   letter-spacing: 0.05em;
-  color: #e1c187;
+  color: var(--workspace-accent);
 }
 body[data-workspace-appearance] #top-center-actions {
   top: auto;
@@ -307,7 +307,7 @@ body[data-workspace-appearance] #top-center-actions button {
   border-radius: 10px;
   color: var(--workspace-text);
   border-color: var(--workspace-border);
-  background: var(--workspace-surface);
+  background: var(--workspace-chrome, var(--workspace-surface));
 }
 
 /* Rails remain mounted, preserving input/selection lifetime. Their active
@@ -364,6 +364,9 @@ body[data-workspace-appearance]
   :is(#left-panel-stack, #right-context-rail)
   :is(button, .data-toggle-row) {
   min-height: 36px;
+  /* An explicit min-height drops the flex item's content minimum, so a row in
+     the scrolling column could shrink and paint its meta line over the next. */
+  flex-shrink: 0;
 }
 body[data-workspace-appearance]
   :is(#left-panel-stack, #right-context-rail)
@@ -414,7 +417,7 @@ body[data-workspace-appearance]:not(.mobile-shell) #command-dock {
   --dock-voice-width: 140px;
   min-height: 48px;
   border-color: var(--workspace-border);
-  background: var(--workspace-surface);
+  background: var(--workspace-chrome, var(--workspace-surface));
   box-shadow: var(--workspace-shadow);
 }
 body[data-workspace-appearance]

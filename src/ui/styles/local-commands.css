@@ -5,7 +5,7 @@
   pointer-events: auto;
   overflow: hidden;
   color: var(--workspace-text, var(--text-primary));
-  background: var(--workspace-surface, #181b1d);
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
   border: 1px solid var(--workspace-border, var(--glass-border));
   border-radius: 14px;
   box-shadow: var(--workspace-shadow);
@@ -23,7 +23,7 @@
   overscroll-behavior: contain;
   scroll-padding-block-start: 80px;
   padding: var(--inspector-gutter);
-  background: var(--workspace-surface, #181b1d);
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
 }
 #local-commands-panel .panel-glow {
   display: none;
@@ -40,7 +40,7 @@
   margin: calc(-1 * var(--inspector-gutter)) calc(-1 * var(--inspector-gutter))
     18px;
   padding: 12px var(--inspector-gutter);
-  background: var(--workspace-surface, #181b1d);
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
   border-bottom: 1px solid var(--workspace-border, var(--glass-border));
 }
 #local-commands-panel .ui-panel__title {
@@ -91,8 +91,8 @@
   min-height: 44px;
   min-width: 0;
   box-sizing: border-box;
-  border: 1px solid var(--workspace-border, #53616a);
-  background: var(--workspace-raised, #131b22);
+  border: 1px solid var(--workspace-border, var(--glass-border, #53616a));
+  background: var(--workspace-raised, var(--surface-info-raised, #131b22));
   color: inherit;
   padding: 12px;
   border-radius: 8px;
@@ -101,7 +101,7 @@
 }
 .local-command-workspace button {
   min-height: 44px;
-  border: 1px solid var(--workspace-border, #53616a);
+  border: 1px solid var(--workspace-border, var(--glass-border, #53616a));
   border-radius: 8px;
   padding: 9px 12px;
   background: transparent;
@@ -128,7 +128,7 @@
   border: 1px solid var(--accent, #bde5d3);
   border-radius: 12px;
   padding: 16px;
-  background: var(--workspace-raised, #19252b);
+  background: var(--workspace-raised, var(--surface-info-raised, #19252b));
 }
 .local-command-preview h3 {
   font-size: 17px;
@@ -139,17 +139,17 @@
   font-family: var(--font-mono, monospace);
 }
 .local-command-workspace .local-command-run {
-  background: var(--workspace-text, #e7e7df);
-  color: var(--workspace-surface, #181b1d);
+  background: var(--workspace-text, var(--text-primary, #e7e7df));
+  color: var(--workspace-surface, var(--bg-dark, #181b1d));
   font-weight: 700;
   text-align: center;
 }
 .local-command-status {
-  border-left: 2px solid var(--workspace-border, #53616a);
+  border-left: 2px solid var(--workspace-border, var(--glass-border, #53616a));
   padding-left: 12px;
 }
 .local-command-error {
-  color: var(--text-warning, #f5c397);
+  color: var(--state-error, var(--text-warning, #f5c397));
   margin-top: 8px !important;
 }
 .local-command-examples summary {
@@ -181,7 +181,7 @@
   grid-template-columns: 24px minmax(0, 1fr);
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid var(--workspace-border, #53616a);
+  border-top: 1px solid var(--workspace-border, var(--glass-border, #53616a));
 }
 .local-command-missions article > div {
   display: grid;

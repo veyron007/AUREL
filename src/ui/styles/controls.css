@@ -69,7 +69,8 @@
   letter-spacing: 1.8px;
   color: var(--accent);
   text-transform: uppercase;
-  text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+  text-shadow: 0 0 8px
+    color-mix(in srgb, var(--hud-accent, #00d4ff) 30%, transparent);
 }
 
 .panel-title {
@@ -327,8 +328,9 @@ html:not([lang='en']):not(:lang(zh)):not(:lang(ja))
   border-color: var(--accent);
   background: var(--accent-dim);
   box-shadow:
-    0 0 20px rgba(0, 212, 255, 0.15),
-    0 0 0 1px rgba(0, 212, 255, 0.1) inset;
+    0 0 20px color-mix(in srgb, var(--hud-accent, #00d4ff) 15%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--hud-accent, #00d4ff) 10%, transparent)
+      inset;
 }
 
 .style-btn.active .btn-icon {
@@ -403,7 +405,9 @@ html:not([lang='en']):not(:lang(zh)):not(:lang(ja))
   width: 128px;
   height: auto;
   margin: 0 auto 24px;
-  filter: drop-shadow(0 0 24px rgba(0, 246, 255, 0.42));
+  filter: drop-shadow(
+    0 0 24px color-mix(in srgb, var(--hud-accent, #00f6ff) 42%, transparent)
+  );
   animation: logo-pulse 2s ease-in-out infinite;
 }
 
@@ -611,7 +615,8 @@ html:not([lang='en']):not(:lang(zh)):not(:lang(ja))
 .pp-toggle-btn.active {
   border-color: var(--accent);
   background: var(--accent-dim);
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.15);
+  box-shadow: 0 0 12px
+    color-mix(in srgb, var(--hud-accent, #00d4ff) 15%, transparent);
 }
 
 .pp-icon {
@@ -771,14 +776,14 @@ html:not([lang='en']) .pp-slider-row > .pp-slider-mini-label {
   gap: 6px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(123, 189, 211, 0.18);
+  border-top: 1px solid var(--hud-line, rgba(123, 189, 211, 0.18));
 }
 
 .map-source-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: rgba(190, 221, 230, 0.62);
+  color: color-mix(in srgb, var(--hud-ink, #bedde6) 62%, transparent);
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 1.35px;
@@ -854,7 +859,8 @@ html:not([lang='en']) .pp-slider-row > .pp-slider-mini-label {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-dim);
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.15);
+  box-shadow: 0 0 10px
+    color-mix(in srgb, var(--hud-accent, #00d4ff) 15%, transparent);
 }
 
 .map-stack-chip.unavailable,
@@ -886,7 +892,7 @@ html:not([lang='en']) .pp-slider-row > .pp-slider-mini-label {
 }
 
 .pp-stack-status.warn {
-  color: #ffb84d;
+  color: var(--state-warn, #ffb84d);
 }
 
 .pp-select {
@@ -1142,8 +1148,8 @@ body.gev-geo-import-drag #cesiumContainer {
   z-index: 300;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(8, 10, 14, 0.88);
-  color: #d9f7ff;
+  background: var(--bg-panel, rgba(8, 10, 14, 0.88));
+  color: var(--hud-ink, #d9f7ff);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 1.8px;
@@ -1290,11 +1296,14 @@ body.ui-clean-view #scene-runtime.active {
 }
 
 #param-slider-panel:not(.collapsed) .param-panel-divider {
-  background: linear-gradient(
-    90deg,
-    rgb(0 212 255 / 28%),
-    rgba(0, 212, 255, 0.18) 58%,
-    transparent
+  background: var(
+    --divider-gradient,
+    linear-gradient(
+      90deg,
+      rgb(0 212 255 / 28%),
+      rgba(0, 212, 255, 0.18) 58%,
+      transparent
+    )
   );
 }
 

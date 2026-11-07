@@ -1296,6 +1296,7 @@
   "src/sources/rateLimit.js",
   "src/ui/layerNames.js",
   "src/ui/styles/cyber.css",
+  "src/ui/styles/lamplight.css",
   "src/voice/layerManifest.js",
   "src/worldFocus.js",
   "src/worldFocus.test.mjs",

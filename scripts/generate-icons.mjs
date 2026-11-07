@@ -16,8 +16,8 @@ const REPO_ROOT = path.resolve(
 const LOGO = path.join(REPO_ROOT, 'public', 'aurel-mark.svg');
 const OUT_DIR = path.join(REPO_ROOT, 'public', 'icons');
 
-/** AUREL background from src/ui/styles/aurel.css. */
-const BACKGROUND = '#101314';
+/** Lamplight --bg-dark from src/ui/styles/lamplight.css. */
+const BACKGROUND = '#141011';
 
 /**
  * Fraction of the canvas the mark is allowed to occupy.

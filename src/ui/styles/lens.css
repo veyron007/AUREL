@@ -175,7 +175,7 @@
   font-size: 13px;
 }
 .lens-error {
-  border-inline-start-color: #be6a59;
+  border-inline-start-color: var(--state-error, #be6a59);
 }
 .lens-sr-only {
   position: absolute;

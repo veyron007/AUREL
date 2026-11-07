@@ -37,7 +37,7 @@
   --panel-surface-frame: none;
   --panel-surface-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
   --panel-surface-title: var(--text-secondary);
-  --panel-surface-error: #ff9b8e;
+  --panel-surface-error: var(--state-error, #ff9b8e);
   --panel-surface-width: 300px;
   --panel-surface-collapsed-width: var(--left-collapsed-width);
 }

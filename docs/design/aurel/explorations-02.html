@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AUREL — Visual explorations 02 / Lamplight</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #141011; color: #f2ebdd; font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 1680px; padding: 52px 44px 40px; margin: auto; }
+    code { font: 11px ui-monospace, monospace; }
+    .eyebrow, .index, .badge, .section-title, .score { font: 11px/1.5 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .14em; }
+    .eyebrow { color: #d6ab55; margin: 0 0 18px; }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 30px; }
+    h1 { font-size: clamp(30px, 3vw, 48px); font-weight: 400; letter-spacing: -.04em; line-height: 1.15; margin: 0; }
+    .brief { max-width: 520px; }
+    .brief p { color: #c7c1b5; margin: 0 0 10px; }
+    .section-title { color: #d6ab55; font-size: 12px; margin: 46px 0 6px; padding-top: 18px; border-top: 1px solid #3a3032; }
+    .section-note { color: #a7a39b; font-size: 12px; margin: 0 0 20px; }
+    .ref { list-style: none; padding: 0; margin: 14px 0 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }
+    .ref li { font-size: 11px; color: #c7c1b5; }
+    .ref li::before { content: ''; display: block; height: 46px; border-radius: 6px; background: var(--swatch); border: 1px solid rgba(242, 235, 221, .12); margin-bottom: 6px; }
+    .ref code { display: block; color: #f2ebdd; }
+    .directions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+    article { min-width: 0; }
+    .heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .heading h3 { margin: 0; font-size: 22px; font-weight: 450; letter-spacing: -.03em; }
+    .index { color: #a7a39b; display: block; margin-bottom: 4px; }
+    .badge { color: #d6ab55; padding: 6px 9px; border: 1px solid #6b5631; background: #2a2017; border-radius: 4px; font-size: 9px; white-space: nowrap; }
+    .specimen { height: 450px; padding: 20px; border: 1px solid var(--border); border-radius: 14px; color: var(--text); background: var(--base); position: relative; overflow: hidden; }
+    .brand { display: flex; align-items: center; gap: 9px; font-size: 19px; letter-spacing: .23em; font-weight: 500; }
+    .lens { width: 28px; height: 28px; flex: 0 0 auto; color: var(--accent); }
+    .tagline { color: var(--muted); font-size: 10px; margin: 5px 0 0 37px; }
+    .world { position: absolute; width: 360px; height: 360px; right: -140px; top: 82px; opacity: .45; color: var(--map); }
+    .layer-panel { width: 64%; position: relative; margin-top: 40px; padding: 15px 13px; border: 1px solid var(--border); border-radius: var(--r, 9px); background: var(--info); }
+    .panel-title { color: var(--muted); font: 10px/1.4 ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 14px; }
+    .layer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+    .switch { width: 25px; height: 14px; background: var(--border); border-radius: 10px; position: relative; flex-shrink: 0; }
+    .switch::before { content: ''; position: absolute; width: 10px; height: 10px; background: var(--text); border-radius: 50%; top: 2px; left: 2px; opacity: .7; }
+    .switch.on { background: var(--accent); }
+    .switch.on::before { left: 13px; background: var(--base); opacity: 1; }
+    .readout { position: absolute; right: 22px; bottom: 96px; text-align: right; font: 10px/1.9 ui-monospace, monospace; color: var(--muted); padding: 6px 10px; border-radius: 6px; background: var(--info); font-variant-numeric: tabular-nums; }
+    .readout b { color: var(--text); font-weight: 500; }
+    .dock { position: absolute; left: 20px; right: 20px; bottom: 20px; display: flex; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 6px; gap: 4px; }
+    .dock span { flex: 1; font-size: 10px; text-align: center; padding: 10px 4px; border-radius: 4px; color: var(--muted); }
+    .dock .active { background: var(--tint); color: var(--accent); box-shadow: inset 0 -3px var(--accent); }
+    .palette { display: flex; gap: 5px; margin: 18px 0 14px; }
+    .palette i { height: 7px; flex: 1; background: var(--swatch); border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(242, 235, 221, .08); }
+    .description { color: #c7c1b5; font-size: 13px; margin: 0; min-height: 84px; }
+    .verdict { color: #d6ab55; font-size: 11px; margin: 14px 0 0; border-top: 1px solid #3a3032; padding-top: 12px; }
+    .verdict.secondary { color: #a7a39b; }
+    .score { font-size: 10px; letter-spacing: .08em; }
+    .final-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+    .final h3 { font-size: 15px; font-weight: 500; margin: 0 0 12px; }
+    .specimen.large { height: 560px; box-shadow: var(--shadow); }
+    .large .wordmark { font-weight: 300; font-size: 26px; letter-spacing: .3em; }
+    .large .wordmark span { position: relative; }
+    .large .wordmark span::after { content: ''; position: absolute; left: -2%; right: -2%; top: 46%; height: 1px; background: var(--base); opacity: .7; }
+    .large .layer-panel { width: 58%; background: var(--info); box-shadow: var(--shadow); }
+    .large .panel-title { color: var(--dim); }
+    .large .layer-row { border-top-color: rgba(242, 235, 221, .06); }
+    .large .layer-row.sel { color: var(--accent); background: var(--tint); box-shadow: inset 3px 0 var(--accent); padding-left: 10px; margin: 0 -13px; padding-right: 13px; }
+    .large .menu { position: absolute; right: -46%; top: 64px; padding: 9px 14px; font-size: 11px; color: var(--muted); background: var(--menu); border-radius: 6px; box-shadow: var(--shadow); }
+    .large .readout { font-size: 11px; line-height: 24px; bottom: 104px; background: var(--info-raised); }
+    .large .dock .focus { outline: 2px solid var(--ring); outline-offset: 2px; }
+    .ladder { list-style: none; padding: 0; margin: 0 0 12px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .ladder li { background: var(--swatch); border: 1px solid rgba(242, 235, 221, .14); border-radius: 8px; padding: 10px; min-height: 86px; font-size: 11px; display: flex; flex-direction: column; justify-content: end; }
+    .ladder b { font-weight: 600; font-size: 12px; }
+    .ladder span { color: #c7c1b5; }
+    .table-wrap { overflow-x: auto; margin-bottom: 8px; }
+    table { border-collapse: collapse; width: 100%; font-size: 12px; font-variant-numeric: tabular-nums; }
+    th, td { padding: 7px 8px; text-align: right; border-bottom: 1px solid #3a3032; white-space: nowrap; }
+    th:first-child { text-align: left; font-weight: 500; }
+    thead th { color: #a7a39b; font: 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .1em; }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--swatch); margin-right: 7px; }
+    .final-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 30px; }
+    .final-lists li { color: #c7c1b5; font-size: 13px; margin-bottom: 9px; }
+    .final-lists strong { color: #f2ebdd; font-weight: 500; }
+    footer { display: flex; justify-content: space-between; gap: 30px; border-top: 1px solid #3a3032; margin-top: 40px; padding-top: 22px; color: #c7c1b5; font-size: 12px; }
+    footer strong { color: #f2ebdd; font-weight: 500; }
+    .reference { max-width: 550px; }
+    .shared { display: none; }
+    @media (max-width: 1100px) { .directions { grid-template-columns: repeat(2, minmax(0, 1fr)); } .final-grid, .final-lists { grid-template-columns: 1fr; } .ref { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+    @media (max-width: 700px) { main { padding: 30px 16px; } header { align-items: start; flex-direction: column; gap: 20px; } .directions { grid-template-columns: 1fr; } .specimen { height: 430px; } .specimen.large { height: 520px; } .description { min-height: auto; } article { margin-bottom: 18px; } footer { flex-direction: column; } .ladder, .ref { grid-template-columns: repeat(3, minmax(0, 1fr)); } .large .layer-panel { width: 72%; } .large .menu { right: 8px; top: auto; bottom: -44px; } }
+  </style>
+</head>
+<body>
+  <svg class="shared" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="lens" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="currentColor"/><ellipse cx="20" cy="20" rx="19" ry="7" transform="rotate(-37 20 20)" fill="none" stroke="currentColor"/><path d="m20 10 7 10-7 10-7-10Z" fill="currentColor"/></symbol>
+    <symbol id="world" viewBox="0 0 360 360"><circle cx="180" cy="180" r="169" fill="none" stroke="currentColor"/><ellipse cx="180" cy="180" rx="88" ry="169" fill="none" stroke="currentColor"/><ellipse cx="180" cy="180" rx="169" ry="65" fill="none" stroke="currentColor"/><path d="M12 180h336M180 12v336M42 86h276M42 274h276" fill="none" stroke="currentColor"/><path d="m94 72 37 15 27 44-22 33 20 38-28 57-19-17-9-47-35-25-6-45 35-53Zm114 5 54 14 39 46-26 31-24-10-18 27-23-33-37-4-9-29 44-42Zm35 142 41 20 4 32-32 16-28-28 15-40Z" fill="currentColor" opacity=".35"/></symbol>
+  </defs></svg>
+  <main>
+    <p class="eyebrow">AUREL / Identity exploration / 02</p>
+    <header>
+      <h1>Lamplight.<br>The parlor with one lamp lit.</h1>
+      <div class="brief">
+        <p>Brief: keep the globe the only bright thing, give the console a room instead of one flat glass, and make the only glowing colour whatever you can press. Mindspace (sheet 01) was the starting point.</p>
+        <p>Reference palette sampled from Marvel Television’s VisionQuest key art (Disney+, October 2026): oxblood and near-black interiors, a mustard-ochre armchair, porcelain-white Vision, petrol-teal wallpaper, amber honeycomb stained glass and a thin letterspaced title with a scanline cut.</p>
+      </div>
+    </header>
+    <section aria-labelledby="ref-h">
+      <h2 id="ref-h" class="section-title">Sampled reference palette</h2>
+      <ul class="ref"><li style="--swatch:#2d0604"><code>#2d0604</code><span>Oxblood interior</span></li><li style="--swatch:#37150a"><code>#37150a</code><span>Near-black room</span></li><li style="--swatch:#7c5e33"><code>#7c5e33</code><span>Chair shadow</span></li><li style="--swatch:#99621e"><code>#99621e</code><span>Mustard-ochre chair</span></li><li style="--swatch:#ecdcc9"><code>#ecdcc9</code><span>Porcelain Vision</span></li><li style="--swatch:#3f737f"><code>#3f737f</code><span>Petrol-teal wallpaper</span></li><li style="--swatch:#1a4852"><code>#1a4852</code><span>Wallpaper shade</span></li><li style="--swatch:#ae714d"><code>#ae714d</code><span>Amber honeycomb</span></li><li style="--swatch:#8b390d"><code>#8b390d</code><span>Oxblood carpet</span></li><li style="--swatch:#3f93a0"><code>#3f93a0</code><span>Teal highlight</span></li></ul>
+    </section>
+    <section aria-labelledby="r1-h">
+      <h2 id="r1-h" class="section-title">Round 1 — six directions</h2>
+      <p class="section-note">Each direction scored by four judging lenses; averages out of 10. Two finalists advanced.</p>
+      <div class="directions">
+      <article>
+        <div class="heading"><div><span class="index">R1.01 / Evolved Mindspace</span><h3>Westview Mindspace</h3></div><span class="badge">Finalist</span></div>
+        <div class="specimen" style="--base:#0e1213;--surface:#171c1e;--info:#171c1e;--text:#eee9df;--muted:#bdc1bb;--accent:#d7b778;--tint:rgba(215, 183, 120, 0.13);--border:rgba(224, 214, 189, 0.16);--map:#7fb0b9;--r:10px" role="img" aria-label="Westview Mindspace specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#0e1213"></i><i style="--swatch:#171c1e"></i><i style="--swatch:#243032"></i><i style="--swatch:#d7b778"></i><i style="--swatch:#eee9df"></i><i style="--swatch:#7fb0b9"></i><i style="--swatch:#592417"></i></div>
+        <p class="description">Evolves the selected graphite/brass Mindspace into the Westview parlor at night: graphite command glass, a petrol-teal tint behind information and oxblood in the shadows. Brass #d7b778 stays the only selection accent while a muted teal carries eyebrows and scroll thumbs.</p>
+        <p class="verdict"><span class="score">Judges 6.5 / 10</span> · the talk-vs-act surface idea and brass restraint; petrol must become a real token.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R1.02 / Chair poster</span><h3>Parlor</h3></div><span class="badge">Finalist</span></div>
+        <div class="specimen" style="--base:#120706;--surface:#1d0d0b;--info:#1d0d0b;--text:#f1e6d3;--muted:#c9b9a4;--accent:#d4a24f;--tint:rgba(212, 162, 79, 0.14);--border:rgba(241, 230, 211, 0.15);--map:#6fa3ae;--r:10px" role="img" aria-label="Parlor specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#120706"></i><i style="--swatch:#1d0d0b"></i><i style="--swatch:#2b1511"></i><i style="--swatch:#d4a24f"></i><i style="--swatch:#f1e6d3"></i><i style="--swatch:#6fa3ae"></i><i style="--swatch:#8b390d"></i></div>
+        <p class="description">Every panel is a slab of oxblood-black lacquer over the globe, with porcelain text and a worn brass accent taken from the chair and frame hardware. Thin vertical gold seams cut through headers and the active rail like a film-print scratch.</p>
+        <p class="verdict"><span class="score">Judges 5.75 / 10</span> · cinematic and warm, but the three surfaces read as one flat slab.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R1.03 / Stained glass</span><h3>HONEYCOMB</h3></div></div>
+        <div class="specimen" style="--base:#0b1416;--surface:#0e1b1d;--info:#0e1b1d;--text:#f2e9d8;--muted:#c9c0ae;--accent:#ec9a3c;--tint:rgba(236, 154, 60, 0.12);--border:rgba(236, 154, 60, 0.16);--map:#5fb3b9;--r:10px" role="img" aria-label="HONEYCOMB specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#0b1416"></i><i style="--swatch:#0e1b1d"></i><i style="--swatch:#17292d"></i><i style="--swatch:#ec9a3c"></i><i style="--swatch:#f2e9d8"></i><i style="--swatch:#5fb3b9"></i><i style="--swatch:#7a2a1a"></i></div>
+        <p class="description">The parlor at dusk seen through the honeycomb window: a petrol-black canvas, smoked teal glass panels and a faint hexagonal lattice on header strips. A single ember-amber accent glows warm on borders, titles and hover blooms.</p>
+        <p class="verdict secondary"><span class="score">Judges 5.25 / 10</span> · amber frames everything, so active reads like warning.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R1.04 / White Vision</span><h3>Porcelain Vigil</h3></div></div>
+        <div class="specimen" style="--base:#141618;--surface:#2a2d30;--info:#2a2d30;--text:#ede9e1;--muted:#c3c1ba;--accent:#e6d2a4;--tint:rgba(230, 210, 164, 0.12);--border:rgba(236, 230, 220, 0.16);--map:#5f8e99;--r:10px" role="img" aria-label="Porcelain Vigil specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#141618"></i><i style="--swatch:#2a2d30"></i><i style="--swatch:#3c3f43"></i><i style="--swatch:#e6d2a4"></i><i style="--swatch:#ede9e1"></i><i style="--swatch:#5f8e99"></i><i style="--swatch:#5a2418"></i></div>
+        <p class="description">Frosted china on black lacquer: cool porcelain-grey panels with ivory text, paler and more mineral than Mindspace. A pale, desaturated gold halo is the only chrome accent.</p>
+        <p class="verdict secondary"><span class="score">Judges 4.75 / 10</span> · panels too present over the globe; crimson danger text fails AA.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R1.05 / Room, literally</span><h3>Westview Console</h3></div></div>
+        <div class="specimen" style="--base:#0e1a1d;--surface:#152d33;--info:#152d33;--text:#f1e7d4;--muted:#cfc6b3;--accent:#e0a93b;--tint:rgba(224, 169, 59, 0.14);--border:rgba(213, 199, 173, 0.20);--map:#7fb3ba;--r:10px" role="img" aria-label="Westview Console specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#0e1a1d"></i><i style="--swatch:#152d33"></i><i style="--swatch:#1f4650"></i><i style="--swatch:#e0a93b"></i><i style="--swatch:#f1e7d4"></i><i style="--swatch:#7fb3ba"></i><i style="--swatch:#a8432f"></i></div>
+        <p class="description">Takes the Westview room literally: every panel is a dark petrol-teal lacquer slab with mustard brass titles and active controls. Oxblood is held for seams, pressed states and alert-adjacent chrome, with porcelain text throughout.</p>
+        <p class="verdict secondary"><span class="score">Judges n/a</span> · the judging pass returned no score; its own risk note flags drift toward the old cyan identity.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R1.06 / Editorial</span><h3>VISION TODAY — Masthead</h3></div></div>
+        <div class="specimen" style="--base:#130d0b;--surface:#18110f;--info:#18110f;--text:#f1e8d8;--muted:#c9bfae;--accent:#cfa044;--tint:rgba(207,160,68,0.12);--border:rgba(213,199,173,0.16);--map:#3f737f;--r:4px" role="img" aria-label="VISION TODAY — Masthead specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#130d0b"></i><i style="--swatch:#18110f"></i><i style="--swatch:#28201c"></i><i style="--swatch:#cfa044"></i><i style="--swatch:#f1e8d8"></i><i style="--swatch:#3f737f"></i><i style="--swatch:#7a2d1c"></i></div>
+        <p class="description">A mid-century broadcast newsroom at night: each panel is a newspaper column printed on warm oxblood-black stock, ruled by hairlines rather than glows. Mustard ochre is the single masthead colour for active state and selection, with petrol teal used only as structural seams.</p>
+        <p class="verdict secondary"><span class="score">Judges n/a</span> · the judging pass returned no score for this direction.</p>
+      </article>
+      </div>
+    </section>
+    <section aria-labelledby="r2-h">
+      <h2 id="r2-h" class="section-title">Round 2 — refinements of the two finalists</h2>
+      <p class="section-note">Three variants each of Westview Mindspace and Parlor (bolder, restraint, utility), re-scored by the same four lenses.</p>
+      <div class="directions">
+      <article>
+        <div class="heading"><div><span class="index">R2.01 / Mindspace · bolder</span><h3>Westview Parlor</h3></div><span class="badge">Winner</span></div>
+        <div class="specimen" style="--base:#121112;--surface:#1d1a19;--info:#152629;--text:#f2ebdd;--muted:#c4c3b8;--accent:#e2b04e;--tint:rgba(226, 176, 78, 0.14);--border:rgba(242, 235, 221, 0.15);--map:#6fa7b1;--r:10px" role="img" aria-label="Westview Parlor specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#121112"></i><i style="--swatch:#1d1a19"></i><i style="--swatch:#152629"></i><i style="--swatch:#e2b04e"></i><i style="--swatch:#f2ebdd"></i><i style="--swatch:#6fa7b1"></i><i style="--swatch:#4a1a12"></i></div>
+        <p class="description">Warm graphite command glass for everything that acts and a real petrol --surface-info token for everything that talks, so the split is a room tone rather than a gradient hint. A bolder mustard becomes the only interactive colour, drawn as a 3px seam, solid primary buttons and selected rows.</p>
+        <p class="verdict"><span class="score">Judges 6.88 / 10</span> · petrol as a surface, one mustard seam, no teal text, every text token above AA.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R2.02 / Parlor · restraint</span><h3>Parlor Quiet</h3></div></div>
+        <div class="specimen" style="--base:#130908;--surface:#1e0f0d;--info:#1e0f0d;--text:#f1e6d3;--muted:#c9b9a4;--accent:#cda55a;--tint:rgba(205, 165, 90, 0.12);--border:rgba(241, 230, 211, 0.14);--map:#6fa3ae;--r:10px" role="img" aria-label="Parlor Quiet specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#130908"></i><i style="--swatch:#1e0f0d"></i><i style="--swatch:#36211b"></i><i style="--swatch:#cda55a"></i><i style="--swatch:#f1e6d3"></i><i style="--swatch:#6fa3ae"></i><i style="--swatch:#8b390d"></i></div>
+        <p class="description">The oxblood parlor with the lamps turned down: a real three-step surface ladder and a dustier picture-frame brass used only for what is selected. A 1px petrol underline closes each panel header like a dado rail, and lighter petrol is the focus ring.</p>
+        <p class="verdict secondary"><span class="score">Judges 6.75 / 10</span> · cleanest restraint, but menus barely lift off the glass.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R2.03 / Parlor · bolder</span><h3>Parlor Noir</h3></div><span class="badge">Grafted</span></div>
+        <div class="specimen" style="--base:#140807;--surface:#1f0e0c;--info:#1f0e0c;--text:#f3e8d6;--muted:#cdbba5;--accent:#dba54c;--tint:rgba(219, 165, 76, 0.16);--border:rgba(243, 232, 214, 0.16);--map:#6fa3ae;--r:10px" role="img" aria-label="Parlor Noir specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#140807"></i><i style="--swatch:#1f0e0c"></i><i style="--swatch:#36201a"></i><i style="--swatch:#dba54c"></i><i style="--swatch:#f3e8d6"></i><i style="--swatch:#6fa3ae"></i><i style="--swatch:#8b390d"></i></div>
+        <p class="description">The chair-poster parlor after midnight, now with walls: glass, menu and raised surfaces climb in measured L* steps. A hotter brass marks selection with a 3px seam and bleed, while a 1px petrol rule trims every panel header and top edge.</p>
+        <p class="verdict"><span class="score">Judges 6.25 / 10</span> · its measured L* ladder and three-state rule carry into Lamplight.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R2.04 / Parlor · utility</span><h3>Parlor Ledger</h3></div></div>
+        <div class="specimen" style="--base:#120706;--surface:#1c0d0b;--info:#1c0d0b;--text:#f1e6d3;--muted:#cdbda8;--accent:#d4a24f;--tint:rgba(212, 162, 79, 0.14);--border:rgba(241, 230, 211, 0.14);--map:#6fa3ae;--r:8px" role="img" aria-label="Parlor Ledger specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#120706"></i><i style="--swatch:#1c0d0b"></i><i style="--swatch:#36211b"></i><i style="--swatch:#d4a24f"></i><i style="--swatch:#f1e6d3"></i><i style="--swatch:#6fa3ae"></i><i style="--swatch:#8b390d"></i></div>
+        <p class="description">The oxblood parlor as a ledger: a three-step ladder, brass reserved for selection and petrol hairlines under headers and along mobile sheet edges. Telemetry is treated as the product, set in 11.5px tabular JetBrains Mono on a 20px row grid.</p>
+        <p class="verdict secondary"><span class="score">Judges 6 / 10</span> · dense scale and petrol caps erode the parlor register on desktop.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R2.05 / Mindspace · restraint</span><h3>Westview Parlor (Quiet)</h3></div></div>
+        <div class="specimen" style="--base:#0e1314;--surface:#161b1c;--info:#15262a;--text:#eee9df;--muted:#bdc1bb;--accent:#cfa858;--tint:rgba(207, 168, 88, 0.12);--border:rgba(224, 214, 189, 0.14);--map:#78a6ae;--r:10px" role="img" aria-label="Westview Parlor (Quiet) specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#0e1314"></i><i style="--swatch:#161b1c"></i><i style="--swatch:#15262a"></i><i style="--swatch:#cfa858"></i><i style="--swatch:#eee9df"></i><i style="--swatch:#78a6ae"></i><i style="--swatch:#592417"></i></div>
+        <p class="description">The same talk-vs-act split with the lamps turned down: graphite command glass, petrol information surfaces and a dusty brass seam on whatever is active. No patterns, rings, glows or gradients compete with the imagery.</p>
+        <p class="verdict secondary"><span class="score">Judges 5 / 10</span> · too close to the brass-only parent; warning sits near the accent.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">R2.06 / Mindspace · utility</span><h3>Westview Instrument</h3></div><span class="badge">Grafted</span></div>
+        <div class="specimen" style="--base:#0d1214;--surface:#151d20;--info:#151d20;--text:#eee9df;--muted:#c0c4bd;--accent:#ddb14f;--tint:rgba(221, 177, 79, 0.14);--border:rgba(224, 214, 189, 0.15);--map:#7fb0b9;--r:8px" role="img" aria-label="Westview Instrument specimen: layer panel, telemetry readout and dock"><div class="brand"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><svg class="world" aria-hidden="true"><use href="#world"/></svg><div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div><div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>FEED <b>PREVIEW</b></div><div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span>◌&nbsp; Display</span></div></div>
+        <div class="palette" aria-hidden="true"><i style="--swatch:#0d1214"></i><i style="--swatch:#151d20"></i><i style="--swatch:#273538"></i><i style="--swatch:#ddb14f"></i><i style="--swatch:#eee9df"></i><i style="--swatch:#7fb0b9"></i><i style="--swatch:#592417"></i></div>
+        <p class="description">The parlor turned into a working instrument bench, tuned for dense telemetry and mobile sheets. Graphite-petrol glass and a petrol information surface carry the split, with a 2px mustard seam as the sole action colour.</p>
+        <p class="verdict"><span class="score">Judges 5 / 10</span> · telemetry grid and mobile sheet carry over; its cool glass lost the hue split.</p>
+      </article>
+      </div>
+    </section>
+    <section aria-labelledby="final-h" class="final">
+      <h2 id="final-h" class="section-title">Selected — Lamplight</h2>
+      <div class="final-grid">
+        <div class="specimen large" style="--base:#141011;--surface:rgba(34, 21, 19, 0.94);--info:rgba(20, 44, 50, 0.94);--info-raised:#1f373e;--raised:#2f2a2a;--menu:#3a3435;--text:#f2ebdd;--muted:#c7c1b5;--dim:#a7a39b;--accent:#d6ab55;--tint:rgba(214, 171, 85, 0.14);--border:rgba(242, 235, 221, 0.15);--hover:rgba(214, 171, 85, 0.62);--map:#6fa7b1;--ring:rgba(111,167,177,.9);--r:10px;--shadow:0 24px 56px rgba(18, 7, 5, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.045)" role="img" aria-label="Lamplight specimen: oxblood command glass, petrol information panel, brass seam on the active dock item">
+          <div class="brand wordmark"><svg class="lens" aria-hidden="true"><use href="#lens"/></svg><span>AUREL</span></div>
+          <p class="tagline">Your world. In perspective.</p>
+          <svg class="world" aria-hidden="true"><use href="#world"/></svg>
+          <div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row sel">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div><div class="menu">Sort by source</div></div>
+          <div class="readout">VIEW <b>ORBITAL</b><br>ALT <b>412 km</b><br>LAT <b>30.3165</b><br>FEED <b>PREVIEW</b></div>
+          <div class="dock"><span class="active">⌕&nbsp; Locate</span><span>◉&nbsp; Assistant</span><span class="focus">◌&nbsp; Display</span></div>
+        </div>
+        <div>
+          <h3>Surface ladder</h3>
+          <ul class="ladder"><li style="--swatch:#141011"><b>ink</b><code>#141011</code><span>L* 5.1</span></li><li style="--swatch:#211513"><b>glass</b><code>#211513</code><span>L* 8.2</span></li><li style="--swatch:#142a30"><b>info</b><code>#142a30</code><span>L* 15.6</span></li><li style="--swatch:#2f2a2a"><b>raised</b><code>#2f2a2a</code><span>L* 17.6</span></li><li style="--swatch:#3a3435"><b>menu</b><code>#3a3435</code><span>L* 22.3</span></li></ul>
+          <p class="section-note">Info-raised <code>#1f373e</code> (L* 21.5) holds cards on information surfaces. Brass <code>#d6ab55</code> is the only interactive colour; teal <code>#6fa7b1</code> is the focus ring and scroll thumb only.</p>
+          <h3>Contrast (computed, WCAG ratio)</h3>
+          <div class="table-wrap"><table>
+          <thead><tr><th scope="col">Token</th><th scope="col">Glass</th><th scope="col">Info</th><th scope="col">Raised</th><th scope="col">Info-raised</th><th scope="col">Menu</th></tr></thead>
+          <tbody>
+          <tr><th scope="row"><i class="dot" style="--swatch:#f2ebdd" aria-hidden="true"></i>textPrimary <code>#f2ebdd</code></th><td>14.99</td><td>12.61</td><td>11.92</td><td>10.57</td><td>10.28</td></tr>
+          <tr><th scope="row"><i class="dot" style="--swatch:#c7c1b5" aria-hidden="true"></i>textSecondary <code>#c7c1b5</code></th><td>9.92</td><td>8.35</td><td>7.89</td><td>7.00</td><td>6.81</td></tr>
+          <tr><th scope="row"><i class="dot" style="--swatch:#a7a39b" aria-hidden="true"></i>textDim <code>#a7a39b</code></th><td>7.07</td><td>5.95</td><td>5.62</td><td>4.99</td><td>4.85</td></tr>
+          <tr><th scope="row"><i class="dot" style="--swatch:#d6ab55" aria-hidden="true"></i>accent <code>#d6ab55</code></th><td>8.31</td><td>6.99</td><td>6.61</td><td>5.86</td><td>5.70</td></tr>
+          <tr><th scope="row"><i class="dot" style="--swatch:#e8836d" aria-hidden="true"></i>danger <code>#e8836d</code></th><td>6.69</td><td>5.63</td><td>5.32</td><td>4.72</td><td>4.59</td></tr>
+          <tr><th scope="row"><i class="dot" style="--swatch:#e38f45" aria-hidden="true"></i>warning <code>#e38f45</code></th><td>7.01</td><td>5.90</td><td>5.57</td><td>4.95</td><td>4.81</td></tr>
+          <tr><th scope="row"><i class="dot" style="--swatch:#a6bf8e" aria-hidden="true"></i>success <code>#a6bf8e</code></th><td>8.86</td><td>7.46</td><td>7.04</td><td>6.25</td><td>6.08</td></tr>
+          </tbody></table></div>
+          <p class="section-note">Ink <code>#141011</code> on brass primary buttons: 8.83. Opaque composites over ink: glass <code>#211513</code>, info <code>#142a30</code>.</p>
+        </div>
+      </div>
+      <div class="final-lists">
+        <div><h3>Signature details</h3><ol>
+          <li><strong>Brass seam.</strong> Brass seam, the one signature: .ui-rail__item--on gets box-shadow: inset 3px 0 var(--accent), 0 0 0 1px var(--accent-dim) with no gradient fill (replace the current #d7b778 literals in aurel.css lines 110-116); the active dock button gets box-shadow: inset 0 -3px var(--accent); primary buttons are solid var(--accent) with color #141011; selected list rows get box-shadow: inset 3px 0 var(--accent) plus background var(--accent-dim). Hover on inactive items changes only border-color to var(--glass-border-hover). Nothing else in chrome is brass-filled.</li>
+          <li><strong>Carpet vs wallpaper.</strong> Carpet vs wallpaper surface tokens: add --surface-info: rgba(20,44,50,.94) and --surface-info-raised: #1f373e to the AUREL :root; in workspace.css set body[data-workspace-appearance] { --workspace-surface: var(--surface-info); --workspace-raised: var(--surface-info-raised); --workspace-accent: var(--accent); --workspace-border: var(--glass-border); } (leave the &#x27;field&#x27; and &#x27;instrument&#x27; appearance blocks untouched); panel body lists (.ui-scroll), telemetry readouts, search results and #intel-hud .hud-summary use var(--surface-info); headers, dock, rails, dialogs and provider settings stay on var(--glass-bg). Replace the hardcoded #181b1d / #24282a / #bda679 fallbacks in planner.css and chronicle.css with var(--surface-info) / var(--surface-info-raised) / var(--accent) so Lens, Fieldbook, Planner and Chronicle read as one petrol room.</li>
+          <li><strong>Measured L* ladder.</strong> Measured L* ladder (grafted from Parlor Noir): ink #141011 (L* 5) -&gt; glass #211513 (L* 8) / info #142a30 (L* 16) -&gt; raised #2f2a2a (L* 18) and info-raised #1f373e (L* 21) for cards, inputs and chips, each with inset 0 1px 0 rgba(255,255,255,.045) as its only edge -&gt; menu #3a3435 (L* 22) for popovers, selects and context menus, carrying --panel-surface-shadow so every popup sits visibly above the glass it opens from. No 1px outer ring; --aurel-raised is re-pointed to var(--raised) and --aurel-ink to var(--bg-dark).</li>
+          <li><strong>Three-state rule.</strong> Three-state interaction rule (grafted from Parlor Noir, implemented with the winner&#x27;s colors): :focus-visible { outline: 2px solid rgba(111,167,177,.9); outline-offset: 2px } (petrol, the only teal besides scroll thumbs rgba(111,167,177,.45)); selected/active = brass seam plus var(--accent) text; hover = var(--glass-border-hover) hairline only. Focus, selection and hover never share a color, and cyan stays exclusively a map color.</li>
+          <li><strong>Dim mono eyebrows.</strong> Dim mono eyebrows: section titles, telemetry unit labels, list-group captions and HUD keys set in JetBrains Mono 10px uppercase, 0.12em tracking, color var(--text-dim) #a7a39b; teal is removed from all chrome text so brass is the only colored chrome text besides the status trio.</li>
+          <li><strong>Telemetry grid and mobile sheet.</strong> Dense telemetry grid and mobile sheet (grafted from Westview Instrument): telemetry rows in JetBrains Mono 11px (12px in HUD) with font-variant-numeric: tabular-nums at 24px line-height, unit suffixes in var(--text-secondary); the mobile bottom sheet uses var(--surface-info) with a 36x4px grab handle in var(--accent-dim), 44px minimum dock tap targets and padding-bottom: env(safe-area-inset-bottom).</li>
+          <li><strong>Wordmark scanline.</strong> Wordmark scanline: #title-bar h1 at Manrope 300, 28px, 0.3em tracking, var(--text-primary), position: relative, with a single ::after { content:&#x27;&#x27;; position:absolute; left:-2%; right:-2%; top:46%; height:1px; background:var(--bg-dark); opacity:.7; pointer-events:none } scoped under :root:not([data-ui-theme=&#x27;cyber&#x27;]). No attr(data-text) echo, no clip-path, no animation, so RTL/CJK titles cannot render empty and prefers-reduced-motion needs no override.</li>
+        </ol></div>
+        <div><h3>Risks to watch</h3><ul>
+          <li>info/glass measures 1.19 and the two levels are separated mainly by hue (petrol vs oxblood) plus 7 L* points; verify at 1x on an uncalibrated monitor over daylight imagery, and if the step reads as one tone, lighten the info surface to rgba(22,48,55,.94) rather than lightening glass, so command surfaces stay the darkest thing over the globe.</li>
+          <li>Menu #3a3435 (L* 22.3) is only 0.8 L* above info-raised #1f373e (L* 21.5); a popover opened from an info-raised card sits at 1.04 against it. Popovers normally open over the info body (1.37) or glass (1.46), but if a select inside a Planner/Chronicle card looks flat, lift menu to #3e3839 and re-check text-dim (4.85 on menu now, little margin).</li>
+          <li>textDim #a7a39b lands at 4.99 on info-raised and 4.85 on menu, AA with little headroom; keep eyebrows at 10px uppercase only on glass and info panels and use var(--text-secondary) for captions inside cards and menus.</li>
+          <li>Danger #e8836d is 4.72 on info-raised and 4.59 on menu; keep destructive labels at 12px or larger on raised sub-surfaces and never color-only.</li>
+          <li>Brass #d6ab55 is warmer than the old #d7b778; over night-lights imagery at low zoom a seam at the panel edge could rhyme with city glow. Keep it to seams, buttons and selected rows inside panels, and fall back to #d9b35a if seams vanish over city glow.</li>
+          <li>The oxblood-tinted command glass warms the satellite imagery bleeding through at .94 alpha; if the layer under panels looks sepia, raise alpha to .95 rather than cooling the tint, and raise --glass-border to rgba(242,235,221,.18) if panel edges disappear over dark ocean now that the 1px outer ring is gone.</li>
+          <li>Workspace scoping: the new --workspace-* mappings must go in the base body[data-workspace-appearance] block only; the &#x27;field&#x27; (light) and &#x27;instrument&#x27; appearance blocks and everything under :root[data-ui-theme=&#x27;cyber&#x27;] (cyber.css) stay untouched. The existing hardcoded brass literals in aurel.css (#d7b778, #f1d49a) must be replaced with var(--accent) or they will sit beside the new brass as a second gold.</li>
+        </ul></div>
+      </div>
+    </section>
+    <footer><div><strong>Method: six directions → four judging lenses → two finalists × three variants → four lenses → synthesis.</strong><br>Westview Mindspace won round 1; Westview Parlor won round 2; Lamplight grafts Parlor Noir’s ladder and three-state rule and Westview Instrument’s telemetry and mobile sheet. 2026-11-07.</div><div class="reference">Static specimens with identical anatomy isolate the palette decision; these are not live controls or live telemetry. Colours were sampled by eye from public key art. No Marvel artwork is included, and none ships in the application.</div></footer>
+  </main>
+</body>
+</html>

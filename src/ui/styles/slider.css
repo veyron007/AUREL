@@ -16,7 +16,7 @@
 .gev-quantitative-slider::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--slider-track, rgba(255, 255, 255, 0.08));
 }
 .gev-quantitative-slider::-webkit-slider-thumb {
   width: 10px;
@@ -35,7 +35,7 @@
   height: 3px;
   border: 0;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--slider-track, rgba(255, 255, 255, 0.08));
 }
 .gev-quantitative-slider::-moz-range-thumb {
   width: 10px;

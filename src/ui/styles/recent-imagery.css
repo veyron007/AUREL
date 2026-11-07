@@ -25,7 +25,7 @@
   inset: -18px;
   background: radial-gradient(
     ellipse at center,
-    rgba(0, 212, 255, 0.16) 0%,
+    color-mix(in srgb, var(--hud-accent, #00d4ff) 16%, transparent) 0%,
     transparent 65%
   );
   filter: blur(16px);
@@ -63,7 +63,7 @@
 
 /* ---- the fixed stack ---------------------------------------------------- */
 .recent-imagery-readout {
-  --weather-card-border: rgba(98, 181, 255, 0.28);
+  --weather-card-border: var(--hud-line, rgba(98, 181, 255, 0.28));
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -148,7 +148,7 @@
   border-color: var(--accent);
 }
 .recent-imagery-readout .ri-notice.warn {
-  color: rgba(255, 196, 120, 0.95);
+  color: color-mix(in srgb, var(--state-warn, #ffc478) 95%, transparent);
 }
 .recent-imagery-readout .ri-notice.info {
   color: var(--accent);
@@ -209,10 +209,12 @@
   background: var(--accent-dim);
 }
 .recent-imagery-readout .ri-card.preview {
-  box-shadow: inset 0 0 0 1px rgba(139, 233, 255, 0.35);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--hud-accent, #8be9ff) 35%, transparent);
 }
 .recent-imagery-readout .ri-card.pinned {
-  box-shadow: inset 0 0 0 1px rgba(139, 233, 255, 0.75);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--hud-accent, #8be9ff) 75%, transparent);
 }
 .recent-imagery-readout .ri-thumb {
   position: relative;

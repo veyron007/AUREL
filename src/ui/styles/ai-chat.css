@@ -38,7 +38,7 @@
   width: 2.45rem;
   height: 2.45rem;
   padding: 0.48rem;
-  border: 1px solid rgba(232, 234, 237, 0.36);
+  border: 1px solid var(--glass-border, rgba(232, 234, 237, 0.36));
   border-radius: 0.65rem;
   background: rgba(232, 234, 237, 0.04);
   box-shadow:
@@ -53,10 +53,10 @@
   #gev-voice-control[data-assistant-mode='chat']
   #gev-chat-button
   > svg {
-  border-color: rgba(54, 220, 255, 0.48);
+  border-color: var(--accent-strong, rgba(54, 220, 255, 0.48));
   box-shadow:
-    0 0 0 0.18rem #36dcff0f,
-    0 0 0.75rem #36dcff1f;
+    0 0 0 0.18rem var(--accent-dim, #36dcff0f),
+    0 0 0.75rem var(--accent-dim, #36dcff1f);
 }
 #command-dock :is(.gev-mic-label, .gev-chat-label) {
   margin: 0;
@@ -67,7 +67,7 @@
 #command-dock #gev-voice-control[data-assistant-mode='chat'] #gev-chat-button,
 #command-dock #gev-voice-button:hover {
   color: var(--accent);
-  background: rgba(54, 220, 255, 0.08);
+  background: var(--accent-dim, rgba(54, 220, 255, 0.08));
 }
 #command-dock #gev-chat-button:focus-visible {
   outline: 2px solid var(--accent);
@@ -84,8 +84,8 @@
   flex-direction: column;
   overflow: hidden;
   color: var(--text-primary);
-  background: rgba(7, 22, 31, 0.97);
-  border: 1px solid rgba(54, 220, 255, 0.3);
+  background: var(--glass-bg, rgba(7, 22, 31, 0.97));
+  border: 1px solid var(--glass-border, rgba(54, 220, 255, 0.3));
   border-radius: 0.9rem;
   box-shadow: 0 1rem 3rem #0008;
   text-align: left;
@@ -232,9 +232,9 @@
   gap: 0.6rem;
   margin: 0.4rem 0.8rem 0.8rem;
   padding: 0.65rem;
-  border: 1px solid #36dcff40;
+  border: 1px solid var(--glass-border, #36dcff40);
   border-radius: 0.65rem;
-  background: #020a1080;
+  background: var(--raised, #020a1080);
 }
 #gev-chat-input {
   box-sizing: border-box;
@@ -253,7 +253,7 @@
   line-height: 1.2rem;
 }
 #gev-chat-form:focus-within {
-  border-color: rgba(54, 220, 255, 0.45);
+  border-color: var(--focus-ring, rgba(54, 220, 255, 0.45));
 }
 #gev-chat-send {
   width: 2rem;
@@ -262,7 +262,7 @@
   border: 0;
   border-radius: 0.4rem;
   background: var(--accent);
-  color: #06141b;
+  color: var(--bg-dark, #06141b);
   cursor: pointer;
 }
 #gev-chat-send:disabled {
@@ -412,7 +412,7 @@
   .gev-panel-layout
   button:is(:hover, [aria-pressed='true']) {
   color: var(--accent);
-  background: #36dcff14;
+  background: var(--accent-dim, #36dcff14);
 }
 #gev-chat-panel .gev-chat-header {
   align-items: flex-start;
@@ -447,7 +447,7 @@
 }
 #gev-chat-attach:is(:hover, [aria-expanded='true']) {
   color: var(--accent);
-  background: #36dcff14;
+  background: var(--accent-dim, #36dcff14);
 }
 #gev-chat-attach:disabled {
   opacity: 0.3;
@@ -458,7 +458,7 @@
   padding: 0.7rem;
   border: 1px solid var(--glass-border);
   border-radius: 0.6rem;
-  background: #020a10;
+  background: var(--menu-bg, #020a10);
 }
 #gev-chat-attach-menu label {
   display: block;
@@ -471,7 +471,7 @@
   border: 1px solid var(--glass-border);
   border-radius: 0.3rem;
   color: var(--text-primary);
-  background: #10232d;
+  background: var(--raised, #10232d);
   font: inherit;
 }
 #gev-chat-layer-row {
@@ -504,9 +504,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0.3rem 0.5rem;
-  border: 1px solid #36dcff40;
+  border: 1px solid var(--accent-glow, #36dcff40);
   border-radius: 1rem;
-  background: #36dcff14;
+  background: var(--accent-dim, #36dcff14);
   color: var(--accent);
   font: inherit;
   font-size: 0.7rem;
@@ -550,7 +550,7 @@
   border: 0;
   border-radius: 0.5rem;
   color: var(--accent);
-  background: #36dcff14;
+  background: var(--accent-dim, #36dcff14);
   cursor: pointer;
 }
 #gev-chat-panel[data-minimized='true'] #gev-chat-input {
@@ -564,10 +564,10 @@
 
 #gev-chat-panel[data-minimized='true']:focus-within {
   width: min(25rem, calc(100vw - 1.5rem));
-  border-color: rgba(54, 220, 255, 0.45);
+  border-color: var(--focus-ring, rgba(54, 220, 255, 0.45));
   box-shadow:
     0 0.5rem 1.5rem #0006,
-    0 0 0 1px #36dcff14;
+    0 0 0 1px var(--accent-dim, #36dcff14);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -587,9 +587,9 @@
   width: 100%;
   box-sizing: border-box;
   padding: 0.65rem 0.8rem;
-  border: 1px solid #36dcff26;
+  border: 1px solid var(--glass-border, #36dcff26);
   border-radius: 0.85rem;
-  background: rgba(12, 26, 34, 0.96);
+  background: var(--glass-bg, rgba(12, 26, 34, 0.96));
   box-shadow: 0 0.5rem 1.5rem #0005;
   animation: gev-reply-slide 180ms ease-out;
 }
@@ -615,7 +615,7 @@
 }
 #gev-chat-expand-reply:hover {
   color: var(--accent);
-  background: #36dcff14;
+  background: var(--accent-dim, #36dcff14);
 }
 #gev-chat-mini-text {
   margin: 0.4rem 0 0;
@@ -703,16 +703,16 @@
   gap: 0.35rem;
   min-height: 2rem;
   padding: 0.3rem 0.75rem 0.3rem 0.45rem;
-  border: 1px solid #36dcff66;
+  border: 1px solid var(--accent-strong, #36dcff66);
   border-radius: 0.45rem;
-  background: #36dcff1f;
+  background: var(--accent-dim, #36dcff1f);
   color: var(--accent);
   font: 600 0.75rem var(--font-sans);
   letter-spacing: 0.02em;
   cursor: pointer;
 }
 #gev-voice-control .gev-voice-panel :is(#gev-chat-back, #gev-voice-back):hover {
-  background: #36dcff33;
+  background: var(--accent-glow, #36dcff33);
 }
 #gev-chat-back:disabled {
   opacity: 0.3;
@@ -742,8 +742,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.45rem;
-  background: #fff;
-  color: #132630;
+  background: var(--text-primary, #fff);
+  color: var(--bg-dark, #132630);
   font-size: 0;
   letter-spacing: 0;
 }
@@ -761,8 +761,8 @@
   min-width: 0;
   padding: 0.65rem 0.8rem;
   border-radius: 0.6rem;
-  background: #36dcff14;
-  border: 1px solid #36dcff20;
+  background: var(--accent-dim, #36dcff14);
+  border: 1px solid var(--accent-dim, #36dcff20);
 }
 
 .gev-chat-message[data-role='assistant'] {
@@ -786,7 +786,8 @@
   height: 1.75rem;
   margin: 0.4rem 0 0;
   border-radius: 0.45rem;
-  background: #10242e url('/logo.svg') center / 1.45rem 1.45rem no-repeat;
+  background: var(--raised, #10242e) url('/logo.svg') center / 1.45rem 1.45rem
+    no-repeat;
   font-size: 0;
   letter-spacing: 0;
 }
@@ -799,10 +800,10 @@
 #command-dock > :is(#location-bar, #control-panel) {
   background: linear-gradient(
     160deg,
-    rgba(26, 30, 34, 0.96),
-    rgba(16, 21, 26, 0.97)
+    var(--glass-bg, rgba(26, 30, 34, 0.96)),
+    var(--glass-bg, rgba(16, 21, 26, 0.97))
   );
-  border-color: rgba(125, 158, 169, 0.25);
+  border-color: var(--glass-border, rgba(125, 158, 169, 0.25));
   box-shadow:
     inset 0 1px 0 #b3f1ff0d,
     inset 0 -1px 0 #74d2e50a,
@@ -812,37 +813,41 @@
   color: #91aab2;
 }
 #command-dock :is(.location-toolbar-label, .panel-header .panel-title) {
-  color: #b8c9cf;
+  color: var(--dock-label-color, #b8c9cf);
 }
 #command-dock > #gev-voice-control {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.65rem 0.9rem 0.85rem;
-  border: 1px solid rgba(54, 220, 255, 0.32);
+  border: 1px solid var(--accent-glow, rgba(54, 220, 255, 0.32));
   border-radius: 1.35rem;
   background: linear-gradient(
     155deg,
-    rgba(14, 39, 50, 0.98),
-    rgba(7, 25, 35, 0.98) 70%
+    var(--glass-bg, rgba(14, 39, 50, 0.98)),
+    var(--glass-bg, rgba(7, 25, 35, 0.98)) 70%
   );
   box-shadow:
     inset 0 0 0 1px #8ae5f00a,
     inset 0 1px 0 #c3f5ff14,
     0 8px 24px #0006,
-    0 0 18px #36dcff12;
+    0 0 18px var(--accent-dim, #36dcff12);
 }
 #command-dock #gev-voice-button,
 #command-dock #gev-chat-button {
-  color: #a8c5ce;
+  color: var(--text-secondary, #a8c5ce);
   transform: translateY(0.1rem);
 }
 #command-dock #gev-voice-control .gev-mic-orbit,
 #command-dock #gev-chat-button > svg {
-  border-color: #90b7c366;
-  background: linear-gradient(145deg, #1a3743, #0b202b);
+  border-color: var(--glass-border, #90b7c366);
+  background: linear-gradient(
+    145deg,
+    var(--raised, #1a3743),
+    var(--raised, #0b202b)
+  );
   box-shadow:
     0 0 0 3px #061d2980,
-    0 0 0 4px #a4e7f029,
+    0 0 0 4px var(--glass-border, #a4e7f029),
     inset 0 1px 3px #c6f5ff12,
     0 3px 7px #0006;
 }
@@ -973,7 +978,7 @@
 #gev-chat-panel .gev-chat-message > span,
 #gev-chat-panel #gev-chat-input,
 #gev-chat-panel #gev-chat-mini-text {
-  color: #dcebf0;
+  color: var(--text-primary, #dcebf0);
   font-size: 13px;
 }
 #gev-chat-suggestions {
@@ -996,15 +1001,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 5px 8px;
-  border: 1px solid #70c8dd26;
+  border: 1px solid var(--glass-border, #70c8dd26);
   border-radius: 6px;
-  color: #b4cdd5;
-  background: #36dcff08;
+  color: var(--text-secondary, #b4cdd5);
+  background: var(--raised, #36dcff08);
   font: 11px var(--font-sans);
   cursor: pointer;
 }
 #gev-chat-suggestions button:hover {
-  background: #36dcff18;
+  background: var(--accent-dim, #36dcff18);
 }
 #gev-chat-panel[data-minimized='true'] #gev-chat-suggestions {
   display: none;
@@ -1028,8 +1033,8 @@
   transform: translate(-50%, -50%);
   background: linear-gradient(
     transparent,
-    rgba(145, 190, 204, 0.35) 25%,
-    rgba(145, 190, 204, 0.35) 75%,
+    var(--glass-border, rgba(145, 190, 204, 0.35)) 25%,
+    var(--glass-border, rgba(145, 190, 204, 0.35)) 75%,
     transparent
   );
   pointer-events: none;
@@ -1058,12 +1063,12 @@
   background: conic-gradient(
     from var(--gev-edge-angle),
     transparent 0deg,
-    #36dcff18 55deg,
-    #36dcffb3 90deg,
-    #b6f5ff 105deg,
+    var(--accent-dim, #36dcff18) 55deg,
+    var(--accent-strong, #36dcffb3) 90deg,
+    var(--accent-hover, #b6f5ff) 105deg,
     transparent 145deg,
     transparent 220deg,
-    #36dcff70 270deg,
+    var(--accent-glow, #36dcff70) 270deg,
     transparent 310deg
   );
   mask:
@@ -1101,14 +1106,19 @@
   justify-content: center;
   align-items: center;
   gap: 2px;
-  filter: drop-shadow(0 0 3px #36dcff24);
+  filter: drop-shadow(0 0 3px var(--accent-dim, #36dcff24));
 }
 #command-dock #gev-voice-control > .gev-voice-visualizer span {
   flex: 1 1 0;
   min-width: 0;
   max-width: 4px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #a3edf4, #42bfd7 55%, #238ba8);
+  background: linear-gradient(
+    180deg,
+    var(--accent-hover, #a3edf4),
+    var(--accent, #42bfd7) 55%,
+    var(--accent-strong, #238ba8)
+  );
   box-shadow: none;
   transform-origin: center;
   transform: scaleY(calc(0.4 + min(var(--bar), 14 - var(--bar)) * 0.085));
@@ -1142,7 +1152,11 @@
   #gev-voice-control[data-speaker='user']
   > .gev-voice-visualizer
   span {
-  background: linear-gradient(180deg, #f4dcab, #d9ac61);
+  background: linear-gradient(
+    180deg,
+    var(--accent-hover, #f4dcab),
+    var(--accent, #d9ac61)
+  );
 }
 @media (prefers-reduced-motion: reduce) {
   #command-dock #gev-voice-control > .gev-voice-visualizer span {
@@ -1195,7 +1209,7 @@
   left: 50%;
   transform: translateX(-50%);
   max-width: 6rem;
-  color: #a8c5ce;
+  color: var(--text-secondary, #a8c5ce);
   font: 8px/1.2 var(--font-mono, monospace);
   text-align: center;
   pointer-events: none;
@@ -1279,9 +1293,9 @@ body[data-assistant-docked='true'] #right-context-rail {
   justify-content: center;
   gap: 0;
   padding: 0.65rem 0.8rem;
-  border: 1px solid #36dcff26;
+  border: 1px solid var(--glass-border, #36dcff26);
   border-radius: 0.85rem;
-  background: rgba(12, 26, 34, 0.96);
+  background: var(--glass-bg, rgba(12, 26, 34, 0.96));
   box-shadow: 0 0.5rem 1.5rem #0005;
 }
 #command-dock
@@ -1324,7 +1338,7 @@ body[data-assistant-docked='true'] #right-context-rail {
   .gev-voice-panel-header
   button:not(#gev-chat-back, #gev-voice-back):hover {
   color: var(--accent);
-  background: #36dcff14;
+  background: var(--accent-dim, #36dcff14);
 }
 #command-dock
   #gev-voice-control
@@ -1483,7 +1497,7 @@ body[data-assistant-docked='true'] #right-context-rail {
   #command-dock
   #gev-voice-control
   #gev-chat-panel[data-minimized='true']:focus-within {
-  border-color: rgba(54, 220, 255, 0.45);
+  border-color: var(--focus-ring, rgba(54, 220, 255, 0.45));
 }
 
 /* A backdrop-filter on the voice control would stop the panels inside it
@@ -1523,7 +1537,7 @@ body[data-assistant-docked='true'] #right-context-rail {
 }
 .gev-voice-hints q {
   padding: 0.25rem 0.6rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
   border-radius: 0.45rem;
   color: var(--text-primary);
 }
@@ -1580,8 +1594,8 @@ body[data-assistant-docked='true'] #right-context-rail {
     [aria-selected='true']
   ) {
   color: var(--accent);
-  background: rgba(54, 220, 255, 0.12);
-  border-color: rgba(54, 220, 255, 0.35);
+  background: var(--accent-dim, rgba(54, 220, 255, 0.12));
+  border-color: var(--accent-glow, rgba(54, 220, 255, 0.35));
 }
 #command-dock
   #gev-voice-control

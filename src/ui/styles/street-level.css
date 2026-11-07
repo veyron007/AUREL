@@ -16,7 +16,7 @@
   inset: -18px;
   background: radial-gradient(
     ellipse at center,
-    rgba(5, 203, 99, 0.16) 0%,
+    color-mix(in srgb, var(--hud-accent, #05cb63) 16%, transparent) 0%,
     transparent 65%
   );
   filter: blur(16px);
@@ -77,12 +77,12 @@
 
 .sl-status.is-busy {
   color: var(--accent);
-  border-color: rgba(0, 212, 255, 0.55);
+  border-color: var(--accent-strong, rgba(0, 212, 255, 0.55));
 }
 
 .sl-status.is-warn {
-  color: #ffb300;
-  border-color: rgba(255, 179, 0, 0.55);
+  color: var(--state-warn, #ffb300);
+  border-color: color-mix(in srgb, var(--state-warn, #ffb300) 55%, transparent);
 }
 
 /* Collapsed strips hide the body entirely: nothing to paint or tab into. */
@@ -165,8 +165,8 @@
 }
 
 .sl-chips .data-toggle-chip.chip-error {
-  color: #ffb300;
-  border-color: rgba(255, 179, 0, 0.55);
+  color: var(--state-warn, #ffb300);
+  border-color: color-mix(in srgb, var(--state-warn, #ffb300) 55%, transparent);
 }
 
 /* The coverage hint and OPEN STREET VIEW share a line; the hint wraps. */
@@ -209,7 +209,7 @@ html:not([lang='en']) .sl-meta-row .sl-nearest-btn {
   font-family: var(--font-sans);
   font-size: 0.72rem;
   line-height: 1.4;
-  color: #ff8a80;
+  color: var(--state-error, #ff8a80);
 }
 
 /* ── Filters ──────────────────────────────────────────────────── */

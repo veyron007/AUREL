@@ -23,7 +23,7 @@
 .scene-btn:hover:not(:disabled) {
   color: var(--accent);
   border-color: var(--accent);
-  background: rgba(0, 212, 255, 0.14);
+  background: var(--accent-dim, rgba(0, 212, 255, 0.14));
 }
 
 .gev-action-button:disabled,
@@ -34,8 +34,8 @@
 
 .gev-action-button--danger:hover:not(:disabled),
 .scene-btn-danger:hover:not(:disabled) {
-  color: #ff7272;
-  border-color: #ff7272;
+  color: var(--state-error, #ff7272);
+  border-color: var(--state-error, #ff7272);
   background: rgba(255, 88, 88, 0.15);
 }
 
@@ -54,6 +54,6 @@
 }
 
 .gev-action-button--compact.gev-action-button--danger:hover:not(:disabled) {
-  color: #ff7e7e;
-  border-color: #ff7e7e;
+  color: var(--state-error, #ff7e7e);
+  border-color: var(--state-error, #ff7e7e);
 }

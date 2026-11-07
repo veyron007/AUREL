@@ -28,7 +28,7 @@
   flex: 0 0 1rem;
   width: 1rem;
   height: 1rem;
-  background: rgba(232, 234, 237, 0.3);
+  background: var(--text-dim, rgba(232, 234, 237, 0.3));
   mask-position: center;
   mask-repeat: no-repeat;
   mask-size: contain;
@@ -53,7 +53,7 @@
 #command-dock :is(#location-bar, #control-panel):hover .dock-label-icon,
 #command-dock :is(#location-bar, #control-panel).dock-pinned .dock-label-icon {
   background: var(--accent);
-  filter: drop-shadow(0 0 0.35rem rgba(0, 212, 255, 0.28));
+  filter: drop-shadow(0 0 0.35rem var(--accent-glow, rgba(0, 212, 255, 0.28)));
 }
 
 #command-dock :is(#location-bar, #control-panel):hover .location-toolbar-label,
@@ -161,7 +161,7 @@
   margin: -1.48rem -0.22rem 0.25rem 0;
   padding: 0;
   border-radius: 50%;
-  background: rgba(8, 24, 34, 0.96);
+  background: var(--raised, rgba(8, 24, 34, 0.96));
   box-shadow: 0 0.35rem 0.9rem rgba(0, 0, 0, 0.5);
   transform: translateY(-0.12rem);
 }
@@ -271,12 +271,12 @@
   height: 2.45rem;
   aspect-ratio: 1;
   box-sizing: border-box;
-  background: rgba(0, 212, 255, 0.06);
-  border: 1px solid rgba(0, 212, 255, 0.48);
+  background: var(--accent-dim, rgba(0, 212, 255, 0.06));
+  border: 1px solid var(--accent-strong, rgba(0, 212, 255, 0.48));
   border-radius: 50%;
   box-shadow:
-    0 0 0 0.18rem rgba(0, 212, 255, 0.06),
-    0 0 0.9rem rgba(0, 212, 255, 0.12);
+    0 0 0 0.18rem var(--accent-dim, rgba(0, 212, 255, 0.06)),
+    0 0 0.9rem var(--accent-dim, rgba(0, 212, 255, 0.12));
 }
 
 #command-dock .gev-mic-label {
@@ -347,7 +347,7 @@
   display: grid;
   align-items: initial;
   width: var(--dock-voice-width);
-  border-color: rgba(255, 92, 110, 0.58);
+  border-color: var(--state-error, rgba(255, 92, 110, 0.58));
   border-radius: 0.4rem;
 }
 
@@ -358,7 +358,7 @@
 #command-dock #gev-voice-control[data-status='error'] #gev-voice-detail {
   max-width: none;
   overflow: hidden;
-  color: #ffb4bd;
+  color: var(--state-error, #ffb4bd);
   line-height: 1.2;
   text-align: center;
   text-overflow: ellipsis;
@@ -374,9 +374,9 @@
   padding: 0.85rem 0.9rem;
   visibility: hidden;
   opacity: 0;
-  color: rgba(255, 220, 224, 0.92);
-  background: rgba(34, 10, 16, 0.96);
-  border: 1px solid rgba(255, 92, 110, 0.5);
+  color: var(--text-primary, rgba(255, 220, 224, 0.92));
+  background: var(--glass-bg, rgba(34, 10, 16, 0.96));
+  border: 1px solid var(--state-error, rgba(255, 92, 110, 0.5));
   border-radius: 0.42rem;
   box-shadow:
     0 0.9rem 2.2rem rgba(0, 0, 0, 0.62),
@@ -412,7 +412,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  color: #ff8f9d;
+  color: var(--state-error, #ff8f9d);
   font-family: var(--font-mono);
   font-size: 0.62rem;
   font-weight: 600;
@@ -421,9 +421,9 @@
 
 #command-dock .gev-voice-error-dismiss {
   padding: 0.25rem 0.42rem;
-  color: rgba(255, 220, 224, 0.72);
+  color: var(--text-secondary, rgba(255, 220, 224, 0.72));
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 143, 157, 0.32);
+  border: 1px solid var(--glass-border, rgba(255, 143, 157, 0.32));
   border-radius: 0.2rem;
   font-family: var(--font-mono);
   font-size: 0.43rem;
@@ -433,7 +433,7 @@
 
 #command-dock #gev-voice-error-detail {
   margin-top: 0.65rem;
-  color: rgba(255, 232, 235, 0.92);
+  color: var(--text-primary, rgba(255, 232, 235, 0.92));
   font-family: var(--font-sans);
   font-size: 0.78rem;
   line-height: 1.45;
@@ -441,7 +441,7 @@
 
 #command-dock .gev-voice-error-hint {
   margin-top: 0.5rem;
-  color: rgba(255, 196, 203, 0.58);
+  color: var(--text-secondary, rgba(255, 196, 203, 0.58));
   font-family: var(--font-mono);
   font-size: 0.52rem;
   line-height: 1.45;

@@ -157,7 +157,7 @@
   background: var(--workspace-raised, var(--menu-bg));
 }
 .fieldbook-notice--error {
-  border-inline-start-color: #c76e62;
+  border-inline-start-color: var(--state-error, #c76e62);
 }
 .fieldbook-preview {
   scroll-margin: 12px;

@@ -16,7 +16,7 @@
   inset: -18px;
   background: radial-gradient(
     ellipse at center,
-    rgba(0, 212, 255, 0.16) 0%,
+    color-mix(in srgb, var(--hud-accent, #00d4ff) 16%, transparent) 0%,
     transparent 65%
   );
   filter: blur(16px);
@@ -96,7 +96,7 @@ html:not([lang='en']) .cctv-controls .scene-btn {
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.7px;
-  color: #91edff;
+  color: var(--hud-ink, #91edff);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 7px;
@@ -108,8 +108,8 @@ html:not([lang='en']) .cctv-controls .scene-btn {
 }
 
 .cctv-cal-value:hover:not(:disabled) {
-  border-color: rgba(0, 212, 255, 0.45);
-  background: rgba(0, 212, 255, 0.08);
+  border-color: var(--accent-strong, rgba(0, 212, 255, 0.45));
+  background: color-mix(in srgb, var(--hud-accent, #00d4ff) 8%, transparent);
 }
 
 .cctv-calibration-actions {
@@ -136,36 +136,64 @@ html:not([lang='en']) .cctv-controls .scene-btn {
 #cctv-projection-btn.active {
   color: var(--accent);
   border-color: var(--accent);
-  background: rgba(0, 212, 255, 0.14);
+  background: color-mix(in srgb, var(--hud-accent, #00d4ff) 14%, transparent);
 }
 
 #cctv-quality-chip {
   min-width: 90px;
-  --status-badge-border: rgba(0, 212, 255, 0.2);
-  --status-badge-color: #8fe7ff;
-  --status-badge-background: rgba(0, 212, 255, 0.08);
+  --status-badge-border: var(--hud-line, rgba(0, 212, 255, 0.2));
+  --status-badge-color: var(--hud-ink, #8fe7ff);
+  --status-badge-background: color-mix(
+    in srgb,
+    var(--hud-accent, #00d4ff) 8%,
+    transparent
+  );
 }
 
 /* CAL badge states (cctv-v2 §3b, amended by LOCKED §9.2 — panel-only, no
    in-world tint). Three visually distinct states: calibrated / curated /
    raw-prior. */
 #cctv-quality-chip[data-cal-badge='calibrated'] {
-  --status-badge-color: #adffbf;
-  --status-badge-border: rgba(141, 255, 135, 0.42);
-  --status-badge-background: rgba(141, 255, 135, 0.12);
+  --status-badge-color: var(--state-ok, #adffbf);
+  --status-badge-border: color-mix(
+    in srgb,
+    var(--state-ok, #8dff87) 42%,
+    transparent
+  );
+  --status-badge-background: color-mix(
+    in srgb,
+    var(--state-ok, #8dff87) 12%,
+    transparent
+  );
 }
 
 #cctv-quality-chip[data-cal-badge='curated'] {
-  --status-badge-color: #ffe6a2;
-  --status-badge-border: rgba(255, 217, 122, 0.35);
-  --status-badge-background: rgba(255, 217, 122, 0.1);
+  --status-badge-color: var(--hud-accent, #ffe6a2);
+  --status-badge-border: color-mix(
+    in srgb,
+    var(--hud-accent, #ffd97a) 35%,
+    transparent
+  );
+  --status-badge-background: color-mix(
+    in srgb,
+    var(--hud-accent, #ffd97a) 10%,
+    transparent
+  );
 }
 
 /* Unsaved live edits (save-gated persistence, viewshed design §3e). */
 #cctv-quality-chip[data-cal-badge='edited'] {
-  --status-badge-color: #ffd08a;
-  --status-badge-border: rgba(255, 176, 82, 0.5);
-  --status-badge-background: rgba(255, 176, 82, 0.14);
+  --status-badge-color: var(--state-warn, #ffd08a);
+  --status-badge-border: color-mix(
+    in srgb,
+    var(--state-warn, #ffb052) 50%,
+    transparent
+  );
+  --status-badge-background: color-mix(
+    in srgb,
+    var(--state-warn, #ffb052) 14%,
+    transparent
+  );
 }
 
 .cctv-frame-wrap {
@@ -223,7 +251,7 @@ html:not([lang='en']) .cctv-controls .scene-btn {
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 2.2px;
-  color: rgba(145, 237, 255, 0.62);
+  color: color-mix(in srgb, var(--hud-ink, #91edff) 62%, transparent);
   pointer-events: none;
 }
 
@@ -286,15 +314,31 @@ html:not([lang='en']) .cctv-controls .scene-btn {
 }
 
 #cctv-source-badge[data-frame-state='loading'] {
-  --status-badge-color: #ffe59b;
-  --status-badge-border: rgba(255, 205, 92, 0.45);
-  --status-badge-background: rgba(255, 205, 92, 0.1);
+  --status-badge-color: var(--state-busy, #ffe59b);
+  --status-badge-border: color-mix(
+    in srgb,
+    var(--state-busy, #ffcd5c) 45%,
+    transparent
+  );
+  --status-badge-background: color-mix(
+    in srgb,
+    var(--state-busy, #ffcd5c) 10%,
+    transparent
+  );
 }
 
 #cctv-source-badge[data-frame-state='error'] {
-  --status-badge-color: #ffb0b0;
-  --status-badge-border: rgba(255, 102, 102, 0.5);
-  --status-badge-background: rgba(255, 72, 72, 0.11);
+  --status-badge-color: var(--state-error, #ffb0b0);
+  --status-badge-border: color-mix(
+    in srgb,
+    var(--state-error, #ff6666) 50%,
+    transparent
+  );
+  --status-badge-background: color-mix(
+    in srgb,
+    var(--state-error, #ff4848) 11%,
+    transparent
+  );
 }
 
 .cctv-summary-label {
@@ -310,8 +354,9 @@ html:not([lang='en']) .cctv-controls .scene-btn {
   font-size: 10px;
   letter-spacing: 0.8px;
   line-height: 1.45;
-  color: #a8f7ff;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.18);
+  color: var(--hud-ink, #a8f7ff);
+  text-shadow: 0 0 10px
+    color-mix(in srgb, var(--hud-accent, #00d4ff) 18%, transparent);
 }
 
 /* Tighter calibration chips keep the seven values to two rows, so
