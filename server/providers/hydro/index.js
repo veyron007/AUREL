@@ -44,7 +44,11 @@ export function parseImergQuery(url) {
   const window = url.searchParams.get('window');
   if (!Object.hasOwn(IMERG_WINDOWS, window)) throw new Error('query');
   const keys = (url.searchParams.get('cells') || '').split(',');
-  if (!keys.length || keys.length > MAX_CELLS || new Set(keys).size !== keys.length)
+  if (
+    !keys.length ||
+    keys.length > MAX_CELLS ||
+    new Set(keys).size !== keys.length
+  )
     throw new Error('query');
   const cells = keys.map((key) => {
     const match = /^(\d{1,4}):(\d{1,4})$/.exec(key);
@@ -54,7 +58,10 @@ export function parseImergQuery(url) {
   });
   const lons = cells.map((c) => c.center[0]),
     lats = cells.map((c) => c.center[1]);
-  if (Math.max(...lons) - Math.min(...lons) > 2 || Math.max(...lats) - Math.min(...lats) > 2)
+  if (
+    Math.max(...lons) - Math.min(...lons) > 2 ||
+    Math.max(...lats) - Math.min(...lats) > 2
+  )
     throw new Error('query');
   return { cells, window, steps: IMERG_WINDOWS[window] };
 }
@@ -78,6 +85,7 @@ export function createHydroMiddleware({
   now = Date.now,
   budget = createFieldContextBudget({ now }),
   timeoutMs = 20_000,
+  imergLongTimeoutMs = 45_000,
 } = {}) {
   const admit = makeRateLimiter({ windowMs: 60_000, max: 20, globalMax: 40 });
   const cache = new Map(),
@@ -123,7 +131,10 @@ export function createHydroMiddleware({
       } catch (error) {
         return {
           state: 'unavailable',
-          reason: error?.code === 'rate-limited' ? 'rate-limited' : 'upstream-unavailable',
+          reason:
+            error?.code === 'rate-limited'
+              ? 'rate-limited'
+              : 'upstream-unavailable',
           unitsReserved: units,
         };
       }
@@ -136,16 +147,25 @@ export function createHydroMiddleware({
     try {
       const value = await requestWithDeadline(
         (signal) => upstreams.imerg(query.cells, query.steps, signal),
-        { timeoutMs },
+        { timeoutMs: query.steps > 6 ? imergLongTimeoutMs : timeoutMs },
       );
       const published = value.steps.filter((step) => step.published).length;
       return {
-        state: published === value.steps.length ? 'ready' : published ? 'partial' : 'unavailable',
+        state:
+          published === value.steps.length
+            ? 'ready'
+            : published
+              ? 'partial'
+              : 'unavailable',
         window: query.window,
         ...value,
       };
     } catch {
-      return { state: 'unavailable', reason: 'upstream-unavailable', window: query.window };
+      return {
+        state: 'unavailable',
+        reason: 'upstream-unavailable',
+        window: query.window,
+      };
     }
   }
 

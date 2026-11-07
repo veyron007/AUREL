@@ -8,6 +8,7 @@ import { createChronicleTools } from './chronicleTools.js';
 import { createResearchTools } from './researchTools.js';
 import { createWatchlistTools } from './watchlistTools.js';
 import { createRegionTools } from './regionTools.js';
+import { createRaindropTools } from './raindropTools.js';
 import { useWorkspaceStore } from '../ui/stores/workspace.js';
 import { initAnnotations } from '../annotations/index.js';
 import { initDrawTool } from '../annotations/drawTool.js';
@@ -139,6 +140,12 @@ export function createApplicationTools({
     fieldbook: personalWorkspace.fieldbook,
   });
   defer(() => planner.destroy());
+  const raindrop = createRaindropTools({
+    pinia: applicationPinia(),
+    viewer,
+    styleManager,
+  });
+  defer(() => raindrop.destroy());
   // DATA ▸ Recent Imagery: the box tool claims the pointer like Draw and the
   // panel lives on the right rail, so both belong to the application
   // lifetime. The tileset lets the layer drape while the globe is hidden.
@@ -205,6 +212,7 @@ export function createApplicationTools({
       () => planner.controller.cancel(),
       () => chronicle.controller.cancel(),
       () => research.controller.cancel(),
+      () => raindrop.controller.pause(),
     ],
   });
   const workspaceStore = useWorkspaceStore(applicationPinia());

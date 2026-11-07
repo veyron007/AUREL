@@ -19,7 +19,8 @@ export function glofasPercentile(series, nowMs) {
   const reference = [];
   for (let i = 0; i < index; i++)
     if (Number.isFinite(series.values[i])) reference.push(series.values[i]);
-  if (reference.length < 30) return { status: 'short-series', n: reference.length };
+  if (reference.length < 30)
+    return { status: 'short-series', n: reference.length };
   const value = series.values[index];
   const atOrBelow = reference.filter((v) => v <= value).length;
   return {
@@ -118,4 +119,3 @@ export function latencyMinutes(observedIso, nowMs) {
   if (!Number.isFinite(at)) return null;
   return Math.max(0, Math.round((nowMs - at) / 60_000));
 }
-

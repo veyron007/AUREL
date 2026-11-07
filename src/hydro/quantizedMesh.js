@@ -123,17 +123,20 @@ export function createTileSampler(mesh, rectangle) {
     if (!(qu >= -0.5 && qu <= QUANT + 0.5 && qv >= -0.5 && qv <= QUANT + 0.5))
       return NaN;
     const list =
-      bins[binOf(Math.max(0, Math.min(QUANT, qv))) * BINS +
-        binOf(Math.max(0, Math.min(QUANT, qu)))];
+      bins[
+        binOf(Math.max(0, Math.min(QUANT, qv))) * BINS +
+          binOf(Math.max(0, Math.min(QUANT, qu)))
+      ];
     for (const t of list) {
       const a = indices[t],
         b = indices[t + 1],
         c = indices[t + 2];
-      const det =
-        (v[b] - v[c]) * (u[a] - u[c]) + (u[c] - u[b]) * (v[a] - v[c]);
+      const det = (v[b] - v[c]) * (u[a] - u[c]) + (u[c] - u[b]) * (v[a] - v[c]);
       if (det === 0) continue;
-      const wa = ((v[b] - v[c]) * (qu - u[c]) + (u[c] - u[b]) * (qv - v[c])) / det;
-      const wb = ((v[c] - v[a]) * (qu - u[c]) + (u[a] - u[c]) * (qv - v[c])) / det;
+      const wa =
+        ((v[b] - v[c]) * (qu - u[c]) + (u[c] - u[b]) * (qv - v[c])) / det;
+      const wb =
+        ((v[c] - v[a]) * (qu - u[c]) + (u[a] - u[c]) * (qv - v[c])) / det;
       const wc = 1 - wa - wb;
       const tolerance = -1e-6;
       if (wa >= tolerance && wb >= tolerance && wc >= tolerance)

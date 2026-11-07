@@ -60,12 +60,12 @@ test('a real GIBS palette tile decodes and every pixel is a published class', ()
       if (!colormap.has(tile.rgbAt(x, y).join(','))) unknown++;
   assert.equal(unknown, 0);
   const address = gibsPixel(78.05, 30.35);
-  assert.deepEqual(
-    { row: address.row, col: address.col },
-    { row: 6, col: 28 },
-  );
+  assert.deepEqual({ row: address.row, col: address.col }, { row: 6, col: 28 });
   const rate = rateAt(tile, colormap, address.px, address.py);
-  assert.ok(rate.lo > 1.4 && rate.hi < 1.5, 'Dehradun cell, 15 Sep 2026 12:00Z');
+  assert.ok(
+    rate.lo > 1.4 && rate.hi < 1.5,
+    'Dehradun cell, 15 Sep 2026 12:00Z',
+  );
   assert.match(
     gibsTileUrl('2026-09-15T12:00:00Z', address),
     /IMERG_Precipitation_Rate_30min\/default\/2026-09-15T12:00:00Z\/2km\/5\/6\/28\.png$/,
@@ -86,9 +86,7 @@ test('time steps and the GIBS domain end are explicit half-hours', () => {
     '2026-11-06T21:30:00Z',
   ]);
   assert.equal(
-    latestFromDomains(
-      '<Domain>2026-11-05/2026-11-06T22:30:00Z/PT30M</Domain>',
-    ),
+    latestFromDomains('<Domain>2026-11-05/2026-11-06T22:30:00Z/PT30M</Domain>'),
     '2026-11-06T22:30:00Z',
   );
   assert.equal(latestFromDomains('<Domains/>'), null);
@@ -125,7 +123,10 @@ test('accumulation sums rate × 0.5 h and reports missing steps instead of zero'
     presentSteps: 2,
     complete: true,
   });
-  const partial = accumulate([{ lo: 2, hi: 3 }, { lo: null, hi: null }]);
+  const partial = accumulate([
+    { lo: 2, hi: 3 },
+    { lo: null, hi: null },
+  ]);
   assert.equal(partial.complete, false);
   assert.equal(partial.presentSteps, 1);
   assert.equal(accumulate([null]).lo, null);
@@ -153,10 +154,19 @@ test('GloFAS percentile ranks today within past days only', () => {
   const at = Date.UTC(2026, 10, 10, 12);
   assert.equal(glofasPercentile(synthetic, at).percentile, 75);
   assert.equal(
-    glofasPercentile({ time: synthetic.time.slice(0, 11), values: synthetic.values.slice(0, 11) }, Date.UTC(2026, 9, 11)).status,
+    glofasPercentile(
+      {
+        time: synthetic.time.slice(0, 11),
+        values: synthetic.values.slice(0, 11),
+      },
+      Date.UTC(2026, 9, 11),
+    ).status,
     'short-series',
   );
-  assert.equal(glofasPercentile(synthetic, Date.UTC(2027, 0, 1)).status, 'no-today');
+  assert.equal(
+    glofasPercentile(synthetic, Date.UTC(2027, 0, 1)).status,
+    'no-today',
+  );
 });
 
 test('polygon forecast uses at most three weighted points and flags gaps', () => {
@@ -170,10 +180,12 @@ test('polygon forecast uses at most three weighted points and flags gaps', () =>
   assert.equal(points.length, 3);
   assert.ok(Math.abs(points.reduce((s, p) => s + p.share, 0) - 1) < 1e-9);
   const now = Date.parse('2026-11-07T04:20:00Z');
-  const hours = Array.from({ length: 48 }, (_, i) =>
-    new Date(Date.parse('2026-11-07T04:00:00Z') + i * 3600_000)
-      .toISOString()
-      .slice(0, 19) + 'Z',
+  const hours = Array.from(
+    { length: 48 },
+    (_, i) =>
+      new Date(Date.parse('2026-11-07T04:00:00Z') + i * 3600_000)
+        .toISOString()
+        .slice(0, 19) + 'Z',
   );
   const series = [
     { time: hours, precipitation: hours.map(() => 1) },
@@ -214,12 +226,20 @@ test('basin watch fires once per crossing, cools down and dedupes by basin and w
   });
   let step = reduceBasinCheck(watch, obs('2026-09-15T12:00:00Z', 4), t0);
   assert.equal(step.fired, null);
-  step = reduceBasinCheck(step.watch, obs('2026-09-15T12:30:00Z', 12), t0 + 1800_000);
+  step = reduceBasinCheck(
+    step.watch,
+    obs('2026-09-15T12:30:00Z', 12),
+    t0 + 1800_000,
+  );
   assert.equal(step.fired?.thresholdMm, 10);
   assert.equal(step.watch.runtime.armed, false);
   const fired = step;
   // Still above: no second firing.
-  step = reduceBasinCheck(fired.watch, obs('2026-09-15T13:00:00Z', 15), t0 + 3600_000);
+  step = reduceBasinCheck(
+    fired.watch,
+    obs('2026-09-15T13:00:00Z', 15),
+    t0 + 3600_000,
+  );
   assert.equal(step.fired, null);
   // The same window cannot fire again even if re-armed.
   const rearmedSameKey = validateBasinWatch({
@@ -227,28 +247,57 @@ test('basin watch fires once per crossing, cools down and dedupes by basin and w
     runtime: { ...fired.watch.runtime, armed: true, cooldownUntil: null },
   });
   assert.equal(
-    reduceBasinCheck(rearmedSameKey, obs('2026-09-15T12:30:00Z', 20), t0 + 7200_000).fired,
+    reduceBasinCheck(
+      rearmedSameKey,
+      obs('2026-09-15T12:30:00Z', 20),
+      t0 + 7200_000,
+    ).fired,
     null,
   );
   // Drop below the hysteresis band re-arms; the cooldown still holds.
-  step = reduceBasinCheck(step.watch, obs('2026-09-15T14:00:00Z', 2), t0 + 2 * 3600_000);
+  step = reduceBasinCheck(
+    step.watch,
+    obs('2026-09-15T14:00:00Z', 2),
+    t0 + 2 * 3600_000,
+  );
   assert.equal(step.watch.runtime.armed, true);
-  step = reduceBasinCheck(step.watch, obs('2026-09-15T15:00:00Z', 30), t0 + 3 * 3600_000);
+  step = reduceBasinCheck(
+    step.watch,
+    obs('2026-09-15T15:00:00Z', 30),
+    t0 + 3 * 3600_000,
+  );
   assert.equal(step.fired, null, 'cooldown');
-  step = reduceBasinCheck(step.watch, obs('2026-09-15T19:00:00Z', 30), t0 + 7 * 3600_000);
+  step = reduceBasinCheck(
+    step.watch,
+    obs('2026-09-15T19:00:00Z', 30),
+    t0 + 7 * 3600_000,
+  );
   assert.ok(step.fired, 'fires again after cooldown and a new crossing');
   assert.equal(step.watch.runtime.notifications.length, 2);
   // Incomplete or low-coverage observations never fire.
   const quiet = createBasinWatch(
-    { basinId: 'b', label: 'x', thresholdMm: 5, cells: [{ key: '1:1', center: [0, 0], km2: 1 }] },
+    {
+      basinId: 'b',
+      label: 'x',
+      thresholdMm: 5,
+      cells: [{ key: '1:1', center: [0, 0], km2: 1 }],
+    },
     { id: 'w2', now: t0 },
   );
   assert.equal(
-    reduceBasinCheck(quiet, { ...obs('2026-09-15T12:00:00Z', 50), coverage: 0.3 }, t0).fired,
+    reduceBasinCheck(
+      quiet,
+      { ...obs('2026-09-15T12:00:00Z', 50), coverage: 0.3 },
+      t0,
+    ).fired,
     null,
   );
   assert.equal(
-    reduceBasinCheck(quiet, { ...obs('2026-09-15T12:00:00Z', 50), complete: false }, t0).fired,
+    reduceBasinCheck(
+      quiet,
+      { ...obs('2026-09-15T12:00:00Z', 50), complete: false },
+      t0,
+    ).fired,
     null,
   );
   assert.equal(reduceBasinCheck(quiet, null, t0).fired, null);
@@ -265,11 +314,57 @@ test('the local trace hands off to HydroRIVERS and follows NEXT_DOWN to the sea'
   const network = validateRiverSubset({
     version: 1,
     reaches: [
-      { id: 1, next: 3, upKm2: 40, name: 'Rispana', line: [[78.06, 30.33], [78.05, 30.3]] },
-      { id: 2, next: 3, upKm2: 300, name: 'Song', line: [[78.15, 30.2], [78.1, 30.15]] },
-      { id: 3, next: 4, upKm2: 900, name: 'Song', line: [[78.1, 30.15], [78.2, 30.05]] },
-      { id: 4, next: 0, upKm2: 22000, name: 'Ganga', line: [[78.2, 30.05], [78.2, 29.5], [88, 22]] },
-      { id: 9, next: 0, upKm2: 2, name: null, line: [[78.101, 30.151], [78.11, 30.16]] },
+      {
+        id: 1,
+        next: 3,
+        upKm2: 40,
+        name: 'Rispana',
+        line: [
+          [78.06, 30.33],
+          [78.05, 30.3],
+        ],
+      },
+      {
+        id: 2,
+        next: 3,
+        upKm2: 300,
+        name: 'Song',
+        line: [
+          [78.15, 30.2],
+          [78.1, 30.15],
+        ],
+      },
+      {
+        id: 3,
+        next: 4,
+        upKm2: 900,
+        name: 'Song',
+        line: [
+          [78.1, 30.15],
+          [78.2, 30.05],
+        ],
+      },
+      {
+        id: 4,
+        next: 0,
+        upKm2: 22000,
+        name: 'Ganga',
+        line: [
+          [78.2, 30.05],
+          [78.2, 29.5],
+          [88, 22],
+        ],
+      },
+      {
+        id: 9,
+        next: 0,
+        upKm2: 2,
+        name: null,
+        line: [
+          [78.101, 30.151],
+          [78.11, 30.16],
+        ],
+      },
     ],
   });
   const result = continueDownstream(network, [78.101, 30.149], 500);
@@ -283,10 +378,19 @@ test('the local trace hands off to HydroRIVERS and follows NEXT_DOWN to the sea'
     'no-reach',
     'nothing within the handoff radius',
   );
-  assert.deepEqual(namesAlong(network, [[78.06, 30.33], [78.1, 30.15], [78.2, 29.5]], { every: 1 }), [
-    'Rispana',
-    'Song',
-    'Ganga',
-  ]);
-  assert.throws(() => validateRiverSubset({ version: 1, reaches: [{ id: 1 }] }));
+  assert.deepEqual(
+    namesAlong(
+      network,
+      [
+        [78.06, 30.33],
+        [78.1, 30.15],
+        [78.2, 29.5],
+      ],
+      { every: 1 },
+    ),
+    ['Rispana', 'Song', 'Ganga'],
+  );
+  assert.throws(() =>
+    validateRiverSubset({ version: 1, reaches: [{ id: 1 }] }),
+  );
 });

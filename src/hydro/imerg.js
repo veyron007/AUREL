@@ -14,15 +14,18 @@
 
 export const GIBS_IMERG = Object.freeze({
   layer: 'IMERG_Precipitation_Rate_30min',
-  colormap: 'https://gibs.earthdata.nasa.gov/colormaps/v1.3/GPM_Precipitation_Rate.xml',
-  legend: 'https://gibs.earthdata.nasa.gov/legends/GPM_Precipitation_Rate_H.svg',
+  colormap:
+    'https://gibs.earthdata.nasa.gov/colormaps/v1.3/GPM_Precipitation_Rate.xml',
+  legend:
+    'https://gibs.earthdata.nasa.gov/legends/GPM_Precipitation_Rate_H.svg',
   tileBase: 'https://gibs.earthdata.nasa.gov/wmts/epsg4326/best',
   matrixSet: '2km',
   level: 5,
   tileSpanDeg: 9,
   tilePixels: 512,
   stepMinutes: 30,
-  products: 'GPM IMERG Early (near real time) and Final, V07, 0.1°, half-hourly',
+  products:
+    'GPM IMERG Early (near real time) and Final, V07, 0.1°, half-hourly',
 });
 
 /** Half-hour steps in each reported window. */
@@ -136,7 +139,11 @@ export function decodePalettePng(bytes, inflate) {
     height,
     rgbAt(px, py) {
       const index = indices[py * width + px];
-      return [palette[index * 3], palette[index * 3 + 1], palette[index * 3 + 2]];
+      return [
+        palette[index * 3],
+        palette[index * 3 + 1],
+        palette[index * 3 + 2],
+      ];
     },
     alphaAt(px, py) {
       const index = indices[py * width + px];
@@ -154,7 +161,10 @@ export function gibsPixel(lon, lat) {
     size - 1,
     Math.floor((((lon + 180) % span) / span) * size),
   );
-  const py = Math.min(size - 1, Math.floor((((90 - lat) % span) / span) * size));
+  const py = Math.min(
+    size - 1,
+    Math.floor((((90 - lat) % span) / span) * size),
+  );
   return { row, col, px, py };
 }
 

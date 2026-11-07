@@ -28,7 +28,9 @@ function encodeTile(fn, minHeight = 0, maxHeight = 1000) {
     for (let i = 0; i < 3; i++) {
       us.push(i * 16383.5);
       vs.push(j * 16383.5);
-      hs.push(((fn(i / 2, j / 2) - minHeight) / (maxHeight - minHeight)) * 32767);
+      hs.push(
+        ((fn(i / 2, j / 2) - minHeight) / (maxHeight - minHeight)) * 32767,
+      );
     }
   const q = (list) => list.map((v) => Math.round(v));
   const triangles = [];
@@ -81,7 +83,9 @@ function encodeTile(fn, minHeight = 0, maxHeight = 1000) {
 }
 
 test('quantized-mesh decoding interpolates inside triangles', () => {
-  const mesh = decodeQuantizedMesh(encodeTile((x, y) => 100 + 200 * x + 50 * y));
+  const mesh = decodeQuantizedMesh(
+    encodeTile((x, y) => 100 + 200 * x + 50 * y),
+  );
   assert.equal(mesh.u.length, 9);
   assert.equal(mesh.indices.length, 24);
   const rect = tileRectangle(12, 5872, 2738);
@@ -139,9 +143,14 @@ test('bundled height encoding keeps quarter-metre steps and missing cells', () =
 });
 
 const manifest = JSON.parse(
-  fs.readFileSync(new URL('../../public/hydro/doon/manifest.json', import.meta.url), 'utf8'),
+  fs.readFileSync(
+    new URL('../../public/hydro/doon/manifest.json', import.meta.url),
+    'utf8',
+  ),
 );
-const demBytes = fs.readFileSync(new URL('../../public/hydro/doon/dem.u16', import.meta.url));
+const demBytes = fs.readFileSync(
+  new URL('../../public/hydro/doon/dem.u16', import.meta.url),
+);
 const codes = new Uint16Array(
   demBytes.buffer,
   demBytes.byteOffset,
@@ -149,7 +158,10 @@ const codes = new Uint16Array(
 );
 const readJson = (name) =>
   JSON.parse(
-    fs.readFileSync(new URL(`../../public/hydro/${name}`, import.meta.url), 'utf8'),
+    fs.readFileSync(
+      new URL(`../../public/hydro/${name}`, import.meta.url),
+      'utf8',
+    ),
   );
 const analysis = createRaindropAnalysis({
   client: createHydroClient({ createWorker: () => null }),
@@ -168,13 +180,19 @@ test('a Rajpur drop crosses Dehradun, turns east into the Song and reaches the G
   assert.equal(result.worker, 'main-thread');
   const path = result.drop.path;
   // Through the city, south of the Rajpur Road start.
-  assert.ok(path.some(([lon, lat]) => lat < 30.32 && lon > 78.03 && lon < 78.08));
+  assert.ok(
+    path.some(([lon, lat]) => lat < 30.32 && lon > 78.03 && lon < 78.08),
+  );
   // East past Doiwala towards the Song.
-  assert.ok(path.some(([lon, lat]) => lon > 78.1 && lat < 30.15 && lat > 30.05));
+  assert.ok(
+    path.some(([lon, lat]) => lon > 78.1 && lat < 30.15 && lat > 30.05),
+  );
   // Into the Ganga reach near Raiwala.
   assert.ok(path.some(([lon, lat]) => lon > 78.2 && lat < 30.06));
   assert.equal(result.drop.end, 'edge');
   assert.equal(result.window.resolution.stepArcSec, 3);
+  assert.ok(result.disclosure.raisedCells > 0, 'sink filling disclosed');
+  assert.equal(result.disclosure.method, 'priority-flood-epsilon');
   // Names: Rispana, then the Song, then the Ganga, in that order.
   const song = result.rivers.indexOf('Song'),
     ganga = result.rivers.indexOf('Ganga');
@@ -185,13 +203,19 @@ test('a Rajpur drop crosses Dehradun, turns east into the Song and reaches the G
   assert.equal(result.farField.end, 'ocean');
   assert.ok(result.farField.handoffM < 1000);
   assert.ok(result.farField.lengthKm > 1500);
-  assert.ok(Number.isSafeInteger(result.basin?.id), 'HydroBASINS level-12 unit');
+  assert.ok(
+    Number.isSafeInteger(result.basin?.id),
+    'HydroBASINS level-12 unit',
+  );
 });
 
 test('a Selaqui drop goes west to the Asan and the Yamuna', async () => {
   const result = await analysis.analyze({ lon: 77.86, lat: 30.37 });
   const path = result.drop.path;
-  assert.ok(path.every(([lon]) => lon <= 77.87), 'never crosses east into the Song basin');
+  assert.ok(
+    path.every(([lon]) => lon <= 77.87),
+    'never crosses east into the Song basin',
+  );
   assert.ok(path.some(([lon, lat]) => lon < 77.75 && lat > 30.4));
   assert.ok(path.at(-1)[0] < 77.61, 'leaves through the western edge');
   assert.ok(result.drop.catchment.areaKm2 > 0);
@@ -209,6 +233,12 @@ test('without the HydroSHEDS subset the trace stops at the window and says so', 
 });
 
 test('outside the bundled grid without terrain access the analysis says so', async () => {
-  assert.equal(insideWithMargin(createGridSpec(manifest.grid), { lon: 78.5, lat: 30.3 }), false);
-  await assert.rejects(offline.analyze({ lon: 78.5, lat: 30.3 }), (error) => error.code === 'offline-outside-pack');
+  assert.equal(
+    insideWithMargin(createGridSpec(manifest.grid), { lon: 78.5, lat: 30.3 }),
+    false,
+  );
+  await assert.rejects(
+    offline.analyze({ lon: 78.5, lat: 30.3 }),
+    (error) => error.code === 'offline-outside-pack',
+  );
 });

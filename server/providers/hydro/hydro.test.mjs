@@ -123,8 +123,7 @@ test('IMERG partial and unavailable states are explicit', async (t) => {
   assert.equal(p.steps[1].published, false);
   assert.equal(p.steps[1].values['2580:1203'], null);
   const down = await serve(t, { fetchOptions: { status: { '/all/': 503 } } });
-  const d = (await down.get('/api/hydro/imerg?cells=2580:1203&window=3h'))
-    .body;
+  const d = (await down.get('/api/hydro/imerg?cells=2580:1203&window=3h')).body;
   assert.equal(d.state, 'unavailable');
   assert.equal(d.reason, 'upstream-unavailable');
 });

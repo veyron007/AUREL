@@ -28,6 +28,7 @@ const TILE_MAX_BYTES = 512 * 1024;
 const COLORMAP_MAX_BYTES = 256 * 1024;
 const JSON_MAX_BYTES = 256 * 1024;
 const TILE_CACHE_MAX = 192;
+const TILE_CONCURRENCY = 8;
 const DOMAIN_TTL_MS = 10 * 60_000;
 const COLORMAP_TTL_MS = 24 * 3600_000;
 /** Recent half-hours can be replaced as Early becomes Late; keep tiles six hours. */
@@ -111,22 +112,32 @@ export function createHydroUpstreams({
    */
   async function imerg(cells, steps, signal) {
     const [table, newest] = await Promise.all([lookup(signal), latest(signal)]);
-    const rows = [];
-    for (const time of stepTimes(newest, steps)) {
-      const values = {};
-      let published = true;
-      for (const { key, center } of cells) {
-        const address = gibsPixel(center[0], center[1]);
-        const decoded = await tile(time, address, signal);
-        if (!decoded) {
-          published = false;
-          values[key] = null;
-          continue;
+    const times = stepTimes(newest, steps);
+    const rows = new Array(times.length);
+    let next = 0;
+    // Half-hours are independent tiles; read them a few at a time.
+    const worker = async () => {
+      while (next < times.length) {
+        const index = next++;
+        const time = times[index];
+        const values = {};
+        let published = true;
+        for (const { key, center } of cells) {
+          const address = gibsPixel(center[0], center[1]);
+          const decoded = await tile(time, address, signal);
+          if (!decoded) {
+            published = false;
+            values[key] = null;
+            continue;
+          }
+          values[key] = rateAt(decoded, table, address.px, address.py) ?? null;
         }
-        values[key] = rateAt(decoded, table, address.px, address.py) ?? null;
+        rows[index] = { time, published, values };
       }
-      rows.push({ time, published, values });
-    }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(TILE_CONCURRENCY, times.length) }, worker),
+    );
     return { latest: newest, steps: rows, retrievedAt: iso(now()) };
   }
 

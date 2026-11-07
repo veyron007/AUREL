@@ -22,7 +22,7 @@ import {
 
 export const MESH_SOURCE = Object.freeze({
   id: 'reearth-mapterhorn-mesh',
-  label: 'Re:Earth / Mapterhorn terrain mesh',
+  name: 'Re:Earth / Mapterhorn terrain mesh',
   tileset: 'mapterhorn-egm08 / cesium-mesh / ellipsoid',
   url: 'https://terrain.reearth.land/cesium-mesh/ellipsoid',
   license: 'CC BY 4.0',
@@ -154,7 +154,9 @@ export function encodeHeights(heights) {
           0,
           Math.min(
             65534,
-            Math.round((value - BUNDLED_ENCODING.offsetM) / BUNDLED_ENCODING.stepM),
+            Math.round(
+              (value - BUNDLED_ENCODING.offsetM) / BUNDLED_ENCODING.stepM,
+            ),
           ),
         )
       : BUNDLED_ENCODING.missing;
@@ -175,6 +177,7 @@ export function decodeHeights(codes) {
 /** Validate a bundled DEM manifest and return its grid. */
 export function bundledDemSpec(manifest) {
   const grid = manifest?.grid;
-  if (manifest?.version !== 1 || !grid) throw new TypeError('Invalid DEM manifest');
+  if (manifest?.version !== 1 || !grid)
+    throw new TypeError('Invalid DEM manifest');
   return createGridSpec(grid);
 }

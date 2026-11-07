@@ -11,7 +11,8 @@ const MAX_GRIDS = 3;
 export function createHydroRouter() {
   const grids = new Map();
   function load({ key, spec, heights }) {
-    if (typeof key !== 'string' || !key) throw new TypeError('Missing grid key');
+    if (typeof key !== 'string' || !key)
+      throw new TypeError('Missing grid key');
     const grid = createGridSpec(spec);
     if (!heights || heights.length !== grid.cols * grid.rows)
       throw new RangeError('Height array does not match the grid');

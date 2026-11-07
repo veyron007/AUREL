@@ -25,13 +25,19 @@ export function describeResolution(spec) {
   const midLat = (spec.north + spec.south) / 2;
   return {
     stepArcSec: Math.round(spec.stepLatDeg * 3600 * 100) / 100,
-    eastWestM: Math.round(spec.stepLonDeg * RAD * 6371008.8 * Math.cos(midLat * RAD)),
+    eastWestM: Math.round(
+      spec.stepLonDeg * RAD * 6371008.8 * Math.cos(midLat * RAD),
+    ),
     northSouthM: Math.round(spec.stepLatDeg * RAD * 6371008.8),
   };
 }
 
 /** Is the point inside a grid with a margin of whole cells? */
-export function insideWithMargin(spec, { lon, lat }, margin = BUNDLED_MARGIN_CELLS) {
+export function insideWithMargin(
+  spec,
+  { lon, lat },
+  margin = BUNDLED_MARGIN_CELLS,
+) {
   return (
     lon > spec.west + margin * spec.stepLonDeg &&
     lon < spec.east - margin * spec.stepLonDeg &&
@@ -61,6 +67,7 @@ export function createRaindropAnalysis({
     basins = null,
     basinsTried = false;
   const liveMeta = new Map();
+  const disclosures = new Map();
 
   async function bundledGrid() {
     if (bundledTried) return bundled;
@@ -105,7 +112,10 @@ export function createRaindropAnalysis({
     if (pack && insideWithMargin(pack.spec, point)) {
       const key = `bundled:${pack.manifest.id}:${pack.manifest.asset.sha256}`;
       if (!client.isLoaded(key))
-        await client.load(key, pack.manifest.grid, decodeHeights(pack.codes));
+        disclosures.set(
+          key,
+          await client.load(key, pack.manifest.grid, decodeHeights(pack.codes)),
+        );
       return {
         key,
         spec: pack.spec,
@@ -140,7 +150,7 @@ export function createRaindropAnalysis({
         throw Object.assign(new Error('Terrain window incomplete'), {
           code: 'terrain-incomplete',
         });
-      await client.load(key, spec, sampled.heights);
+      disclosures.set(key, await client.load(key, spec, sampled.heights));
       liveMeta.set(key, sampled);
     }
     const sampled = liveMeta.get(key);
@@ -149,10 +159,15 @@ export function createRaindropAnalysis({
       spec,
       dem: {
         kind: 'live',
-        label: MESH_SOURCE.label,
-        source: { ...MESH_SOURCE, level: sampled?.level, tiles: sampled?.tiles },
+        label: MESH_SOURCE.name,
+        source: {
+          ...MESH_SOURCE,
+          level: sampled?.level,
+          tiles: sampled?.tiles,
+        },
         missingCells: sampled?.missingCells ?? null,
-        datum: 'EGM96 orthometric (bundled geoid applied to the ellipsoidal mesh)',
+        datum:
+          'EGM96 orthometric (bundled geoid applied to the ellipsoidal mesh)',
         quantizationM: null,
       },
     };
@@ -174,18 +189,25 @@ export function createRaindropAnalysis({
       ? namesAlong(network, drop.path, { upKm2: drop.pathUpKm2 })
       : [];
     const names = [...localNames];
-    for (const name of far?.names || []) if (names.at(-1) !== name) names.push(name);
+    for (const name of far?.names || [])
+      if (names.at(-1) !== name) names.push(name);
     return {
       point,
       window: {
         key: window.key,
-        extent: [window.spec.west, window.spec.south, window.spec.east, window.spec.north],
+        extent: [
+          window.spec.west,
+          window.spec.south,
+          window.spec.east,
+          window.spec.north,
+        ],
         cols: window.spec.cols,
         rows: window.spec.rows,
         resolution: describeResolution(window.spec),
       },
       dem: window.dem,
       worker: client.mode,
+      disclosure: disclosures.get(window.key) ?? null,
       drop: { ...drop, localLengthKm: lineLengthM(drop.path) / 1000 },
       farField: network
         ? far?.status === 'ok'

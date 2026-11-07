@@ -29,7 +29,10 @@ export function imergRequestCells(weights) {
  */
 export function imergCard(envelope, weights, nowMs) {
   if (!envelope || !['ready', 'partial'].includes(envelope.state))
-    return { state: 'unavailable', reason: envelope?.reason || 'upstream-unavailable' };
+    return {
+      state: 'unavailable',
+      reason: envelope?.reason || 'upstream-unavailable',
+    };
   const means = envelope.steps.map((step) => basinMean(weights, step.values));
   const windows = {};
   for (const [name, steps] of Object.entries(IMERG_WINDOWS))
@@ -63,7 +66,10 @@ export const forecastPoints = (weights) => representativePoints(weights, 3);
 /** Weighted next-hours totals from a forecast envelope. */
 export function forecastCard(envelope, points, nowMs) {
   if (!envelope || envelope.state !== 'ready')
-    return { state: envelope?.state || 'unavailable', reason: envelope?.reason || 'upstream-unavailable' };
+    return {
+      state: envelope?.state || 'unavailable',
+      reason: envelope?.reason || 'upstream-unavailable',
+    };
   const totals = polygonForecast(
     envelope.points,
     points.map((p) => p.share),
@@ -84,7 +90,10 @@ export function forecastCard(envelope, points, nowMs) {
 /** GloFAS percentile card; never exposes the discharge values themselves. */
 export function glofasCard(envelope, nowMs) {
   if (!envelope || envelope.state !== 'ready')
-    return { state: envelope?.state || 'unavailable', reason: envelope?.reason || 'upstream-unavailable' };
+    return {
+      state: envelope?.state || 'unavailable',
+      reason: envelope?.reason || 'upstream-unavailable',
+    };
   const rank = glofasPercentile(envelope, nowMs);
   return {
     state: rank.status === 'ok' ? 'ready' : 'insufficient',

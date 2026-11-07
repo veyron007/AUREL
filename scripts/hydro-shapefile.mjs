@@ -14,10 +14,22 @@ export function readDbf(file) {
   if (headerLength + records * recordLength > bytes.byteLength + 1)
     throw new RangeError('DBF is truncated');
   const fields = [];
-  for (let at = 32, offset = 1; bytes[at] !== 0x0d && at < headerLength; at += 32) {
-    const name = bytes.subarray(at, at + 11).toString('latin1').replace(/\0.*$/s, '');
+  for (
+    let at = 32, offset = 1;
+    bytes[at] !== 0x0d && at < headerLength;
+    at += 32
+  ) {
+    const name = bytes
+      .subarray(at, at + 11)
+      .toString('latin1')
+      .replace(/\0.*$/s, '');
     const length = bytes[at + 16];
-    fields.push({ name, type: String.fromCharCode(bytes[at + 11]), offset, length });
+    fields.push({
+      name,
+      type: String.fromCharCode(bytes[at + 11]),
+      offset,
+      length,
+    });
     offset += length;
   }
   return {
@@ -31,7 +43,9 @@ export function readDbf(file) {
       const out = numeric ? new Float64Array(records) : new Array(records);
       for (let i = 0; i < records; i++) {
         const start = headerLength + i * recordLength + field.offset;
-        const text = bytes.toString('latin1', start, start + field.length).trim();
+        const text = bytes
+          .toString('latin1', start, start + field.length)
+          .trim();
         out[i] = numeric ? (text === '' ? NaN : Number(text)) : text;
       }
       return out;
@@ -55,20 +69,31 @@ export function readShp(file) {
           throw new RangeError('Shapefile record out of bounds');
         const type = view.getInt32(start, true);
         if (type === 3 || type === 5) {
-          const bbox = [0, 1, 2, 3].map((k) => view.getFloat64(start + 4 + k * 8, true));
+          const bbox = [0, 1, 2, 3].map((k) =>
+            view.getFloat64(start + 4 + k * 8, true),
+          );
           let parts = null;
           if (geometry(index, bbox)) {
             const numParts = view.getInt32(start + 36, true),
               numPoints = view.getInt32(start + 40, true);
-            if (numParts < 1 || numPoints < 2 || 44 + numParts * 4 + numPoints * 16 > length)
+            if (
+              numParts < 1 ||
+              numPoints < 2 ||
+              44 + numParts * 4 + numPoints * 16 > length
+            )
               throw new RangeError('Shapefile geometry out of bounds');
-            const starts = Array.from({ length: numParts }, (_, p) => view.getInt32(start + 44 + p * 4, true));
+            const starts = Array.from({ length: numParts }, (_, p) =>
+              view.getInt32(start + 44 + p * 4, true),
+            );
             const base = start + 44 + numParts * 4;
             parts = starts.map((first, p) => {
               const last = p + 1 < numParts ? starts[p + 1] : numPoints;
               const line = [];
               for (let q = first; q < last; q++)
-                line.push([view.getFloat64(base + q * 16, true), view.getFloat64(base + q * 16 + 8, true)]);
+                line.push([
+                  view.getFloat64(base + q * 16, true),
+                  view.getFloat64(base + q * 16 + 8, true),
+                ]);
               return line;
             });
           }
@@ -97,7 +122,8 @@ export function simplify(line, tolerance) {
     let worst = -1,
       index = -1;
     for (let i = a + 1; i < b; i++) {
-      const d = Math.abs(dy * line[i][0] - dx * line[i][1] + x2 * y1 - y2 * x1) / len;
+      const d =
+        Math.abs(dy * line[i][0] - dx * line[i][1] + x2 * y1 - y2 * x1) / len;
       if (d > worst) {
         worst = d;
         index = i;

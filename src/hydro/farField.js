@@ -45,7 +45,11 @@ export function validateRiverSubset(value) {
 }
 
 /** Nearest vertex on any qualifying reach. */
-export function nearestReach(network, point, { minUpKm2 = 0, maxM = HANDOFF_MAX_M } = {}) {
+export function nearestReach(
+  network,
+  point,
+  { minUpKm2 = 0, maxM = HANDOFF_MAX_M } = {},
+) {
   let best = null;
   for (const reach of network.reaches) {
     if (reach.upKm2 < minUpKm2) continue;
@@ -172,7 +176,5 @@ export function basinAt(basins, point) {
     (candidate) =>
       Array.isArray(candidate.ring) && inRing(point, candidate.ring),
   );
-  return unit
-    ? { id: unit.id, upKm2: unit.upKm2, subKm2: unit.subKm2 }
-    : null;
+  return unit ? { id: unit.id, upKm2: unit.upKm2, subKm2: unit.subKm2 } : null;
 }

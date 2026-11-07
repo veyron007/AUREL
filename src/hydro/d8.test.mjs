@@ -32,10 +32,7 @@ const build = (spec, fn) => {
 
 test('a cone drains every cell outward with no fill and no loops', () => {
   const spec = grid(41, 41);
-  const heights = build(
-    spec,
-    (r, c) => 1000 - 10 * Math.hypot(r - 20, c - 20),
-  );
+  const heights = build(spec, (r, c) => 1000 - 10 * Math.hypot(r - 20, c - 20));
   const routed = routeGrid(spec, heights);
   assert.equal(routed.disclosure.raisedCells, 0);
   const apex = 20 * 41 + 20;
@@ -142,8 +139,7 @@ test('outline keeps diagonal-only neighbours apart and counts holes', () => {
   mask[14] = 1;
   assert.equal(catchmentOutline(spec, mask).parts, 2);
   const square = new Uint8Array(36);
-  for (let r = 1; r < 5; r++)
-    for (let c = 1; c < 5; c++) square[r * 6 + c] = 1;
+  for (let r = 1; r < 5; r++) for (let c = 1; c < 5; c++) square[r * 6 + c] = 1;
   square[14] = 0;
   const outline = catchmentOutline(spec, square);
   assert.equal(outline.parts, 1);

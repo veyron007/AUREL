@@ -1,0 +1,41 @@
+AUREL Raindrop — bundled hydrography notices
+
+1. HydroSHEDS (rivers.json, basins-doon.json)
+
+This product, AUREL Raindrop, incorporates data from the HydroSHEDS version 1
+database which is © World Wildlife Fund, Inc. (2006-2022) and has been used
+herein under license. WWF has not evaluated the data as altered and
+incorporated within AUREL Raindrop, and therefore gives no warranty regarding
+its accuracy, completeness, currency or suitability for any particular
+purpose. Portions of the HydroSHEDS v1 database incorporate data which are the
+intellectual property rights of © USGS (2006-2008), NASA (2000-2005), ESRI
+(1992-1998), CIAT (2004-2006), UNEP-WCMC (1993), WWF (2004), Commonwealth of
+Australia (2007), and Her Royal Majesty and the British Crown and are used
+under license. The HydroSHEDS v1 database and more information are available
+at https://www.hydrosheds.org.
+
+Products: HydroRIVERS v1.0 (Asia) and HydroBASINS v1c level 12 (Asia),
+retrieved 2026-11-07 from https://data.hydrosheds.org/file/. The files here are
+a simplified, renamed subset for the Doon valley and the reaches downstream of
+it. They are part of AUREL and are not distributed as a stand-alone product.
+
+Citations:
+  Lehner, B., Grill G. (2013): Global river hydrography and network routing:
+  baseline data and new approaches to study the world's large river systems.
+  Hydrological Processes, 27(15): 2171-2186. Data is available at
+  www.hydrosheds.org.
+  Lehner, B., Verdin, K., Jarvis, A. (2008): New global hydrography derived
+  from spaceborne elevation data. Eos, Transactions, AGU, 89(10): 93-94.
+
+2. River names (rivers.json "name" fields with nameSource "osm")
+
+© OpenStreetMap contributors, available under the Open Database License
+(ODbL 1.0), https://www.openstreetmap.org/copyright. Names with nameSource
+"curated" were placed by AUREL at three anchor points (Asan Barrage, Padma at
+Hardinge Bridge, lower Meghna) and are not OpenStreetMap data.
+
+3. Terrain grid (doon/dem.u16)
+
+Derived from the Re:Earth Terrain quantized mesh (mapterhorn-egm08, CC BY 4.0)
+built on Mapterhorn and EGM2008 (NGA): https://terrain.reearth.land/,
+https://mapterhorn.com/.

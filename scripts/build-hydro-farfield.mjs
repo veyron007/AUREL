@@ -34,7 +34,12 @@ if (!riversBase || !basinsBase || !osmFile)
   throw new Error('--rivers, --basins and --osm are required');
 
 const EXTENT = [77.6, 29.98, 78.32, 30.56];
-const SEED = [EXTENT[0] - 0.02, EXTENT[1] - 0.02, EXTENT[2] + 0.02, EXTENT[3] + 0.02];
+const SEED = [
+  EXTENT[0] - 0.02,
+  EXTENT[1] - 0.02,
+  EXTENT[2] + 0.02,
+  EXTENT[3] + 0.02,
+];
 const NEAR_TOL = 0.0002,
   FAR_TOL = 0.002;
 /** Names propagate downstream only from reaches at least this large. */
@@ -68,13 +73,17 @@ const ANCHORS = [
   },
 ];
 
-const intersects = (b, e) => b[0] <= e[2] && b[2] >= e[0] && b[1] <= e[3] && b[3] >= e[1];
-const inside = ([lon, lat], e) => lon >= e[0] && lon <= e[2] && lat >= e[1] && lat <= e[3];
+const intersects = (b, e) =>
+  b[0] <= e[2] && b[2] >= e[0] && b[1] <= e[3] && b[3] >= e[1];
+const inside = ([lon, lat], e) =>
+  lon >= e[0] && lon <= e[2] && lat >= e[1] && lat <= e[3];
 const round = (line) => line.map(([x, y]) => [+x.toFixed(5), +y.toFixed(5)]);
 const RAD = Math.PI / 180;
 const metres = (a, b) =>
-  Math.hypot((a[0] - b[0]) * Math.cos(((a[1] + b[1]) / 2) * RAD), a[1] - b[1]) * 111195;
-const sha = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  Math.hypot((a[0] - b[0]) * Math.cos(((a[1] + b[1]) / 2) * RAD), a[1] - b[1]) *
+  111195;
+const sha = (file) =>
+  createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 
 // --- HydroRIVERS -----------------------------------------------------------
 const dbf = readDbf(`${riversBase}.dbf`);
@@ -101,7 +110,9 @@ for (const seed of seeds) {
   }
 }
 const reaches = [];
-for (const record of shp.records({ geometry: (index) => selected.has(index) })) {
+for (const record of shp.records({
+  geometry: (index) => selected.has(index),
+})) {
   if (!record.parts) continue;
   const i = record.index;
   const raw = record.parts.flat();
@@ -152,9 +163,11 @@ for (const reach of reaches) {
   const votes = new Map();
   for (const p of reach.line) {
     const hit = nearestOsm(p);
-    if (hit) votes.set(hit.name, (votes.get(hit.name) || 0) + (hit.river ? 1.5 : 1));
+    if (hit)
+      votes.set(hit.name, (votes.get(hit.name) || 0) + (hit.river ? 1.5 : 1));
   }
-  const [name, score] = [...votes.entries()].sort((a, b) => b[1] - a[1])[0] || [];
+  const [name, score] =
+    [...votes.entries()].sort((a, b) => b[1] - a[1])[0] || [];
   if (name && score >= reach.line.length * 0.5) {
     reach.name = name;
     reach.nameSource = 'osm';
@@ -172,7 +185,12 @@ for (const anchor of ANCHORS) {
       if (d <= anchor.radiusM && (!best || d < best.d)) best = { reach, d };
     }
   }
-  anchorsUsed.push({ ...anchor, reach: best?.reach.id ?? null, distanceM: best ? Math.round(best.d) : null, upKm2: best?.reach.upKm2 ?? null });
+  anchorsUsed.push({
+    ...anchor,
+    reach: best?.reach.id ?? null,
+    distanceM: best ? Math.round(best.d) : null,
+    upKm2: best?.reach.upKm2 ?? null,
+  });
   if (best) {
     best.reach.name = anchor.name;
     best.reach.nameSource = 'curated';
@@ -231,7 +249,8 @@ const source = {
   id: 'hydrosheds-v1',
   label: 'HydroSHEDS v1 (WWF)',
   url: 'https://www.hydrosheds.org/',
-  license: 'HydroSHEDS v1 License Agreement (free for non-commercial and commercial use; no stand-alone redistribution)',
+  license:
+    'HydroSHEDS v1 License Agreement (free for non-commercial and commercial use; no stand-alone redistribution)',
   notice: 'hydro/HYDROSHEDS-NOTICE.txt',
   retrievedAt,
 };
@@ -243,8 +262,11 @@ const riversDoc = {
   source: {
     ...source,
     product: 'HydroRIVERS v1.0, Asia (15 arc-second network)',
-    citation: 'Lehner, B., Grill G. (2013). Hydrological Processes 27(15): 2171-2186. https://doi.org/10.1002/hyp.9740',
-    archiveSha256: sha(`${path.dirname(riversBase)}/../HydroRIVERS_v10_as_shp.zip`),
+    citation:
+      'Lehner, B., Grill G. (2013). Hydrological Processes 27(15): 2171-2186. https://doi.org/10.1002/hyp.9740',
+    archiveSha256: sha(
+      `${path.dirname(riversBase)}/../HydroRIVERS_v10_as_shp.zip`,
+    ),
   },
   naming: {
     osm: {
@@ -253,7 +275,17 @@ const riversDoc = {
       attribution: '© OpenStreetMap contributors',
       timestamp: osm.osm3s?.timestamp_osm_base ?? null,
     },
-    anchors: anchorsUsed.map(({ name, lon, lat, note, reach, distanceM, upKm2 }) => ({ name, lon, lat, note, reach, distanceM, upKm2 })),
+    anchors: anchorsUsed.map(
+      ({ name, lon, lat, note, reach, distanceM, upKm2 }) => ({
+        name,
+        lon,
+        lat,
+        note,
+        reach,
+        distanceM,
+        upKm2,
+      }),
+    ),
     propagation: `Names of reaches draining at least ${PROPAGATE_MIN_KM2} km² continue downstream until another named reach.`,
   },
   reaches: reaches.map(strip),
@@ -264,13 +296,17 @@ const basinsDoc = {
   source: {
     ...source,
     product: 'HydroBASINS v1c, Asia, level 12',
-    citation: 'Lehner, B., Grill G. (2013). Hydrological Processes 27(15): 2171-2186.',
+    citation:
+      'Lehner, B., Grill G. (2013). Hydrological Processes 27(15): 2171-2186.',
     archiveSha256: sha(`${path.dirname(basinsBase)}/../hybas_as_lev12_v1c.zip`),
   },
   units,
 };
 fs.writeFileSync(path.join(outDir, 'rivers.json'), JSON.stringify(riversDoc));
-fs.writeFileSync(path.join(outDir, 'basins-doon.json'), JSON.stringify(basinsDoc));
+fs.writeFileSync(
+  path.join(outDir, 'basins-doon.json'),
+  JSON.stringify(basinsDoc),
+);
 const vertices = reaches.reduce((n, r) => n + r.line.length, 0);
 console.log(
   JSON.stringify({

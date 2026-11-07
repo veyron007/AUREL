@@ -99,7 +99,11 @@ function isBoundary(spec, heights, row, col) {
  * @param {{epsilonM?: number}} [options]
  * @returns {{filled: Float64Array, raisedCells: number, maxRaiseM: number, validCells: number}}
  */
-export function fillDepressions(spec, heights, { epsilonM = FILL_EPSILON_M } = {}) {
+export function fillDepressions(
+  spec,
+  heights,
+  { epsilonM = FILL_EPSILON_M } = {},
+) {
   assertHeights(spec, heights);
   const { cols, rows } = spec;
   const n = cols * rows;

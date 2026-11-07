@@ -90,7 +90,7 @@ export class RaindropController {
     this.cards = { imerg: null, forecast: null, glofas: null };
     this.watches = [];
     this.watchesPaused = false;
-    this.checking = false;
+    this.checking = null;
     this.run = null;
     this.timer = null;
     this.destroyed = false;
@@ -122,7 +122,9 @@ export class RaindropController {
   }
 
   live() {
-    return !this.destroyed && (!this.store || this.store.owns(this.owner, 'pick'));
+    return (
+      !this.destroyed && (!this.store || this.store.owns(this.owner, 'pick'))
+    );
   }
 
   present() {
@@ -140,7 +142,8 @@ export class RaindropController {
         watchesPaused: this.watchesPaused,
         canWatch:
           Boolean(this.result?.drop?.catchment?.imergWeights?.length) &&
-          this.watches.length < BASIN_WATCH_LIMITS.watches,
+          this.watches.length < BASIN_WATCH_LIMITS.watches &&
+          !this.watches.some((watch) => watch.basinId === this.basinId()),
       }),
     );
   }
@@ -178,7 +181,12 @@ export class RaindropController {
   }
 
   traceAt(lon, lat, name = null) {
-    if (!Number.isFinite(lon) || !Number.isFinite(lat) || Math.abs(lat) > 90 || Math.abs(lon) > 180)
+    if (
+      !Number.isFinite(lon) ||
+      !Number.isFinite(lat) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lon) > 180
+    )
       return this.setState('error', 'invalid-point');
     this.abortRun();
     return this.trace({ lon, lat, name }, (this.run = new AbortController()));
@@ -193,7 +201,11 @@ export class RaindropController {
         { signal: run.signal },
       );
       if (run.signal.aborted || this.run !== run) return;
-      this.result = { ...result, placeName: point.name || null, at: this.now() };
+      this.result = {
+        ...result,
+        placeName: point.name || null,
+        at: this.now(),
+      };
       this.render.show?.(this.result);
       this.setState('ready');
       await this.readRain(run);
@@ -291,6 +303,16 @@ export class RaindropController {
     return this.checkWatches();
   }
 
+  /** Stable id for the current result's basin: HydroBASINS unit plus D8 outlet. */
+  basinId() {
+    const outlet = this.result?.drop?.outlet;
+    if (!outlet) return null;
+    const at = `${outlet[0].toFixed(3)},${outlet[1].toFixed(3)}`;
+    return this.result.basin?.id
+      ? `hybas12:${this.result.basin.id}:${at}`
+      : `d8-outlet:${at}`;
+  }
+
   addWatch(thresholdMm) {
     const catchment = this.result?.drop?.catchment;
     if (!catchment?.imergWeights?.length) return false;
@@ -298,9 +320,7 @@ export class RaindropController {
     try {
       const watch = createBasinWatch(
         {
-          basinId: this.result.basin?.id
-            ? `hybas12:${this.result.basin.id}:${outlet[0].toFixed(3)},${outlet[1].toFixed(3)}`
-            : `d8-outlet:${outlet[0].toFixed(3)},${outlet[1].toFixed(3)}`,
+          basinId: this.basinId(),
           label:
             this.result.placeName ||
             `${outlet[1].toFixed(3)}°, ${outlet[0].toFixed(3)}°`,
@@ -311,7 +331,10 @@ export class RaindropController {
       );
       if (this.watches.some((row) => row.basinId === watch.basinId))
         return false;
-      this.watches = [...this.watches, watch].slice(0, BASIN_WATCH_LIMITS.watches);
+      this.watches = [...this.watches, watch].slice(
+        0,
+        BASIN_WATCH_LIMITS.watches,
+      );
       this.storage.write(this.watches);
       this.watchesPaused = false;
       this.syncTimer();
@@ -343,9 +366,15 @@ export class RaindropController {
     }
   }
 
-  async checkWatches() {
-    if (this.checking || this.watchesPaused || !this.watches.length) return [];
-    this.checking = true;
+  /** One check at a time; a concurrent call waits for the running one. */
+  checkWatches() {
+    if (this.checking) return this.checking.then(() => []);
+    if (this.watchesPaused || !this.watches.length) return Promise.resolve([]);
+    this.checking = this.runWatchChecks();
+    return this.checking;
+  }
+
+  async runWatchChecks() {
     const fired = [];
     try {
       for (const watch of this.watches) {
@@ -365,7 +394,7 @@ export class RaindropController {
       }
       this.storage.write(this.watches);
     } finally {
-      this.checking = false;
+      this.checking = null;
       this.present();
     }
     return fired;

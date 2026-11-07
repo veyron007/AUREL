@@ -47,7 +47,10 @@ export function createGridSpec(spec) {
 }
 
 /** Grid centred on a point, sized in cells; validates everything. */
-export function gridAround({ lon, lat }, { cols, rows, stepLonDeg, stepLatDeg }) {
+export function gridAround(
+  { lon, lat },
+  { cols, rows, stepLonDeg, stepLatDeg },
+) {
   return createGridSpec({
     west: lon - (cols / 2) * stepLonDeg,
     north: lat + (rows / 2) * stepLatDeg,
