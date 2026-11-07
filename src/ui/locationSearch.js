@@ -48,7 +48,8 @@ export class LocationSearch {
   subscribe(listener, options) {
     return this.channel.subscribe(listener, options);
   }
-  async run(query) {
+  /** Search for `query`; `choice.place` flies to a suggested place as listed. */
+  async run(query, choice = null) {
     query = String(query || '').trim();
     if (!query || this.destroyed) return;
     const authority = this.begin();
@@ -87,6 +88,7 @@ export class LocationSearch {
       this.channel.publish(change('started'));
       if (!current() || controller.signal.aborted) return;
       const destination = await this.search(query, {
+        ...(choice?.place ? { place: choice.place } : {}),
         signal: controller.signal,
         beforeFly: () => current() && this.beforeFly(authority),
       });

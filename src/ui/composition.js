@@ -2,6 +2,10 @@
 import { StyleManager as ApplicationShell } from './applicationShell.js';
 import { LocationSearch } from './location.js';
 import { CITY_POIS } from '../cityPois.js';
+import { createSuggestionEngine } from '../search/suggest.js';
+import { listPresetPlaces } from '../search/presetGeocoder.js';
+import { createRecentPlaces } from '../search/recentPlaces.js';
+import { viewportBias } from '../annotations/annotationResolver.js';
 import {
   GLOBE_VIEW,
   flyToGlobeView,
@@ -77,6 +81,7 @@ export class StyleManager extends ApplicationShell {
         flyToPresetLocation,
         flyToPOI,
         searchAndFlyTo,
+        locationSuggestions,
         interruptCameraMotion,
         interruptGlobeRotation,
         IntelHUD,
@@ -124,3 +129,30 @@ export class StyleManager extends ApplicationShell {
     });
   }
 }
+
+const recentPlaces = createRecentPlaces();
+
+/**
+ * Location type-ahead for the shell: the suggestion engine over the bundled
+ * places, this browser's recent choices and the place search's keyless
+ * suggester, plus the current view bias. Kept here so the shell itself does
+ * not import search modules.
+ */
+const locationSuggestions = Object.freeze({
+  createEngine({ placeSearch, onUpdate }) {
+    return createSuggestionEngine({
+      remote: placeSearch?.suggest ?? null,
+      places: listPresetPlaces(CITY_POIS),
+      readRecent: () => recentPlaces.read(),
+      onUpdate,
+    });
+  },
+  remember: (place) => recentPlaces.remember(place),
+  bias(viewer) {
+    try {
+      return viewportBias(viewer);
+    } catch {
+      return null;
+    }
+  },
+});

@@ -305,6 +305,7 @@ export class StyleManager extends ShellFacade {
       services: {
         CITY_POIS: services.CITY_POIS,
         searchAndFlyTo: services.searchAndFlyTo,
+        locationSuggestions: services.locationSuggestions,
         LocationSearch: services.LocationSearch,
         OrbitController: services.OrbitController,
         suspendDetection: services.suspendDetection,

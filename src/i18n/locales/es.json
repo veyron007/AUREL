@@ -4397,5 +4397,17 @@
   "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "Sin configurar. Añade RADIO_PRIORITY_COUNTRIES=IN a .env para reservar hasta {count} emisoras indias en el directorio de radio y reinicia",
   "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "Reserva hasta {count} emisoras de radio por país para {countries}. Configurado con RADIO_PRIORITY_COUNTRIES en .env; reinicia después de cambiarlo",
   "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "Token ignorado por Solo gratis: este servicio funciona sin clave. Las credenciales guardadas no cambian.",
-  "RADIO PRIORITY COUNTRIES": "PAÍSES PRIORITARIOS DE RADIO"
+  "RADIO PRIORITY COUNTRIES": "PAÍSES PRIORITARIOS DE RADIO",
+  "Bundled place": "Lugar incluido",
+  "City": "Ciudad",
+  "Coordinates": "Coordenadas",
+  "District": "Distrito",
+  "Landmark": "Punto de referencia",
+  "Looking up places…": "Buscando lugares…",
+  "No matching places. Press Enter to search anyway.": "No hay lugares coincidentes. Pulsa Intro para buscar de todos modos.",
+  "Online suggestions unavailable; showing saved places.": "Sugerencias en línea no disponibles; se muestran lugares guardados.",
+  "Place suggestions": "Sugerencias de lugares",
+  "State": "Estado",
+  "Street": "Calle",
+  "OpenStreetMap": "OpenStreetMap"
 }

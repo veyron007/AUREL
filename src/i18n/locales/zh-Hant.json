@@ -4247,5 +4247,17 @@
   "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "未設定。在 .env 中添加 RADIO_PRIORITY_COUNTRIES=IN，可在電台目錄中為印度預留最多 {count} 個電台，然後重啟",
   "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "為 {countries} 每個國家預留最多 {count} 個電台。由 .env 中的 RADIO_PRIORITY_COUNTRIES 設定；修改後請重啟",
   "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "「僅免費」模式下不使用該令牌——此服務無需密鑰也能使用。已儲存的憑證維持不變。",
-  "RADIO PRIORITY COUNTRIES": "電台優先國家"
+  "RADIO PRIORITY COUNTRIES": "電台優先國家",
+  "Bundled place": "內建地點",
+  "City": "城市",
+  "Coordinates": "座標",
+  "District": "區",
+  "Landmark": "地標",
+  "Looking up places…": "正在查找地點…",
+  "No matching places. Press Enter to search anyway.": "沒有符合的地點。按 Enter 仍然搜尋。",
+  "Online suggestions unavailable; showing saved places.": "線上建議無法使用；顯示已儲存的地點。",
+  "Place suggestions": "地點建議",
+  "State": "州",
+  "Street": "街道",
+  "OpenStreetMap": "OpenStreetMap"
 }

@@ -4472,5 +4472,17 @@
   "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "Не задано. Додайте RADIO_PRIORITY_COUNTRIES=IN у .env, щоб зарезервувати в каталозі радіо до {count} індійських станцій, потім перезапустіть",
   "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "Резервує в каталозі радіо до {count} станцій на країну: {countries}. Задається через RADIO_PRIORITY_COUNTRIES у .env; після зміни перезапустіть",
   "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "Токен не використовується в режимі «Лише безкоштовно» — сервіс працює й без ключа. Збережені облікові дані не змінено.",
-  "RADIO PRIORITY COUNTRIES": "ПРІОРИТЕТНІ КРАЇНИ РАДІО"
+  "RADIO PRIORITY COUNTRIES": "ПРІОРИТЕТНІ КРАЇНИ РАДІО",
+  "Bundled place": "Вбудоване місце",
+  "City": "Місто",
+  "Coordinates": "Координати",
+  "District": "Район",
+  "Landmark": "Пам'ятка",
+  "Looking up places…": "Пошук місць…",
+  "No matching places. Press Enter to search anyway.": "Збігів немає. Натисніть Enter, щоб усе одно шукати.",
+  "Online suggestions unavailable; showing saved places.": "Онлайн-підказки недоступні; показано збережені місця.",
+  "Place suggestions": "Підказки місць",
+  "State": "Штат",
+  "Street": "Вулиця",
+  "OpenStreetMap": "OpenStreetMap"
 }

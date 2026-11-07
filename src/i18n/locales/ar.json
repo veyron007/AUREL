@@ -4622,5 +4622,17 @@
   "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "غير مضبوط. أضف RADIO_PRIORITY_COUNTRIES=IN إلى .env لحجز ما يصل إلى {count} محطة هندية في دليل الإذاعات، ثم أعد التشغيل",
   "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "يحجز ما يصل إلى {count} محطة إذاعية لكل دولة من: {countries}. مضبوط عبر RADIO_PRIORITY_COUNTRIES في .env؛ أعد التشغيل بعد تغييره",
   "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "الرمز متجاهَل في وضع مجاني فقط — تعمل هذه الخدمة دون مفتاح. تبقى بيانات الاعتماد المحفوظة دون تغيير.",
-  "RADIO PRIORITY COUNTRIES": "دول أولوية الإذاعات"
+  "RADIO PRIORITY COUNTRIES": "دول أولوية الإذاعات",
+  "Bundled place": "مكان مضمّن",
+  "City": "مدينة",
+  "Coordinates": "إحداثيات",
+  "District": "حي",
+  "Landmark": "معلم",
+  "Looking up places…": "جارٍ البحث عن الأماكن…",
+  "No matching places. Press Enter to search anyway.": "لا توجد أماكن مطابقة. اضغط Enter للبحث على أي حال.",
+  "Online suggestions unavailable; showing saved places.": "الاقتراحات عبر الإنترنت غير متاحة؛ تُعرض الأماكن المحفوظة.",
+  "Place suggestions": "اقتراحات الأماكن",
+  "State": "ولاية",
+  "Street": "شارع",
+  "OpenStreetMap": "OpenStreetMap"
 }

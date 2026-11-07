@@ -646,7 +646,9 @@
       "src/data/local_data/natural_earth/marine.json",
       "src/sources/httpBody.js",
       "src/i18n/marker.js",
-      "src/sources/nominatim.js"
+      "src/sources/nominatim.js",
+      "src/search/suggest.js",
+      "src/search/recentPlaces.js"
     ],
     "external": []
   },
@@ -825,7 +827,8 @@
       "src/i18n/locales/ru.json",
       "src/i18n/locales/uk.json",
       "src/i18n/locales/zh-CN.json",
-      "src/i18n/locales/zh-Hant.json"
+      "src/i18n/locales/zh-Hant.json",
+      "src/ui/searchSuggestions.js"
     ],
     "external": []
   },
@@ -1234,7 +1237,8 @@
       "src/ui/wildlifeSightingPlacement.js",
       "src/overlays/worldOverlayChrome.js",
       "src/layers/wildlifeSightings/photoText.js",
-      "src/ui/stores/workspace.js"
+      "src/ui/stores/workspace.js",
+      "src/ui/searchSuggestions.js"
     ],
     "external": ["cesium", "vue", "pinia", "vue-i18n"]
   },
@@ -3538,7 +3542,10 @@
       "src/orbitWitness/overlay.js",
       "src/app/orbitWitnessTools.js",
       "src/ui/orbitWitnessController.js",
-      "src/ui/stores/orbitWitness.js"
+      "src/ui/stores/orbitWitness.js",
+      "src/ui/searchSuggestions.js",
+      "src/search/suggest.js",
+      "src/search/recentPlaces.js"
     ],
     "external": [
       "hls.js",
@@ -4192,7 +4199,9 @@
       "src/layers/wildlifeSightings/photoText.js",
       "src/layers/wildlifeSightings/performance.js",
       "src/layers/directions/snapshot.js",
-      "src/layers/recentImagery/historical.js"
+      "src/layers/recentImagery/historical.js",
+      "src/search/suggest.js",
+      "src/search/recentPlaces.js"
     ],
     "external": [
       "hls.js",
@@ -4280,7 +4289,9 @@
       "src/data/placeBoundaries.js",
       "src/data/placeNames.js",
       "src/data/local_data/us_census_places/files.js",
-      "src/data/local_data/wof_neighborhoods/files.js"
+      "src/data/local_data/wof_neighborhoods/files.js",
+      "src/search/suggest.js",
+      "src/search/recentPlaces.js"
     ],
     "external": [
       "cesium",

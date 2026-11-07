@@ -4,7 +4,10 @@ import { createHttpGeospatialProvider } from './http.js';
 import { createPlaceSearch } from './placeSearch.js';
 import { createNominatimStatus } from '../sources/nominatimStatus.js';
 import { createGoogleGeocoder } from './google.js';
-import { createPhotonGeocoder } from '../keylessGeocoder.js';
+import {
+  createPhotonGeocoder,
+  createPhotonSuggester,
+} from '../keylessGeocoder.js';
 import { createCoordinateGeocoder } from './coordinateGeocoder.js';
 import { createPresetGeocoder } from './presetGeocoder.js';
 import { createAlpsGeocoder } from './alpsGeocoder.js';
@@ -108,8 +111,21 @@ export function createDefaultPlaceSearch({
       ? { ...endpoints, reverse: null, textSearch: null, nearby: null }
       : endpoints,
   });
+  // Type-ahead suggestions use keyless Photon only: public Nominatim forbids
+  // autocomplete and Google's is billable. `endpoints.photon === null` (the
+  // operator's "no Photon") leaves suggestions local-only.
+  const suggest =
+    providers.suggest !== undefined
+      ? providers.suggest
+      : endpoints.photon === null
+        ? null
+        : createPhotonSuggester({
+            fetchImpl,
+            endpoint: endpoints.photon ?? undefined,
+          });
   return {
     ...forward,
+    suggest,
     ...createGeospatialServices({
       signal,
       providers: {

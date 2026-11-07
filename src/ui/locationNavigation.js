@@ -2,6 +2,7 @@ import * as Cesium from 'cesium';
 import { t } from '../i18n/index.js';
 import { createStateChannel } from '../app/stateChannel.js';
 import { LocationControls } from './location.js';
+import { SearchSuggestions } from './searchSuggestions.js';
 
 /** Own destination selection, lookup, orbit and world-jump lifetime. */
 export class LocationNavigation {
@@ -127,9 +128,10 @@ export class LocationNavigation {
       isCurrent: (generation) =>
         !this._disposed && generation === this._navigationGeneration,
       beforeFly: (generation) => this._reassertNavigationHandoff(generation),
-      search: (query, options) =>
+      // A chosen suggestion flies to that place as listed; typed text searches.
+      search: (query, { place, ...options }) =>
         searchAndFlyTo(this.viewer, query, {
-          placeSearch: this.placeSearch,
+          placeSearch: place ? chosenPlaceSearch(place) : this.placeSearch,
           ...options,
         }),
       onResult: (destination) => {
@@ -138,10 +140,24 @@ export class LocationNavigation {
       },
       onError: (error) => console.error('[Search] Geocoding failed:', error),
     });
+    const { locationSuggestions } = this.services;
+    const suggestions = locationSuggestions
+      ? new SearchSuggestions({
+          createEngine: (onUpdate) =>
+            locationSuggestions.createEngine({
+              placeSearch: this.placeSearch,
+              onUpdate,
+            }),
+          onChange: () => this._locationControls?.present(),
+        })
+      : null;
     this._locationControls = new LocationControls({
       elements: {
         search: this._locationSearch,
       },
+      suggestions,
+      readBias: () => locationSuggestions?.bias(this.viewer) ?? null,
+      onChoosePlace: (place) => locationSuggestions?.remember(place),
       publish: (view) => this._publishLocation?.(view),
       cities: CITY_POIS,
       getExpandedCity: () => this._expandedCityId,
@@ -448,4 +464,14 @@ export class LocationNavigation {
     this._trafficTransitionTimer = null;
     this.orbitController?.stop();
   }
+}
+
+/** A one-answer place search for a suggestion the user already chose. */
+function chosenPlaceSearch(place) {
+  return {
+    async geocode(_query, { signal } = {}) {
+      signal?.throwIfAborted();
+      return { place: { ...place, exact: true }, answered: true };
+    },
+  };
 }

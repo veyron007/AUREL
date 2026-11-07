@@ -71,8 +71,17 @@ function selectMapSource(chip) {
       <button id="search-toggle" class="search-toggle-btn" type="button" :title="t('Search any location')" :aria-label="t('Search any location')" @click="locationControls?.toggleSearch()">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       </button>
-      <input type="search" id="location-search" class="aurel-search-input" v-class-toggle="{ expanded: !!loc?.searchExpanded, searching: !!loc?.searching }" :placeholder="t('Search any location...')" autocomplete="off" spellcheck="false" enterkeyhint="search" :aria-label="t('Search location by name or coordinates')" :aria-invalid="loc?.searchError ? 'true' : null" :aria-describedby="loc?.searchError ? 'location-search-error' : null" />
+      <input type="search" id="location-search" class="aurel-search-input" v-class-toggle="{ expanded: !!loc?.searchExpanded, searching: !!loc?.searching }" :placeholder="t('Search any location...')" autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-controls="location-suggestions" :aria-expanded="loc?.suggest?.open ? 'true' : 'false'" :aria-activedescendant="loc?.suggest?.activeId || null" :aria-label="t('Search location by name or coordinates')" :aria-invalid="loc?.searchError ? 'true' : null" :aria-describedby="loc?.searchError ? 'location-search-error' : null" />
       <button id="search-submit" type="button" :aria-label="t('Search')" :title="t('Search')" @click="locationControls?.submitSearch()"><span aria-hidden="true">↵</span></button>
+    </div>
+    <div id="location-suggestions-wrap" class="location-suggestions" v-show="loc?.suggest?.open">
+      <ul id="location-suggestions" role="listbox" :aria-label="t('Place suggestions')" class="ui-scroll">
+        <li v-for="(item, index) in loc?.suggest?.items || []" :key="item.key" :id="item.id" role="option" :aria-selected="item.active ? 'true' : 'false'" class="location-suggestion" v-class-toggle="{ active: item.active }" :data-source="item.sourceId" @mousedown.prevent @mousemove="locationControls?.highlightSuggestion(index)" @click="locationControls?.chooseSuggestion(index)">
+          <span class="location-suggestion-text"><span class="location-suggestion-title">{{ item.title }}</span><span v-if="item.detail" class="location-suggestion-detail">{{ item.detail }}</span></span>
+          <span class="location-suggestion-meta"><span class="location-suggestion-kind">{{ item.kind }}</span><span class="location-suggestion-source">{{ item.source }}</span></span>
+        </li>
+      </ul>
+      <p v-if="loc?.suggest?.status" class="location-suggestions-status" aria-live="polite">{{ loc.suggest.status }}</p>
     </div>
     <div class="aurel-search-feedback">
       <span id="location-search-status" role="status" aria-live="polite">{{ loc?.searching ? t('Searching...') : '' }}</span>

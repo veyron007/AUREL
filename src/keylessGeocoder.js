@@ -512,3 +512,39 @@ export function createPhotonGeocoder({
       }),
   };
 }
+
+/** Rows asked of Photon per suggestion request. */
+const PHOTON_SUGGEST_LIMIT = 7;
+
+/**
+ * Photon as a type-ahead suggester: one request per settled query, soft
+ * proximity bias, several candidates in Photon's order. Debounce, caching and
+ * cancellation belong to the caller (src/search/suggest.js); this only turns
+ * one query into a list of normalized places, and rejects when Photon does
+ * not answer so the caller can say suggestions are unavailable.
+ */
+export function createPhotonSuggester({
+  fetchImpl = fetch,
+  endpoint = PHOTON_ENDPOINT,
+  limit = PHOTON_SUGGEST_LIMIT,
+} = {}) {
+  return async function suggest(query, { bias = null, signal } = {}) {
+    signal?.throwIfAborted();
+    const trimmed = String(query ?? '').trim();
+    if (!trimmed) return [];
+    const deadline = AbortSignal.timeout(PHOTON_TIMEOUT_MS);
+    const requestSignal = signal
+      ? AbortSignal.any([signal, deadline])
+      : deadline;
+    const response = await fetchImpl(
+      photonSearchUrl(trimmed, { bias, limit, endpoint }),
+      { signal: requestSignal },
+    );
+    if (!response.ok) throw new Error(`Photon answered ${response.status}`);
+    const data = await response.json();
+    requestSignal.throwIfAborted();
+    if (!Array.isArray(data?.features))
+      throw new Error('Photon answer malformed');
+    return data.features.map(normalizePhotonFeature).filter(Boolean);
+  };
+}

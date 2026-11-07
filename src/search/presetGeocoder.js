@@ -111,3 +111,11 @@ export function createPresetGeocoder({ presets = {} } = {}) {
     },
   };
 }
+
+/**
+ * Every bundled city and landmark as a place, once each, in preset order.
+ * Location suggestions search this list locally while the user types.
+ */
+export function listPresetPlaces(presets = {}) {
+  return [...new Set(indexPresets(presets).values())];
+}

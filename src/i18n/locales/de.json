@@ -4322,5 +4322,17 @@
   "Not set. Add RADIO_PRIORITY_COUNTRIES=IN to .env to reserve up to {count} Indian stations in the radio directory, then restart": "Nicht gesetzt. RADIO_PRIORITY_COUNTRIES=IN in .env eintragen, um bis zu {count} indische Sender im Radioverzeichnis zu reservieren, dann neu starten",
   "Reserves up to {count} radio stations per country for {countries}. Set by RADIO_PRIORITY_COUNTRIES in .env; restart after changing it": "Reserviert bis zu {count} Radiosender je Land für {countries}. Gesetzt über RADIO_PRIORITY_COUNTRIES in .env; nach einer Änderung neu starten",
   "Token ignored by Free-only — this service still works without a key. Saved credentials are unchanged.": "Token durch Nur kostenlos ignoriert — dieser Dienst funktioniert auch ohne Schlüssel. Gespeicherte Zugangsdaten bleiben unverändert.",
-  "RADIO PRIORITY COUNTRIES": "RADIO-PRIORITÄTSLÄNDER"
+  "RADIO PRIORITY COUNTRIES": "RADIO-PRIORITÄTSLÄNDER",
+  "Bundled place": "Mitgelieferter Ort",
+  "City": "Stadt",
+  "Coordinates": "Koordinaten",
+  "District": "Stadtteil",
+  "Landmark": "Wahrzeichen",
+  "Looking up places…": "Orte werden gesucht…",
+  "No matching places. Press Enter to search anyway.": "Keine passenden Orte. Mit Enter trotzdem suchen.",
+  "Online suggestions unavailable; showing saved places.": "Online-Vorschläge nicht verfügbar; gespeicherte Orte werden angezeigt.",
+  "Place suggestions": "Ortsvorschläge",
+  "State": "Bundesland",
+  "Street": "Straße",
+  "OpenStreetMap": "OpenStreetMap"
 }

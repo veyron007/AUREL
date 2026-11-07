@@ -34,6 +34,9 @@ export class LocationControls {
     onSearchEdit,
     onReset,
     searchExpanded = false,
+    suggestions = null,
+    readBias = () => null,
+    onChoosePlace = null,
     publish = () => {},
     doc = document,
     requestFrame = (callback) => requestAnimationFrame(callback),
@@ -48,6 +51,9 @@ export class LocationControls {
       onSearch,
       onSearchEdit,
       onReset,
+      suggestions,
+      readBias,
+      onChoosePlace,
       publish,
       doc,
       requestFrame,
@@ -94,12 +100,30 @@ export class LocationControls {
         onPoi(cityId, index);
     });
     this.bind(elements.search, 'keydown', (event) => {
-      if (event.key === 'Enter') void this.submitSearch();
+      if (event.isComposing) return;
+      if (this.suggestions?.key(event)) {
+        event.preventDefault();
+        return;
+      }
+      if (event.key !== 'Enter') return;
+      const active = this.suggestions?.active();
+      if (active) {
+        event.preventDefault();
+        void this.chooseSuggestion(this.suggestions.activeIndex);
+      } else void this.submitSearch();
     });
     // Typing corrects a failed query; closing the field (which empties it) drops its error.
-    this.bind(elements.search, 'input', () => onSearchEdit?.());
+    this.bind(elements.search, 'input', () => {
+      onSearchEdit?.();
+      this.suggestions?.input(elements.search.value, this.readBias());
+    });
+    // Focusing an empty field offers recent places.
+    this.bind(elements.search, 'focus', () =>
+      this.suggestions?.input(elements.search.value, this.readBias()),
+    );
     this.bind(elements.search, 'blur', () => {
       if (!elements.search.value) onSearchEdit?.();
+      this.suggestions?.close();
     });
     this.present();
   }
@@ -136,6 +160,7 @@ export class LocationControls {
       searchError: this.searchError,
       searchExpanded: this.searchExpanded,
       searching: this.searching,
+      suggest: this.suggestions?.view() ?? null,
       orbit: this.orbit && { ...this.orbit },
     };
   }
@@ -243,8 +268,24 @@ export class LocationControls {
   }
   /** The visible search action uses the same lookup as keyboard submission. */
   submitSearch() {
-    if (!this.destroyed)
-      return this.onSearch(this.elements.search?.value ?? '');
+    if (this.destroyed) return;
+    this.suggestions?.close();
+    return this.onSearch(this.elements.search?.value ?? '');
+  }
+  /** Fly to one suggested place exactly as listed, without searching again. */
+  chooseSuggestion(index) {
+    if (this.destroyed || !this.suggestions) return;
+    const row = this.suggestions.items[index];
+    if (!row) return;
+    const label = String(row.place.label || row.place.name);
+    if (this.elements.search) this.elements.search.value = label;
+    this.suggestions.close();
+    this.onChoosePlace?.(row.place);
+    return this.onSearch(label, { place: row.place });
+  }
+  /** The pointer moved over a suggestion row. */
+  highlightSuggestion(index) {
+    if (!this.destroyed) this.suggestions?.highlight(index);
   }
   /** Mark the search field while a lookup runs. */
   setSearching(active) {
@@ -270,6 +311,7 @@ export class LocationControls {
   /** Close the search field and drop its query. */
   closeSearch() {
     if (this.destroyed) return;
+    this.suggestions?.close();
     this.searchExpanded = false;
     this.present();
     const field = this.elements.search;
@@ -286,6 +328,7 @@ export class LocationControls {
     if (this.destroyed) return;
     this.destroyed = true;
     this.cancelExpansion();
+    this.suggestions?.destroy();
     for (const remove of this.removers.splice(0)) remove();
     // The ORBIT indicator leaves with its owner.
     if (this.orbit) {

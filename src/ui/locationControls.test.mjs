@@ -108,6 +108,7 @@ test('the tray presents its cities, empty status and no landmarks at first', () 
     searchError: null,
     searchExpanded: false,
     searching: false,
+    suggest: null,
     orbit: null,
   });
   f.controls.highlightCity('b');
@@ -291,4 +292,85 @@ test('staging a local search opens a bounded query without navigating', () => {
   assert.equal(f.elements.search.value, 'Dehradun');
   f.controls.destroy();
   assert.equal(f.controls.stageSearch('Delhi'), false);
+});
+
+test('choosing a suggestion fills the field and flies to that exact place', async () => {
+  const { LocationControls } = await import('./locationControls.js');
+  const { SearchSuggestions } = await import('./searchSuggestions.js');
+  const listeners = {};
+  const field = {
+    value: '',
+    addEventListener: (type, fn) => (listeners[type] = fn),
+    removeEventListener() {},
+    focus() {},
+    blur() {},
+  };
+  const doc = { addEventListener() {}, removeEventListener() {} };
+  const chosen = {
+    lat: 30.4597,
+    lng: 78.1058,
+    name: 'Lal Tibba',
+    label: 'Lal Tibba, Mussoorie',
+    types: [],
+  };
+  const suggestions = new SearchSuggestions({
+    createEngine: (onUpdate) => ({
+      update: (text) =>
+        onUpdate({
+          query: text,
+          items: [{ key: 'a', source: 'remote', place: chosen }],
+          loading: false,
+          remote: 'done',
+        }),
+      cancel() {},
+      destroy() {},
+    }),
+  });
+  const searches = [];
+  const remembered = [];
+  const controls = new LocationControls({
+    elements: { search: field },
+    cities: {},
+    getExpandedCity: () => null,
+    onCity() {},
+    onPoi() {},
+    onSearch: (query, choice) => searches.push([query, choice]),
+    onChoosePlace: (p) => remembered.push(p),
+    suggestions,
+    doc,
+    publish() {},
+  });
+  field.value = 'lal t';
+  listeners.input();
+  listeners.keydown({ key: 'ArrowDown', preventDefault() {} });
+  listeners.keydown({ key: 'Enter', preventDefault() {} });
+  assert.equal(field.value, 'Lal Tibba, Mussoorie');
+  assert.deepEqual(searches, [['Lal Tibba, Mussoorie', { place: chosen }]]);
+  assert.deepEqual(remembered, [chosen]);
+  assert.equal(suggestions.open, false);
+  controls.destroy();
+});
+
+test('Enter with no highlighted suggestion submits the typed text', async () => {
+  const { LocationControls } = await import('./locationControls.js');
+  const listeners = {};
+  const field = {
+    value: 'rajpur road',
+    addEventListener: (type, fn) => (listeners[type] = fn),
+    removeEventListener() {},
+  };
+  const searches = [];
+  const controls = new LocationControls({
+    elements: { search: field },
+    cities: {},
+    getExpandedCity: () => null,
+    onCity() {},
+    onPoi() {},
+    onSearch: (query, choice) => searches.push([query, choice]),
+    doc: { addEventListener() {}, removeEventListener() {} },
+    publish() {},
+  });
+  listeners.keydown({ key: 'Enter', preventDefault() {} });
+  assert.deepEqual(searches, [['rajpur road', undefined]]);
+  controls.destroy();
 });

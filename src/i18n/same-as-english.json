@@ -40,7 +40,8 @@
     "{value}°",
     "Raindrop",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "OpenStreetMap"
   ],
   "de": [
     "1090 MHz",
@@ -233,7 +234,8 @@
     "Mumbai",
     "Bengaluru",
     "Chennai",
-    "Kolkata"
+    "Kolkata",
+    "OpenStreetMap"
   ],
   "es": [
     "1090 MHz",
@@ -388,7 +390,8 @@
     "Mussoorie",
     "Rishikesh",
     "Delhi",
-    "Chennai"
+    "Chennai",
+    "OpenStreetMap"
   ],
   "fr": [
     "1090 MHz",
@@ -602,7 +605,8 @@
     "Mumbai",
     "Bengaluru",
     "Chennai",
-    "Kolkata"
+    "Kolkata",
+    "OpenStreetMap"
   ],
   "it": [
     "1090 MHz",
@@ -800,7 +804,8 @@
     "Mumbai",
     "Bengaluru",
     "Chennai",
-    "Kolkata"
+    "Kolkata",
+    "OpenStreetMap"
   ],
   "ja": [
     "1090 MHz",
@@ -862,7 +867,8 @@
     "Raindrop",
     "{value} mm",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "OpenStreetMap"
   ],
   "pt": [
     "1090 MHz",
@@ -1015,7 +1021,8 @@
     "Mussoorie",
     "Rishikesh",
     "Mumbai",
-    "Chennai"
+    "Chennai",
+    "OpenStreetMap"
   ],
   "ru": [
     "AIS: --",
@@ -1042,7 +1049,8 @@
     "{value}°",
     "Raindrop",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "OpenStreetMap"
   ],
   "uk": [
     "AIS: --",
@@ -1064,7 +1072,8 @@
     "{value}°",
     "Raindrop",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "OpenStreetMap"
   ],
   "zh-CN": [
     "1090 MHz",
@@ -1134,7 +1143,8 @@
     "Raindrop",
     "{value} mm",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "OpenStreetMap"
   ],
   "zh-Hant": [
     "1090 MHz",
@@ -1204,6 +1214,7 @@
     "Raindrop",
     "{value} mm",
     "India Meteorological Department",
-    "Central Water Commission"
+    "Central Water Commission",
+    "OpenStreetMap"
   ]
 }

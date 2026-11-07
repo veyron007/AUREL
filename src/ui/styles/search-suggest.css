@@ -1,0 +1,98 @@
+/* Location search suggestions: a combobox list under the search field. */
+#aurel-search .location-suggestions {
+  margin-top: 6px;
+  overflow: hidden;
+  color: var(--text-primary);
+  background: var(--surface-info, var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: var(--panel-surface-shadow, 0 18px 40px rgba(0, 0, 0, 0.5));
+  font: 13px/1.4 var(--font-sans);
+}
+
+#location-suggestions {
+  max-height: min(380px, 55vh);
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  overscroll-behavior: contain;
+}
+
+.location-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.location-suggestion.active {
+  background: var(--accent-dim);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+.location-suggestion-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.location-suggestion-title {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.location-suggestion.active .location-suggestion-title {
+  color: var(--accent);
+}
+
+.location-suggestion-detail {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.location-suggestion-meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  color: var(--text-dim);
+  font: 500 10px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.location-suggestion[data-source='recent'] .location-suggestion-source {
+  color: var(--text-secondary);
+}
+
+.location-suggestions-status {
+  margin: 0;
+  padding: 8px 14px 10px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  border-top: 1px solid var(--glass-border);
+}
+
+#location-suggestions:empty + .location-suggestions-status {
+  border-top: 0;
+}
+
+@media (max-width: 620px) {
+  #location-suggestions {
+    max-height: 45vh;
+  }
+  .location-suggestion-meta {
+    display: none;
+  }
+}
