@@ -3898,5 +3898,17 @@
   "Remove": "削除",
   "Last reading {range} to {time}.": "最新の値 {range}({time} まで)。",
   "Not checked yet.": "まだ確認していません。",
-  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "{time} までの 3 時間で通知:{range}、{threshold} mm 超。"
+  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "{time} までの 3 時間で通知:{range}、{threshold} mm 超。",
+  "written": "書き込み済み",
+  "answered": "応答済み",
+  "refused ({code})": "拒否 ({code})",
+  "Agent writes": "エージェントの書き込み",
+  "Allow agent writes": "エージェントの書き込みを許可",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "このセッションでオン。ローカル MCP エージェントが場所・メモ・範囲・監視を追加でき、「エージェント作成」と表示されます。",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "オフ。エージェントは読み取りのみ可能で、書き込みはすべて拒否されます。このタブのセッション終了時にオフになります。",
+  "Agent desk ready on this server.": "このサーバーでエージェント窓口の準備ができています。",
+  "Agent desk not connected.": "エージェント窓口は未接続です。",
+  "Recent agent requests": "最近のエージェント要求",
+  "by agent · {client} · {time}": "エージェント作成 · {client} · {time}",
+  "cited by agent": "エージェントが引用"
 }

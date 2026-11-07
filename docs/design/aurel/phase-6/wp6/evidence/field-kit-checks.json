@@ -1,0 +1,197 @@
+{
+  "base": "http://localhost:4194",
+  "checks": [
+    {
+      "name": "Allow agent writes is visible in the workspace tools and off by default",
+      "pass": true
+    },
+    {
+      "name": "stdio MCP server initializes",
+      "pass": true
+    },
+    {
+      "name": "Field Kit tools are listed; horizon_at waits for WP1",
+      "pass": true
+    },
+    {
+      "name": "get_free_budget answers estimated remaining units per ledger",
+      "pass": true
+    },
+    {
+      "name": "with writes off every write tool returns the typed refusal writes_disabled",
+      "pass": true
+    },
+    {
+      "name": "a dry-run mission plan works with writes off",
+      "pass": true
+    },
+    {
+      "name": "turning writes on is kept for this tab session only",
+      "pass": true
+    },
+    {
+      "name": "the sunrise mission saves a project as claude-code",
+      "pass": true
+    },
+    {
+      "name": "writes chain revisions; a stale revision is refused with revision_conflict",
+      "pass": true
+    },
+    {
+      "name": "a cloud-cover watch is refused as unsupported; a fire watch is saved stopped",
+      "pass": true
+    },
+    {
+      "name": "a self-crossing area is refused with invalid_geometry",
+      "pass": true
+    },
+    {
+      "name": "render_view returns a PNG whose legend gives each visible layer a class and time field",
+      "pass": true
+    },
+    {
+      "name": "every answer carried a provenance envelope",
+      "pass": true
+    },
+    {
+      "name": "Library shows the agent entries as \"by agent · claude-code · time\"",
+      "pass": true
+    },
+    {
+      "name": "a reload in the same tab session keeps writes on",
+      "pass": true
+    },
+    {
+      "name": "a new browser session starts with writes off",
+      "pass": true
+    },
+    {
+      "name": "mobile document has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "no unhandled browser errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ],
+  "transcript": [
+    {
+      "tool": "get_free_budget",
+      "isError": false,
+      "summary": "Estimated remaining free units — field-context: about 100 upstream requests left today (estimated); imagery-history: about 100 upstream requests left today (estimated); research: about 48 analysis jobs left today (estimated). Not a guarantee of free dispatch.",
+      "refusal": null,
+      "envelope": "derived"
+    },
+    {
+      "tool": "fieldbook_add_place",
+      "isError": true,
+      "summary": "Refused (writes_disabled): Agent writes are off. The owner can turn on \"Allow agent writes\" in AUREL's workspace tools for this session; nothing was written.",
+      "refusal": "writes_disabled",
+      "envelope": null
+    },
+    {
+      "tool": "run_mission_template",
+      "isError": true,
+      "summary": "Refused (writes_disabled): Agent writes are off. The owner can turn on \"Allow agent writes\" in AUREL's workspace tools for this session; nothing was written.",
+      "refusal": "writes_disabled",
+      "envelope": null
+    },
+    {
+      "tool": "fieldbook_add_note",
+      "isError": true,
+      "summary": "Refused (writes_disabled): Agent writes are off. The owner can turn on \"Allow agent writes\" in AUREL's workspace tools for this session; nothing was written.",
+      "refusal": "writes_disabled",
+      "envelope": null
+    },
+    {
+      "tool": "draw_area",
+      "isError": true,
+      "summary": "Refused (writes_disabled): Agent writes are off. The owner can turn on \"Allow agent writes\" in AUREL's workspace tools for this session; nothing was written.",
+      "refusal": "writes_disabled",
+      "envelope": null
+    },
+    {
+      "tool": "register_watch",
+      "isError": true,
+      "summary": "Refused (writes_disabled): Agent writes are off. The owner can turn on \"Allow agent writes\" in AUREL's workspace tools for this session; nothing was written.",
+      "refusal": "writes_disabled",
+      "envelope": null
+    },
+    {
+      "tool": "run_mission_template",
+      "isError": false,
+      "summary": "Sunrise shoot: Lal Tibba, Mussoorie: 6 steps (dry run, nothing written).",
+      "refusal": null,
+      "envelope": "note"
+    },
+    {
+      "tool": "run_mission_template",
+      "isError": false,
+      "summary": "Sunrise shoot: Lal Tibba, Mussoorie: saved 1 place and a checklist to \"Mussoorie sunrise shoot, 2026-11-08\" (revision 1), by agent · claude-code · 2026-11-07T08:14:50.287Z.",
+      "refusal": null,
+      "envelope": "note"
+    },
+    {
+      "tool": "fieldbook_add_place",
+      "isError": false,
+      "summary": "Saved place Gun Hill to \"Mussoorie sunrise shoot, 2026-11-08\" (revision 2), by agent · claude-code · 2026-11-07T08:14:50.353Z.",
+      "refusal": null,
+      "envelope": "note"
+    },
+    {
+      "tool": "fieldbook_add_note",
+      "isError": false,
+      "summary": "Saved a note (1 citations) to \"Mussoorie sunrise shoot, 2026-11-08\" (revision 3), by agent · claude-code · 2026-11-07T08:14:50.391Z.",
+      "refusal": null,
+      "envelope": "note"
+    },
+    {
+      "tool": "draw_area",
+      "isError": false,
+      "summary": "Drew Lal Tibba viewpoint in \"Mussoorie sunrise shoot, 2026-11-08\" (revision 4), by agent · claude-code · 2026-11-07T08:14:50.424Z.",
+      "refusal": null,
+      "envelope": "note"
+    },
+    {
+      "tool": "draw_area",
+      "isError": true,
+      "summary": "Refused (revision_conflict): The project is at revision 4, not 3. Nothing was written.",
+      "refusal": "revision_conflict",
+      "envelope": null
+    },
+    {
+      "tool": "register_watch",
+      "isError": true,
+      "summary": "Refused (unsupported): AUREL watches NASA FIRMS fire detections only; a cloud_cover watch does not exist.",
+      "refusal": "unsupported",
+      "envelope": null
+    },
+    {
+      "tool": "register_watch",
+      "isError": false,
+      "summary": "Registered a fire-detection watch (stopped until the owner starts it), by agent · claude-code · 2026-11-07T08:14:50.545Z.",
+      "refusal": null,
+      "envelope": "note"
+    },
+    {
+      "tool": "draw_area",
+      "isError": true,
+      "summary": "Refused (invalid_geometry): The area is not a valid bounded polygon: its edges cross each other.",
+      "refusal": "invalid_geometry",
+      "envelope": null
+    },
+    {
+      "tool": "render_view",
+      "isError": false,
+      "summary": "Globe picture 960×678 with 1 legend rows:\nOverview — observed · time unknown\nTimes are each layer’s last refresh in AUREL, not each feature’s observation time.",
+      "refusal": null,
+      "envelope": "derived"
+    }
+  ]
+}

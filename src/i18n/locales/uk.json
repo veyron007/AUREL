@@ -4123,5 +4123,17 @@
   "Remove": "Вилучити",
   "Last reading {range} to {time}.": "Останнє значення {range} до {time}.",
   "Not checked yet.": "Ще не перевірено.",
-  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "Спрацювало за 3 год до {time}: {range}, понад {threshold} мм."
+  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "Спрацювало за 3 год до {time}: {range}, понад {threshold} мм.",
+  "written": "записано",
+  "answered": "відповіджено",
+  "refused ({code})": "відхилено ({code})",
+  "Agent writes": "Запис агентами",
+  "Allow agent writes": "Дозволити запис агентам",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "Увімкнено для цього сеансу. Локальні MCP-агенти можуть додавати місця, нотатки, області та спостереження з позначкою «агентом».",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "Вимкнено. Агенти можуть читати; будь-який запис відхиляється. Вимикається після завершення сеансу цієї вкладки.",
+  "Agent desk ready on this server.": "Пульт агентів готовий на цьому сервері.",
+  "Agent desk not connected.": "Пульт агентів не під’єднано.",
+  "Recent agent requests": "Останні запити агентів",
+  "by agent · {client} · {time}": "агентом · {client} · {time}",
+  "cited by agent": "процитовано агентом"
 }

@@ -70,6 +70,7 @@ export function createMcpServer({
   descriptions,
   decorate,
   resources = [],
+  onInitialize,
 }) {
   const tools = () => toMcpTools(catalog, { descriptions, decorate });
   const resourceByUri = new Map(
@@ -77,6 +78,9 @@ export function createMcpServer({
   );
   const methods = {
     initialize(params) {
+      // The application may record the client's self-reported name, which
+      // Field Kit writes carry as their author tag.
+      onInitialize?.(params);
       const requested = params?.protocolVersion;
       return {
         protocolVersion: MCP_PROTOCOL_VERSIONS.includes(requested)
@@ -130,8 +134,21 @@ export function createMcpServer({
               data: item.data,
               mimeType: item.mimeType,
             })),
+            // The provenance envelope travels beside the data, which stays
+            // as the tool returned it, so agents can cite it verbatim.
+            ...(result.envelope
+              ? [
+                  {
+                    type: 'text',
+                    text: `Provenance envelope: ${JSON.stringify(result.envelope)}`,
+                  },
+                ]
+              : []),
           ],
           structuredContent: result.data,
+          ...(result.envelope
+            ? { _meta: { 'aurel/envelope': result.envelope } }
+            : {}),
           isError: false,
         };
       } catch (error) {
@@ -151,6 +168,7 @@ export function createMcpServer({
             ...(known && error.retryAfterSeconds != null
               ? { retry_after_seconds: error.retryAfterSeconds }
               : {}),
+            ...(known && error.details ? { details: error.details } : {}),
           },
           isError: true,
         };

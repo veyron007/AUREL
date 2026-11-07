@@ -28,10 +28,11 @@ const METHODS = new Set(['GET', 'HEAD', 'POST']);
 // Routes the panel never loads, matched as the server routes them: without
 // regard to case, and with a mounted route also matching when a dot follows
 // it (`/mcp.json` reaches `/mcp`). Provider Settings, which only the app's own
-// page may use; credential and model endpoints; the MCP server itself; and
+// page may use; credential and model endpoints; the agent desk relay, which
+// only the owner's AUREL tab and a local MCP server use; the MCP server itself; and
 // the development server's internal routes.
 const REFUSED_PATHS = [
-  /^\/api\/(?:setup|realtime|openai)(?:[/.]|$)/i,
+  /^\/api\/(?:setup|realtime|openai|agent-desk)(?:[/.]|$)/i,
   /^\/mcp(?:[/.]|$)/i,
   /^\/(?:@|__)/,
 ];

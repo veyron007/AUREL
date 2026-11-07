@@ -3898,5 +3898,17 @@
   "Remove": "移除",
   "Last reading {range} to {time}.": "最近讀數 {range}，截至 {time}。",
   "Not checked yet.": "尚未檢查。",
-  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "截至 {time} 的 3 小時觸發：{range}，超過 {threshold} mm。"
+  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "截至 {time} 的 3 小時觸發：{range}，超過 {threshold} mm。",
+  "written": "已寫入",
+  "answered": "已回應",
+  "refused ({code})": "已拒絕 ({code})",
+  "Agent writes": "代理寫入",
+  "Allow agent writes": "允許代理寫入",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "本次工作階段已開啟。本機 MCP 代理可新增地點、筆記、區域與監看，並標示為「由代理」。",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "已關閉。代理可讀取；所有寫入都會被拒絕。此分頁工作階段結束時自動關閉。",
+  "Agent desk ready on this server.": "代理工作台已在此伺服器就緒。",
+  "Agent desk not connected.": "代理工作台未連線。",
+  "Recent agent requests": "最近的代理請求",
+  "by agent · {client} · {time}": "由代理 · {client} · {time}",
+  "cited by agent": "由代理引用"
 }

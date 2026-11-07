@@ -253,3 +253,11 @@
 .fieldbook-library-toolbar label {
   min-height: 44px;
 }
+
+/* Field Kit: entries an agent wrote carry their author, never styled as the owner's. */
+.fieldbook-workspace .fieldbook-author {
+  display: block;
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}

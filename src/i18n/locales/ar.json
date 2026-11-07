@@ -4273,5 +4273,17 @@
   "Remove": "إزالة",
   "Last reading {range} to {time}.": "آخر قراءة {range} حتى {time}.",
   "Not checked yet.": "لم يُفحص بعد.",
-  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "انطلقت للساعات الثلاث حتى {time}: {range}، فوق {threshold} مم."
+  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "انطلقت للساعات الثلاث حتى {time}: {range}، فوق {threshold} مم.",
+  "written": "مكتوب",
+  "answered": "تمت الإجابة",
+  "refused ({code})": "مرفوض ({code})",
+  "Agent writes": "كتابة الوكلاء",
+  "Allow agent writes": "السماح بكتابة الوكلاء",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "مفعّل لهذه الجلسة. يمكن لوكلاء MCP المحليين إضافة أماكن وملاحظات ومناطق ومراقبات، مع وسم «بواسطة وكيل».",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "متوقف. يمكن للوكلاء القراءة؛ تُرفض كل كتابة. يتوقف عند انتهاء جلسة هذا التبويب.",
+  "Agent desk ready on this server.": "مكتب الوكلاء جاهز على هذا الخادم.",
+  "Agent desk not connected.": "مكتب الوكلاء غير متصل.",
+  "Recent agent requests": "طلبات الوكلاء الأخيرة",
+  "by agent · {client} · {time}": "بواسطة وكيل · {client} · {time}",
+  "cited by agent": "استشهد به وكيل"
 }

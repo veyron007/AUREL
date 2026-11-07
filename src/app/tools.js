@@ -8,6 +8,7 @@ import { createHorizonTools } from './horizonTools.js';
 import { createChronicleTools } from './chronicleTools.js';
 import { createResearchTools } from './researchTools.js';
 import { createWatchlistTools } from './watchlistTools.js';
+import { createAgentDeskTools } from './agentDeskTools.js';
 import { createRegionTools } from './regionTools.js';
 import { createRaindropTools } from './raindropTools.js';
 import { useWorkspaceStore } from '../ui/stores/workspace.js';
@@ -200,6 +201,16 @@ export function createApplicationTools({
   defer(() => research.destroy());
   const watchlists = createWatchlistTools({ pinia: applicationPinia() });
   defer(() => watchlists.destroy());
+  // Field Kit: answers a local MCP server's requests; writes need the owner's
+  // per-session "Allow agent writes" toggle (src/fieldkit).
+  const agentDesk = createAgentDeskTools({
+    pinia: applicationPinia(),
+    viewer,
+    dataManager,
+    fieldbook: personalWorkspace.fieldbook,
+    watchlists: watchlists.controller,
+  });
+  if (agentDesk) defer(() => agentDesk.destroy());
   const regions = createRegionTools({
     pinia: applicationPinia(),
     geoFileImport,

@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PassThrough } from 'node:stream';
-import { createLocalMcpServer } from '../../server/mcp/server.js';
+import {
+  createLocalMcpServer,
+  localMcpTools,
+} from '../../server/mcp/server.js';
 import { createApiFetch } from '../../server/mcp/services.js';
 import { parseArgs, serveStdio } from '../../server/mcp/stdio.js';
-import { coreTools, toolsForSurface } from './index.js';
+import { toolsForSurface } from './index.js';
 
 const usgs = {
   type: 'FeatureCollection',
@@ -67,10 +70,10 @@ test('the stdio server answers newline-delimited requests using only its data so
   assert.equal(responses.length, 4);
   assert.equal(byId.get(1).result.serverInfo.name, 'gods-eye-view');
   assert.equal(byId.get(null).error.code, -32700);
-  // Every Core tool's services are composed locally.
+  // Every Core and Field Kit tool's services are composed locally.
   assert.deepEqual(
     byId.get(2).result.tools.map((tool) => tool.name),
-    toolsForSurface(coreTools, 'mcp').map((tool) => tool.name),
+    toolsForSurface(localMcpTools(), 'mcp').map((tool) => tool.name),
   );
   assert.equal(
     byId.get(3).result.content[0].text,

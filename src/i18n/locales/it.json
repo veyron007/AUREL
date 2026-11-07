@@ -4048,5 +4048,17 @@
   "Remove": "Rimuovi",
   "Last reading {range} to {time}.": "Ultima lettura {range} fino a {time}.",
   "Not checked yet.": "Non ancora controllato.",
-  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "Scattato per le 3 h fino a {time}: {range}, oltre {threshold} mm."
+  "Fired for the 3 h to {time}: {range}, above {threshold} mm.": "Scattato per le 3 h fino a {time}: {range}, oltre {threshold} mm.",
+  "written": "scritto",
+  "answered": "risposto",
+  "refused ({code})": "rifiutato ({code})",
+  "Agent writes": "Scritture degli agenti",
+  "Allow agent writes": "Consenti scritture degli agenti",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "Attivo per questa sessione. Gli agenti MCP locali possono aggiungere luoghi, note, aree e sorveglianze, contrassegnati «da agente».",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "Disattivato. Gli agenti possono leggere; ogni scrittura viene rifiutata. Si disattiva alla fine della sessione di questa scheda.",
+  "Agent desk ready on this server.": "Postazione agenti pronta su questo server.",
+  "Agent desk not connected.": "Postazione agenti non connessa.",
+  "Recent agent requests": "Richieste recenti degli agenti",
+  "by agent · {client} · {time}": "da agente · {client} · {time}",
+  "cited by agent": "citato da agente"
 }

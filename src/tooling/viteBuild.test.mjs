@@ -145,7 +145,7 @@ test('root config retains named exports and admits free-only providers in order'
     assert.equal(compatibility[name], value, name);
   const config = standaloneConfig({ mode: 'test' }, { nominatimStorageDir });
   const standaloneProviders = config.plugins
-    .slice(5, -6)
+    .slice(5, -7)
     .map((plugin) => plugin.name);
   assert.equal(config.plugins[4].name, 'standalone-free-only');
   assert.equal(config.plugins[4].enforce, 'pre');
@@ -161,9 +161,11 @@ test('root config retains named exports and admits free-only providers in order'
       .localProviderPlugins({ freeOnly: true, nominatimStorageDir })
       .map((plugin) => plugin.name),
   );
-  assert.equal(config.plugins.at(-7).name, 'gev-key-setup');
-  // Token fallback follows real providers and local MCP before the API 404.
-  assert.equal(config.plugins.at(-6).name, 'local-mcp');
+  assert.equal(config.plugins.at(-8).name, 'gev-key-setup');
+  // Token fallback follows real providers, local MCP and the agent desk
+  // relay before the API 404.
+  assert.equal(config.plugins.at(-7).name, 'local-mcp');
+  assert.equal(config.plugins.at(-6).name, 'aurel-agent-desk');
   assert.equal(config.plugins.at(-5).name, 'google-token-unavailable');
   assert.equal(config.plugins.at(-4).name, 'api-not-found');
   // Config-only, so it sits after the provider slice rather than in it.

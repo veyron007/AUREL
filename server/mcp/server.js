@@ -12,6 +12,9 @@ import {
   panelRuntime,
 } from '../../src/tools/panel.js';
 import { createMcpServer } from '../../src/tools/mcp/index.js';
+import { envelopeInterceptor } from '../../src/fieldkit/envelope.js';
+import { createFieldKitTools } from '../../src/fieldkit/tools.js';
+import { sanitizeClientName } from '../../src/fieldkit/author.js';
 import { DEFAULT_API_BASE, createLocalToolServices } from './services.js';
 
 const INSTRUCTIONS =
@@ -21,13 +24,29 @@ const INSTRUCTIONS =
   "Answers that can be shown in God's Eye View include data.view; to show one, call " +
   'show_in_gods_eye_view with that view, adding layers, style, a camera or marks as ' +
   "needed. It shows live God's Eye View where the client displays apps and " +
-  'returns a link everywhere.';
+  'returns a link everywhere. Every result carries a provenance envelope ' +
+  '(observed, modelled, derived, simulated or note; sources, licence and ' +
+  'applicable time); cite it. Field Kit tools write to the owner’s Fieldbook ' +
+  'only while the owner has turned on "Allow agent writes" in the open AUREL ' +
+  'tab; otherwise they answer a typed refusal. Call get_free_budget before ' +
+  'provider-heavy work.';
 
-/** Construct the local MCP server for Core's tools. */
+/**
+ * The tools the local MCP server composes: Core's, then the Field Kit's.
+ * `horizonAt` is the registration seam for WP1's horizon_at tool; until WP1
+ * merges it stays null and horizon_at is not offered.
+ */
+export function localMcpTools({ horizonAt = null } = {}) {
+  return [...coreTools, ...createFieldKitTools({ horizonAt })];
+}
+
+/** Construct the local MCP server for Core's and the Field Kit's tools. */
 export function createLocalMcpServer({
   apiBase = DEFAULT_API_BASE,
   fetchImpl,
   panelKey = randomBytes(32).toString('base64url'),
+  ledgerDir,
+  horizonAt = null,
 } = {}) {
   const { version } = JSON.parse(
     readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
@@ -37,14 +56,27 @@ export function createLocalMcpServer({
   // page, so it keeps the tool from clients that only list it, and is not
   // access control. The stdio entry passes the install's shared key
   // (panelKey.js), so separate processes of one client agree.
+  // The client's self-reported name tags Field Kit writes ("by agent ·
+  // claude-code · time"). It is a label, not an identity.
+  let clientName = 'unknown-client';
   return createMcpServer({
     catalog: catalogForSurface(
       composeCatalog({
-        tools: coreTools,
-        services: createLocalToolServices({ apiBase, fetchImpl, panelKey }),
+        tools: localMcpTools({ horizonAt }),
+        services: createLocalToolServices({
+          apiBase,
+          fetchImpl,
+          panelKey,
+          ledgerDir,
+          clientName: () => clientName,
+        }),
+        interceptors: [envelopeInterceptor()],
       }),
       'mcp',
     ),
+    onInitialize: (params) => {
+      clientName = sanitizeClientName(params?.clientInfo?.name);
+    },
     name: 'gods-eye-view',
     version,
     instructions: INSTRUCTIONS,
