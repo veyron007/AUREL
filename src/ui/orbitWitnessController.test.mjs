@@ -188,7 +188,8 @@ test('a footprint shows the modelled swath and the observed scene footprint', as
   assert.equal(await controller.showFootprint(pass.id), true);
   const [shapes] = calls.overlay;
   assert.ok(shapes.predicted.length > 4);
-  assert.match(shapes.label, /modelled/);
+  assert.equal(Object.hasOwn(shapes, 'label'), false);
+  assert.match(controller.view.feedback, /scene footprint \(observed\)/);
   assert.equal(
     controller.view.missions.find((row) => row.id === 'sentinel-2b').passes[0]
       .footprint,

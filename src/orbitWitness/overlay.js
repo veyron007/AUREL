@@ -32,14 +32,11 @@ export function createOrbitWitnessOverlay(viewer) {
   }
   return {
     /**
-     * @param {{ predicted?: Array<[number, number]>|null, observed?: Array<[number, number]>|null, label?: string, place?: { lat: number, lon: number } }} shapes
+     * The panel names each shape's class; no Cesium label is drawn (world text
+     * belongs to the world-overlay host).
+     * @param {{ predicted?: Array<[number, number]>|null, observed?: Array<[number, number]>|null }} shapes
      */
-    async show({
-      predicted = null,
-      observed = null,
-      label = '',
-      place = null,
-    } = {}) {
+    async show({ predicted = null, observed = null } = {}) {
       const target = await ensure();
       if (!target) return false;
       target.entities.removeAll();
@@ -68,22 +65,6 @@ export function createOrbitWitnessOverlay(viewer) {
             width: 2,
             clampToGround: true,
             material: Cesium.Color.fromCssColorString(PETROL),
-          },
-        });
-      if (place && label)
-        target.entities.add({
-          id: 'orbit-witness-label',
-          position: Cesium.Cartesian3.fromDegrees(place.lon, place.lat),
-          label: {
-            text: label,
-            font: '600 13px "IBM Plex Sans", sans-serif',
-            fillColor: Cesium.Color.fromCssColorString('#f4ead7'),
-            outlineColor: Cesium.Color.BLACK,
-            outlineWidth: 3,
-            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
           },
         });
       registerDynamicCredit(viewer, ORBIT_WITNESS_CREDIT);

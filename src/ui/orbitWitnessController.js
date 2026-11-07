@@ -272,14 +272,10 @@ export class OrbitWitnessController {
       ? this.context?.catalogue?.scenes.find((row) => row.id === scene.id)
           ?.footprint
       : null;
-    await this.overlay.show({
-      predicted: ring,
-      observed,
-      place: this.place,
-      label: scene
-        ? t('Predicted swath (modelled) · scene footprint (observed)')
-        : t('Predicted swath (modelled)'),
-    });
+    await this.overlay.show({ predicted: ring, observed });
+    this.feedback = observed
+      ? t('Predicted swath (modelled) · scene footprint (observed)')
+      : t('Predicted swath (modelled)');
     this.footprintPassId = passId;
     this.present();
     return true;
