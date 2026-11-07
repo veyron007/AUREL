@@ -478,8 +478,9 @@ function readMarkup(file) {
 }
 
 // Text that never reaches the page as UI: tool results and descriptions for
-// AI clients (MCP and the voice model).
-const NOT_UI = [/^src\/tools\//];
+// AI clients (MCP and the voice model), and the Field Kit's agent-facing
+// answers, envelopes and agent-authored content (src/fieldkit).
+const NOT_UI = [/^src\/tools\//, /^src\/fieldkit\//];
 
 function sourceFiles() {
   return trackedFiles(

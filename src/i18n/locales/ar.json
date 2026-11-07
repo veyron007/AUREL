@@ -4130,5 +4130,17 @@
   "Some work could not stop. Check active layers and watches.": "تعذر إيقاف بعض العمليات. تحقق من الطبقات والمراقبات النشطة.",
   "Pausing feeds…": "جارٍ إيقاف التدفقات مؤقتًا…",
   "Pause feeds": "إيقاف التدفقات مؤقتًا",
-  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "إيقاف التدفقات المباشرة والمراقبات المحلية والتحليلات المعلقة. يظل العمل المحفوظ مفتوحًا."
+  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "إيقاف التدفقات المباشرة والمراقبات المحلية والتحليلات المعلقة. يظل العمل المحفوظ مفتوحًا.",
+  "written": "مكتوب",
+  "answered": "تمت الإجابة",
+  "refused ({code})": "مرفوض ({code})",
+  "Agent writes": "كتابة الوكلاء",
+  "Allow agent writes": "السماح بكتابة الوكلاء",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "مفعّل لهذه الجلسة. يمكن لوكلاء MCP المحليين إضافة أماكن وملاحظات ومناطق ومراقبات، مع وسم «بواسطة وكيل».",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "متوقف. يمكن للوكلاء القراءة؛ تُرفض كل كتابة. يتوقف عند انتهاء جلسة هذا التبويب.",
+  "Agent desk ready on this server.": "مكتب الوكلاء جاهز على هذا الخادم.",
+  "Agent desk not connected.": "مكتب الوكلاء غير متصل.",
+  "Recent agent requests": "طلبات الوكلاء الأخيرة",
+  "by agent · {client} · {time}": "بواسطة وكيل · {client} · {time}",
+  "cited by agent": "استشهد به وكيل"
 }

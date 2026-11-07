@@ -3755,5 +3755,17 @@
   "Some work could not stop. Check active layers and watches.": "部分工作無法停止。請檢查執行中的圖層和監測。",
   "Pausing feeds…": "正在暫停資料更新…",
   "Pause feeds": "暫停資料更新",
-  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "停止即時資料流、本機監測和待處理的分析。已儲存的工作保持開啟。"
+  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "停止即時資料流、本機監測和待處理的分析。已儲存的工作保持開啟。",
+  "written": "已寫入",
+  "answered": "已回應",
+  "refused ({code})": "已拒絕 ({code})",
+  "Agent writes": "代理寫入",
+  "Allow agent writes": "允許代理寫入",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "本次工作階段已開啟。本機 MCP 代理可新增地點、筆記、區域與監看，並標示為「由代理」。",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "已關閉。代理可讀取；所有寫入都會被拒絕。此分頁工作階段結束時自動關閉。",
+  "Agent desk ready on this server.": "代理工作台已在此伺服器就緒。",
+  "Agent desk not connected.": "代理工作台未連線。",
+  "Recent agent requests": "最近的代理請求",
+  "by agent · {client} · {time}": "由代理 · {client} · {time}",
+  "cited by agent": "由代理引用"
 }

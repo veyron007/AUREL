@@ -21,17 +21,25 @@ export const TOOL_ERROR_CODES = Object.freeze([
   'unsupported',
   'malformed',
   'retry_later',
+  // A Field Kit write the app declined; `details` holds the typed refusal.
+  'refused',
 ]);
 
 /** An expected failure with a stable code and a message written for the caller. */
 export class ToolError extends Error {
-  constructor(code, message, { retryAfterSeconds = null } = {}) {
+  constructor(
+    code,
+    message,
+    { retryAfterSeconds = null, details = null } = {},
+  ) {
     if (!TOOL_ERROR_CODES.includes(code))
       throw new TypeError(`Unknown tool error code: ${code}`);
     super(message);
     this.name = 'ToolError';
     this.code = code;
     this.retryAfterSeconds = retryAfterSeconds;
+    // Plain data safe to return to the caller, such as a typed refusal.
+    this.details = details;
   }
 }
 

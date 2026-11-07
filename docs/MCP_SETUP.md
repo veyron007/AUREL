@@ -64,8 +64,34 @@ Diego in God's Eye View with military flights on."*
   and wait. A path or `args` mistake fails here.
 - **The panel says it could not load:** `npm run build:panel` was not run, or
   the dev server is down.
+- **Writes are refused with `writes_disabled`:** turn on **Allow agent
+  writes** in the AUREL tab's workspace tools. With `no_app_session`, open
+  AUREL on the server named by `--api-base`.
 - **Logs:** the server writes each call, and why one failed, to stderr. Claude
   Desktop keeps it in its logs folder as `mcp-server-gods-eye-view.log`; in
   Codex, right-click the panel → DevTools for the panel's console.
+
+## Agent writes (AUREL Field Kit)
+
+Every answer carries a provenance envelope (class, sources and licence,
+applicable time); cite it. The Field Kit tools write to the owner's
+Fieldbook and Watchlists only through the open AUREL tab:
+
+1. Keep `npm run dev` running and AUREL open in a browser tab on the same
+   server. Without a tab, writes answer `no_app_session`.
+2. Writes are off by default. In the workspace tools, turn on **Allow agent
+   writes**; it stays on for this tab session only. While it is off, every
+   write answers a typed refusal, `writes_disabled`, and nothing is written.
+3. Each write returns `project_id` and `revision`; pass both
+   (`expected_revision`) to the next write. A stale revision answers
+   `revision_conflict` instead of overwriting.
+4. Library shows agent entries as "by agent · <client> · time", using the
+   name your client reports (Claude Code reports `claude-code`).
+
+Try: *"Prepare a Fieldbook for a Mussoorie sunrise shoot on Sunday."* The
+agent can call `get_free_budget`, `run_mission_template` with
+`template: "sunrise_shoot"`, `fieldbook_add_note` with citations,
+`draw_area`, `register_watch` and `render_view`. `horizon_at` arrives with
+the Kshitij Horizon Engine (WP1).
 
 See [tools and the MCP server](TOOLS.md) for what the tools do.

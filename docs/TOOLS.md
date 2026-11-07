@@ -204,6 +204,70 @@ returns a `Request`-to-`Response` handler for stateless Streamable HTTP: one
 JSON-RPC message per POST, answered with JSON. The host owns routing and any
 access control in front of it.
 
+A result may carry `envelope`, a provenance envelope. The server adds it as a
+last text block (`Provenance envelope: {...}`) and as
+`_meta["aurel/envelope"]`, and leaves `structuredContent` as the tool's data.
+A failed call whose error carries `details`, such as a Field Kit refusal,
+returns them in `structuredContent.details`. `onInitialize(params)` lets the
+application read the client's self-reported `clientInfo`.
+
+## Provenance envelopes
+
+The local MCP server wraps every result in an envelope
+(`src/fieldkit/envelope.js`, schema `aurel.envelope/1`): `class` is one of
+`observed`, `modelled`, `derived`, `simulated` or `note`; `sources` lists each
+source's `id`, `label`, `licence` and `url`; `applicable_time` is the
+`{ from, to }` span the content applies to, or `null` with a note saying it is
+unknown; `retrieved_at`, `units` and `note` complete it. Read tools are
+stamped by `envelopeInterceptor()` from `READ_TOOL_PROVENANCE` without
+changing their data; a tool not listed there is `derived` with "provenance
+not recorded", never a guessed observation. Cite the envelope verbatim.
+
+## Field Kit (AUREL)
+
+`src/fieldkit/` adds tools that act like an analyst. The Fieldbook and
+Watchlists live in the owner's open AUREL tab, so writes travel over a local
+relay on the app's server (`server/agentDesk/`, `/api/agent-desk`): the MCP
+server submits a request, the tab long-polls for it, decides, and answers.
+
+- **Writes are off by default.** The tab's workspace tools show "Allow agent
+  writes", kept for that browser tab session only (`sessionStorage`). While
+  it is off, every write answers `isError: true` with
+  `structuredContent.error: "refused"` and
+  `structuredContent.details.refusal.code: "writes_disabled"`.
+- **Refusal codes:** `writes_disabled`, `no_app_session` (no tab open),
+  `revision_conflict` (with `details.latest_revision`), `invalid_geometry`,
+  `not_found`, `limit_reached`, `unsupported`, `storage_unavailable`,
+  `invalid_request`, `timeout`. Unknown fields are refused by schema
+  (`invalid_arguments`) and again in the tab.
+- **Revision checks:** every write to an existing project names
+  `project_id` and `expected_revision` (each write returns the new
+  `revision`). The tab checks it, then saves through the Fieldbook
+  repository's own atomic revision check, so a stale write never overwrites.
+- **Author tags:** agent entries get IDs `agent.<client>.<uuid>`, where
+  `<client>` is the MCP client's `clientInfo.name` reduced to `[a-z0-9-]`.
+  Library shows "by agent · <client> · time". Agent text is stored verbatim
+  as untrusted data, shown as text, and never executed or interpreted.
+- **Relay safety:** the relay accepts only local requests (the `/mcp`
+  checks); submissions must carry no `Origin`, so no web page can submit as an
+  agent; answers must come from the app's page; `panel_request` refuses
+  `/api/agent-desk`. An embedded app (`?embed=1`, the MCP Apps panel) never
+  answers. Nothing is persisted and nothing runs when no tab is open.
+- **`horizon_at`** is WP1's tool. `FIELD_KIT_SLOTS` records its slot, and
+  `createLocalMcpServer({ horizonAt })` / `createFieldKitTools({ horizonAt })`
+  take its definition once WP1 merges; until then it is not offered and
+  mission steps that use it are marked "not offered by this server yet".
+
+| Tool | Writes | Returns |
+| --- | --- | --- |
+| `get_free_budget` | no | Estimated remaining units per Free-only ledger (Planner forecasts, Chronicle imagery, Research NDVI) and the providers Free-only pauses; always "estimated", never a guarantee of free dispatch |
+| `fieldbook_add_place` | yes | Saves a point, with optional evidence citations; starts a project when `project_id` is omitted |
+| `fieldbook_add_note` | yes | Saves a plain-text note about a project, place, route or drawing; citations become evidence rows on its subject and are listed under the note |
+| `draw_area` | yes | Saves a simple polygon or bbox of at most 2° per side as a drawing |
+| `run_mission_template` | yes (not with `dry_run`) | An F08 procedure (`sunrise_shoot`, `explore_neighborhood`, `plan_half_day_outing`, `watch_my_region`): the steps as tools with arguments, and the places and a checklist note saved to a project; it never calls a provider itself |
+| `register_watch` | yes | A local NASA FIRMS fire-detection watch on a saved place, saved stopped until the owner starts it; other kinds are refused with `unsupported` |
+| `render_view` | no | A PNG of the globe in the owner's tab with a legend of each visible layer's class and last refresh time (also as `legend` data) |
+
 ## Voice
 
 Voice offers the catalog's queries next to its app actions.
@@ -301,3 +365,8 @@ and the development server's internal routes. See SECURITY.md.
 | `get_hud_caption` | `weather`, `summary` | The app's heads-up display caption for an area |
 | `show_in_gods_eye_view` | `app` | A view in God's Eye View: the live panel in clients with MCP Apps, and a link everywhere; takes another answer's view or an area or camera, layers, style, map, marks and something to follow |
 | `panel_request` | `app` | Panel only: loads a path from the app's server for the God's Eye View panel |
+
+The Field Kit tools (`get_free_budget`, `fieldbook_add_place`,
+`fieldbook_add_note`, `draw_area`, `run_mission_template`, `register_watch`,
+`render_view`) are listed under [Field Kit (AUREL)](#field-kit-aurel); they
+are offered on MCP only.

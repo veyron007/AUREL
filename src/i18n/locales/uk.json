@@ -3980,5 +3980,17 @@
   "Some work could not stop. Check active layers and watches.": "Деякі операції не вдалося зупинити. Перевірте активні шари й моніторинг.",
   "Pausing feeds…": "Призупинення потоків…",
   "Pause feeds": "Призупинити потоки",
-  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "Зупинити потоки даних у реальному часі, локальне спостереження й аналізи в очікуванні. Збережена робота залишиться відкритою."
+  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "Зупинити потоки даних у реальному часі, локальне спостереження й аналізи в очікуванні. Збережена робота залишиться відкритою.",
+  "written": "записано",
+  "answered": "відповіджено",
+  "refused ({code})": "відхилено ({code})",
+  "Agent writes": "Запис агентами",
+  "Allow agent writes": "Дозволити запис агентам",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "Увімкнено для цього сеансу. Локальні MCP-агенти можуть додавати місця, нотатки, області та спостереження з позначкою «агентом».",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "Вимкнено. Агенти можуть читати; будь-який запис відхиляється. Вимикається після завершення сеансу цієї вкладки.",
+  "Agent desk ready on this server.": "Пульт агентів готовий на цьому сервері.",
+  "Agent desk not connected.": "Пульт агентів не під’єднано.",
+  "Recent agent requests": "Останні запити агентів",
+  "by agent · {client} · {time}": "агентом · {client} · {time}",
+  "cited by agent": "процитовано агентом"
 }

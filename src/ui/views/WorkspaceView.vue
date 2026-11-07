@@ -6,6 +6,7 @@ import { usePanelStore } from '../stores/panels.js';
 import { PANEL_RAIL_ITEMS } from '../panelRailCatalog.js';
 import { useDisplayStore } from '../stores/display.js';
 import { useLocationStore } from '../stores/location.js';
+import AgentWritesToggle from './panels/AgentWritesToggle.vue';
 
 const workspace = useWorkspaceStore();
 const panels = usePanelStore();
@@ -76,6 +77,7 @@ function openPanel(id) {
       <details class="workspace-all-tools"><summary>{{ t('All tools') }}</summary><button v-for="panel in otherTools" :key="panel.id" type="button" :aria-pressed="activePanel?.id === panel.id" @click="openPanel(panel.id)">{{ panelLabel(panel) }}</button><button type="button" @click="workspace.act('openTray', 'location-bar')">{{ t('LOCATION') }}</button><button type="button" @click="workspace.act('openTray', 'control-panel')">{{ t('VISUAL PRESETS') }}</button></details>
       <button type="button" data-pause-feeds :disabled="pausing" :title="t('Stop live feeds, local watches and pending analyses. Saved work stays open.')" @click="pauseFeeds">{{ pausing ? t('Pausing feeds…') : t('Pause feeds') }}</button>
       <p v-if="pauseStatus" class="workspace-session-status workspace-tool-hint" role="status">{{ pauseStatus }}</p>
+      <AgentWritesToggle />
     </section>
     <div v-if="activePanel" id="aurel-workspace-sheet-controls" class="workspace-sheet-controls" role="group" :aria-label="t('Inspector size')">
       <span class="workspace-sheet-title">{{ panelLabel(activePanel) }}</span>

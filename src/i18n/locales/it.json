@@ -3905,5 +3905,17 @@
   "Some work could not stop. Check active layers and watches.": "Non è stato possibile interrompere alcune attività. Controlla i livelli e i monitoraggi attivi.",
   "Pausing feeds…": "Sospensione delle fonti…",
   "Pause feeds": "Sospendi fonti",
-  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "Interrompi i flussi in tempo reale, i monitoraggi locali e le analisi in sospeso. Il lavoro salvato resta aperto."
+  "Stop live feeds, local watches and pending analyses. Saved work stays open.": "Interrompi i flussi in tempo reale, i monitoraggi locali e le analisi in sospeso. Il lavoro salvato resta aperto.",
+  "written": "scritto",
+  "answered": "risposto",
+  "refused ({code})": "rifiutato ({code})",
+  "Agent writes": "Scritture degli agenti",
+  "Allow agent writes": "Consenti scritture degli agenti",
+  "On for this session. Local MCP agents can add places, notes, areas and watches, tagged \"by agent\".": "Attivo per questa sessione. Gli agenti MCP locali possono aggiungere luoghi, note, aree e sorveglianze, contrassegnati «da agente».",
+  "Off. Agents can read; every write is refused. Turns off when this tab session ends.": "Disattivato. Gli agenti possono leggere; ogni scrittura viene rifiutata. Si disattiva alla fine della sessione di questa scheda.",
+  "Agent desk ready on this server.": "Postazione agenti pronta su questo server.",
+  "Agent desk not connected.": "Postazione agenti non connessa.",
+  "Recent agent requests": "Richieste recenti degli agenti",
+  "by agent · {client} · {time}": "da agente · {client} · {time}",
+  "cited by agent": "citato da agente"
 }

@@ -365,6 +365,20 @@ export class FieldbookController {
     this._showArchived = Boolean(value);
     this._publish();
   }
+  /**
+   * An agent saved `projectId` through the repository (src/fieldkit). Refresh
+   * the library and show the saved version, unless the owner has unsaved
+   * edits: those stay untouched and their next save reports the conflict.
+   */
+  async syncExternalWrite(projectId) {
+    if (!this._live()) return false;
+    await this._refresh();
+    const showing = this._draft?.id === projectId;
+    if (this._available() && !this._hasUnsaved() && (showing || !this._draft))
+      return this._open(projectId);
+    this._publish();
+    return true;
+  }
   async reloadSaved() {
     if (!this._available() || !this._draft || this._baseRevision === null)
       return false;

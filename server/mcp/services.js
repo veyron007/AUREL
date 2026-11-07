@@ -6,6 +6,8 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createToolServices } from '../../src/tools/services.js';
+import { createAgentDeskClient } from '../agentDesk/client.js';
+import { createFreeBudgetService } from '../agentDesk/freeBudget.js';
 
 // Bundled data some sources read by module-relative URL.
 const BUNDLED_DATA = new URL('../../src/data/local_data/', import.meta.url);
@@ -54,11 +56,26 @@ async function readBundled(url) {
   }
 }
 
-/** Construct every service Core's tools read, backed by the local server. */
+/**
+ * Construct every service Core's tools read, backed by the local server,
+ * plus the Field Kit's: the agent desk relay on that server and the
+ * Free-only ledgers on disk. `clientName` reads the MCP client's name for
+ * author tags.
+ */
 export function createLocalToolServices(options = {}) {
-  return createToolServices({
-    fetchImpl: createApiFetch(options),
-    appUrl: options.apiBase ?? DEFAULT_API_BASE,
-    panelKey: options.panelKey,
-  });
+  const fetchImpl = createApiFetch(options);
+  return {
+    ...createToolServices({
+      fetchImpl,
+      appUrl: options.apiBase ?? DEFAULT_API_BASE,
+      panelKey: options.panelKey,
+    }),
+    agentDesk: createAgentDeskClient({
+      fetchImpl,
+      clientName: options.clientName ?? (() => 'unknown-client'),
+    }),
+    freeBudget: createFreeBudgetService(
+      options.ledgerDir ? { dir: options.ledgerDir } : {},
+    ),
+  };
 }
