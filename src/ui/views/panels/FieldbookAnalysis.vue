@@ -1,5 +1,6 @@
 <script setup>
 import { t } from '../../../i18n/index.js';
+import CheckpointSheet from './CheckpointSheet.vue';
 const props = defineProps({ snapshot: { type: Object, required: true } });
 const time = (value) => value ? new Date(value).toLocaleString(undefined, { timeZone: props.snapshot.timeZone, timeZoneName: 'short' }) : t('Unknown');
 const meters = (value) => value == null ? t('Unknown') : t('{value} m', { value });
@@ -33,6 +34,7 @@ const meters = (value) => value == null ? t('Unknown') : t('{value} m', { value 
         <p v-if="source.hours.length">{{ t('{count} hourly forecast samples saved', { count: source.hours.length }) }}</p>
         <p class="fieldbook-help">{{ source.attribution }} · {{ source.license }}</p>
       </div>
+      <CheckpointSheet v-if="checkpoint.mountainWeather" :sheet="checkpoint.mountainWeather.sheet" :elevation-source="checkpoint.mountainWeather.elevationSource" :departure-at="snapshot.departureAt" />
     </section>
     <section v-if="snapshot.fireContext">
       <h5>{{ t('Fire context') }} · {{ snapshot.fireContext.source }}</h5>

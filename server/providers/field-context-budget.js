@@ -1,21 +1,35 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-/** Reservations are committed before dispatch, including failed upstream attempts. */
-export function createFieldContextBudget({
-  file = path.join(process.cwd(), '.gev-cache', 'field-context-budget.json'),
+const FIELD_CONTEXT_CEILINGS = Object.freeze({
+  day: 100,
+  month: 2000,
+  minute: 10,
+});
+
+/**
+ * Durable weighted ledger. Reservations are committed before dispatch,
+ * including failed upstream attempts. `ceilings` are fixed by each owning
+ * module; injected limits can lower them, never raise them. Each reservation
+ * consumes `units` (a positive integer) from every period.
+ */
+export function createWeightedLedger({
+  file,
   now = Date.now,
-  dailyLimit = 100,
-  monthlyLimit = 2000,
-  minuteLimit = 10,
-} = {}) {
+  ceilings,
+  dailyLimit,
+  monthlyLimit,
+  minuteLimit,
+}) {
   const cap = (value, max) =>
     Number.isSafeInteger(value) && value > 0 ? Math.min(value, max) : max;
   const limits = {
-    day: cap(dailyLimit, 100),
-    month: cap(monthlyLimit, 2000),
-    minute: cap(minuteLimit, 10),
+    day: cap(dailyLimit, ceilings.day),
+    month: cap(monthlyLimit, ceilings.month),
+    minute: cap(minuteLimit, ceilings.minute),
   };
-  async function reserve() {
+  async function reserve(units = 1) {
+    if (!Number.isSafeInteger(units) || units < 1 || units > limits.minute)
+      return { ok: false, reason: 'budget-units' };
     let locked = false;
     const lock = file + '.lock';
     let temp;
@@ -77,10 +91,10 @@ export function createFieldContextBudget({
         ['day', 'daily-limit'],
         ['minute', 'minute-limit'],
       ])
-        if (state[period + 'Count'] >= limits[period])
+        if (state[period + 'Count'] + units > limits[period])
           return { ok: false, reason };
       for (const period of ['day', 'month', 'minute'])
-        state[period + 'Count']++;
+        state[period + 'Count'] += units;
       temp = path.join(lock, 'reservation.json');
       const handle = await fs.open(temp, 'wx', 0o600);
       try {
@@ -108,4 +122,22 @@ export function createFieldContextBudget({
     }
   }
   return { reserve };
+}
+
+/** The Phase 3 Open-Meteo field-context ledger: one unit per outbound call. */
+export function createFieldContextBudget({
+  file = path.join(process.cwd(), '.gev-cache', 'field-context-budget.json'),
+  now = Date.now,
+  dailyLimit = FIELD_CONTEXT_CEILINGS.day,
+  monthlyLimit = FIELD_CONTEXT_CEILINGS.month,
+  minuteLimit = FIELD_CONTEXT_CEILINGS.minute,
+} = {}) {
+  return createWeightedLedger({
+    file,
+    now,
+    ceilings: FIELD_CONTEXT_CEILINGS,
+    dailyLimit,
+    monthlyLimit,
+    minuteLimit,
+  });
 }

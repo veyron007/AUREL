@@ -166,7 +166,8 @@ test('two-image comparison exposes acquisition time, uncertainty and separate ev
     document.querySelector('[data-image-side="a"]').textContent,
     /AlignmentUnverified/,
   );
-  assert.equal(document.querySelectorAll('.chronicle-lane').length, 4);
+  assert.equal(document.querySelectorAll('.chronicle-lane').length, 5);
+  assert.ok(document.querySelector('[data-lane="precipitation"]'));
   assert.match(
     document.querySelector('[data-lane="notes"]').textContent,
     /Date unknown/,

@@ -6,6 +6,7 @@ import { usePlannerStore } from '../ui/stores/planner.js';
 import { useLensStore } from '../ui/stores/lens.js';
 import { createFieldContextSource } from '../sources/fieldContext.js';
 import { fetchFirmsAreaSource } from '../sources/firmsArea.js';
+import { createMountainWeatherSource } from '../sources/mountainWeather.js';
 
 /** Explicit analysis adapters. Construction never starts a provider request. */
 export function createPlannerBindings({
@@ -16,6 +17,7 @@ export function createPlannerBindings({
   fieldbook,
   contextSource = createFieldContextSource(),
   fireSource = fetchFirmsAreaSource,
+  mountainSource = createMountainWeatherSource(),
 }) {
   const lens = useLensStore(pinia);
   const lifetime = new AbortController();
@@ -106,6 +108,15 @@ export function createPlannerBindings({
     async getFireContext({ bounds }, { signal } = {}) {
       const active = activeSignal(signal);
       const result = await fireSource({ bounds, signal: active });
+      active.throwIfAborted();
+      return result;
+    },
+    async getMountainWeather(point, { from, signal } = {}) {
+      const active = activeSignal(signal);
+      const result = await mountainSource.getSheet(point, {
+        from,
+        signal: active,
+      });
       active.throwIfAborted();
       return result;
     },
