@@ -17,6 +17,10 @@ import {
   validateSavedFieldContext,
   validateSavedFireContext,
 } from './analysisSources.js';
+import { validateHorizonSnapshot } from './horizonAnalysis.js';
+
+/** Saved analysis kinds: Planner route/place context and Kshitij horizons. */
+export const ANALYSIS_KINDS = Object.freeze(['route-context', 'horizon']);
 
 export const SOLAR_METHOD =
   'USNO low-precision solar position; standard -0.833° sunrise and -6° civil twilight; no terrain horizon';
@@ -180,7 +184,9 @@ export function validateAnalysisSnapshot(
 export function validateAnalysis(entry, path, budget) {
   fields(entry, path, ['id', 'subjectId', 'kind', 'createdAt', 'snapshot']);
   id(entry.subjectId, `${path}.subjectId`);
-  oneOf(entry.kind, `${path}.kind`, ['route-context']);
+  oneOf(entry.kind, `${path}.kind`, ANALYSIS_KINDS);
   timestamp(entry.createdAt, `${path}.createdAt`);
-  validateAnalysisSnapshot(entry.snapshot, `${path}.snapshot`, budget);
+  if (entry.kind === 'horizon')
+    validateHorizonSnapshot(entry.snapshot, `${path}.snapshot`);
+  else validateAnalysisSnapshot(entry.snapshot, `${path}.snapshot`, budget);
 }

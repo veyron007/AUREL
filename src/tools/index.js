@@ -26,6 +26,7 @@ import {
   getWeather,
 } from './queries/environment.js';
 import { getBhoteKoshiFlood } from './queries/events.js';
+import { horizonAt } from './queries/horizon.js';
 import { getActiveFires, getEarthquakes } from './queries/hazards.js';
 import { getRecentImagery } from './queries/imagery.js';
 import { findInfrastructure } from './queries/infrastructure.js';
@@ -117,6 +118,7 @@ export const coreTools = Object.freeze([
   getCyclones,
   getFirePerimeters,
   getTerrainHeight,
+  horizonAt,
   findMilitaryInstallations,
   getMapFeatures,
   situationBrief,

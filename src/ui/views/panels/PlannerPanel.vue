@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 import { t } from '../../../i18n/index.js';
 import { usePlannerStore } from '../../stores/planner.js';
 import RailPanel from '../../rail/RailPanel.vue';
+import HorizonCard from './HorizonCard.vue';
 
 const planner = usePlannerStore();
 const { view } = storeToRefs(planner);
@@ -703,6 +704,7 @@ async function analyze() {
           </template>
         </section>
       </template>
+      <HorizonCard v-if="view?.scope !== 'route'" surface="planner" />
     </div>
   </RailPanel>
 </template>

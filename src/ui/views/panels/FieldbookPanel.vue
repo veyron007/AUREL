@@ -5,6 +5,7 @@ import { t } from '../../../i18n/index.js';
 import { useFieldbookStore } from '../../stores/fieldbook.js';
 import RailPanel from '../../rail/RailPanel.vue';
 import FieldbookAnalysis from './FieldbookAnalysis.vue';
+import FieldbookHorizon from './FieldbookHorizon.vue';
 import FieldbookComparison from './FieldbookComparison.vue';
 
 const fieldbook = useFieldbookStore();
@@ -133,7 +134,7 @@ async function chooseAttachment(event) { const file = event.target.files?.[0]; e
           <section class="fieldbook-section" :aria-label="t('Saved analyses')">
             <h4>{{ t('Saved analyses') }} <span>{{ draft.analyses.length }}</span></h4>
             <p v-if="!draft.analyses.length" class="fieldbook-help">{{ t('Save a route or place analysis from Planner to keep its context here.') }}</p>
-            <details v-for="item in draft.analyses" :key="item.id" class="fieldbook-evidence"><summary>{{ subjectName(item.subjectId) }} · {{ displayTime(item.snapshot.capturedAt) }}</summary><FieldbookAnalysis :snapshot="item.snapshot" /></details>
+            <details v-for="item in draft.analyses" :key="item.id" class="fieldbook-evidence"><summary>{{ subjectName(item.subjectId) }} · {{ displayTime(item.snapshot.capturedAt) }}</summary><FieldbookHorizon v-if="item.kind === 'horizon'" :snapshot="item.snapshot" /><FieldbookAnalysis v-else :snapshot="item.snapshot" /></details>
           </section>
           <section class="fieldbook-section" :aria-label="t('Saved comparisons')">
             <h4>{{ t('Saved comparisons') }} <span>{{ draft.comparisons.length }}</span></h4>

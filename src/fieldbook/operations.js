@@ -141,7 +141,7 @@ export function addAnalysis(
     project,
     'analyses',
     entry,
-    { kind: 'route-context', createdAt: now },
+    { kind: entry.kind ?? 'route-context', createdAt: now },
     now,
   );
 }

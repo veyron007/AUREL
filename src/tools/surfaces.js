@@ -24,6 +24,8 @@ export const TOOL_SURFACES = Object.freeze({
   get_weather_map: voiceOff,
   get_recent_imagery: voiceOff,
   get_cctv_snapshot: voiceOff,
+  // A 360-value horizon envelope is for programs; voice has no use for it.
+  horizon_at: voiceOff,
   // The app shows its HUD caption itself, and assistants write their own.
   get_hud_caption: Object.freeze({ voice: false, mcp: false }),
   // Voice answers these from the loaded layers with analyst_query.

@@ -549,11 +549,11 @@ export class FieldbookController {
     return this.savePlace(selection, evidence);
   }
   /** An explicit snapshot save owns one revisioned write; failures retain its draft. */
-  async saveAnalysis(subject, snapshot) {
+  async saveAnalysis(subject, snapshot, kind = 'route-context') {
     if (!this._available()) return false;
     this._ensureProject();
     const edited = this._edit((project) =>
-      prepareAnalysisSave(project, subject, snapshot),
+      prepareAnalysisSave(project, subject, snapshot, kind),
     );
     return edited ? this.save() : false;
   }

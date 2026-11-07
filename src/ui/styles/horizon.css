@@ -1,0 +1,190 @@
+/* Kshitij horizon card: Lamplight tokens only, shared by Planner and Lens. */
+.horizon-card {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  padding-top: 16px;
+  margin-top: 16px;
+  min-width: 0;
+}
+.horizon-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.horizon-heading h3 {
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.horizon-badge {
+  font-size: 10px;
+  letter-spacing: 0.035em;
+  color: var(--workspace-accent, var(--accent));
+  border: 1px solid var(--accent-dim, var(--glass-border));
+  border-radius: var(--btn-radius, 4px);
+  padding: 2px 6px;
+}
+.horizon-help {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.horizon-form,
+.horizon-block {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.horizon-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px 12px;
+}
+.horizon-fields label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.horizon-fields input {
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--raised, var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--btn-radius, 4px);
+  padding: 6px 8px;
+}
+.horizon-fields input:focus-visible,
+.horizon-actions button:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--accent));
+  outline-offset: 2px;
+}
+.horizon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.horizon-actions button {
+  font: inherit;
+  font-size: 12px;
+  min-height: 32px;
+  padding: 6px 12px;
+  color: var(--text-primary);
+  background: var(--raised, var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--btn-radius, 4px);
+  cursor: pointer;
+}
+.horizon-actions .horizon-primary {
+  color: var(--bg-dark, #111);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.horizon-actions button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.horizon-notice {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+.horizon-notice--error {
+  color: var(--state-error, var(--text-primary));
+}
+.horizon-chart {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.horizon-chart svg {
+  width: 100%;
+  height: 96px;
+  background: var(--raised, var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--btn-radius, 4px);
+}
+.horizon-chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+.horizon-chart-zero {
+  stroke: var(--glass-border);
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+.horizon-chart-peak {
+  fill: var(--text-primary);
+}
+.horizon-axis {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.horizon-block h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.horizon-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+.horizon-metrics > div {
+  min-width: 0;
+}
+.horizon-metrics dt {
+  font-size: 11px;
+  color: var(--workspace-muted, var(--text-secondary));
+  margin-bottom: 2px;
+}
+.horizon-metrics dd {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.horizon-delta {
+  color: var(--workspace-accent, var(--accent));
+}
+.horizon-peaks {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.horizon-peaks li {
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-primary);
+  padding: 8px;
+  background: var(--raised, var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--btn-radius, 4px);
+}
+.horizon-peaks li[data-state='marginal'] {
+  border-style: dashed;
+}
+.horizon-peak-state {
+  font-size: 10px;
+  letter-spacing: 0.035em;
+  color: var(--workspace-accent, var(--accent));
+}
+@media (max-width: 480px) {
+  .horizon-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
