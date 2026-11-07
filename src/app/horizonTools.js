@@ -1,13 +1,9 @@
 import { watch } from 'vue';
+import { Cartesian3, Color, CustomDataSource, HeightReference } from 'cesium';
 import {
-  Cartesian3,
-  Color,
-  CustomDataSource,
-  HeightReference,
-  LabelStyle,
-  VerticalOrigin,
-  Cartesian2,
-} from 'cesium';
+  clearOverlaySource,
+  setOverlayEntries,
+} from '../overlays/worldOverlay.js';
 import { t } from '../i18n/index.js';
 import { HorizonController } from '../ui/horizonController.js';
 import { useHorizonStore } from '../ui/stores/horizon.js';
@@ -20,6 +16,7 @@ import { roundAzimuth, roundKm } from '../horizon/envelope.js';
 /** Lamplight brass: the only interactive colour, used for the horizon ring. */
 const RING_COLOUR = '#d6ab55';
 const MAX_RING_LABELS = 6;
+const OVERLAY_SOURCE = 'kshitij-horizon';
 
 /** The skyline trace: one ground-clamped vertex per ray at its blocking terrain. */
 export function horizonRingPositions(result) {
@@ -51,6 +48,7 @@ export function createHorizonBindings({
   const service = createHorizonService({ fetchImpl, run });
   let source = null;
   const clearHorizon = () => {
+    clearOverlaySource(OVERLAY_SOURCE);
     if (source && viewer?.dataSources) viewer.dataSources.remove(source, true);
     source = null;
     viewer?.scene?.requestRender?.();
@@ -92,37 +90,39 @@ export function createHorizonBindings({
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
         },
       });
-      result.peaks.listed
+      const peaks = result.peaks.listed
         .filter((peak) => peak.state === 'skyline')
-        .slice(0, MAX_RING_LABELS)
-        .forEach((peak) => {
-          source.entities.add({
-            id: `kshitij-horizon-${peak.id}`,
-            position: Cartesian3.fromDegrees(peak.lon, peak.lat),
-            point: {
-              pixelSize: 6,
-              color: colour,
-              heightReference: HeightReference.CLAMP_TO_GROUND,
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
-            },
-            label: {
-              text: t('{name} · {distance} km · az {azimuth}° · terrain-only', {
-                name: peak.name,
-                distance: roundKm(peak.distanceM),
-                azimuth: roundAzimuth(peak.azimuthDeg),
-              }),
-              font: '12px sans-serif',
-              fillColor: Color.WHITE,
-              outlineColor: Color.BLACK,
-              outlineWidth: 3,
-              style: LabelStyle.FILL_AND_OUTLINE,
-              verticalOrigin: VerticalOrigin.BOTTOM,
-              pixelOffset: new Cartesian2(0, -10),
-              heightReference: HeightReference.CLAMP_TO_GROUND,
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
-            },
-          });
-        });
+        .slice(0, MAX_RING_LABELS);
+      peaks.forEach((peak) =>
+        source.entities.add({
+          id: `kshitij-horizon-${peak.id}`,
+          position: Cartesian3.fromDegrees(peak.lon, peak.lat),
+          point: {
+            pixelSize: 6,
+            color: colour,
+            heightReference: HeightReference.CLAMP_TO_GROUND,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          },
+        }),
+      );
+      // World text goes through the shared overlay host, never Cesium labels.
+      setOverlayEntries(
+        OVERLAY_SOURCE,
+        peaks.map((peak) => ({
+          id: peak.id,
+          position: Cartesian3.fromDegrees(peak.lon, peak.lat, peak.demM ?? 0),
+          variant: 'label',
+          title: peak.name,
+          details: [
+            t('{name} · {distance} km · az {azimuth}° · terrain-only', {
+              name: peak.nameHi ?? peak.name,
+              distance: roundKm(peak.distanceM),
+              azimuth: roundAzimuth(peak.azimuthDeg),
+            }),
+          ],
+          accent: RING_COLOUR,
+        })),
+      );
       viewer.dataSources.add(source);
       viewer.scene?.requestRender?.();
     },
