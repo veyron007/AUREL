@@ -117,7 +117,23 @@ are unchanged.
 
 ## Verification
 
-VERIFICATION_PLACEHOLDER
+Run on 7 November 2026 on this branch after merging `main` (`ef0eae9f`).
+
+| Check                                   | Result                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm test`                              | 11,461 tests: 11,457 passed, 0 failed, 4 skipped (the Node 24 allocation probes on Node 26).                                                                                                                                                                                                                                          |
+| Targeted WP3 suites                     | 38 tests in `mountainWeather.test.mjs`, `checkpointSheet.test.mjs`, `plannerSheet.test.mjs`, `chronicleTools.test.mjs`, all passing.                                                                                                                                                                                                  |
+| `npm run check:boundaries`              | Passes (new modules registered in `scripts/package-boundaries.json`).                                                                                                                                                                                                                                                                 |
+| `npm run i18n`                          | 11 catalogs complete, 3,688 messages (81 new).                                                                                                                                                                                                                                                                                        |
+| `npm run format:check`                  | Fails before formatting anything, identically on `main`: `scripts/format-scope.json` lists `src/fieldbook/document.test.mjs` and `src/sources/firmsArea.test.mjs`, which are not in git history. With those two entries skipped, all 2,018 in-scope files pass Prettier, including every file WP3 changed. Left for the orchestrator. |
+| `scripts/qa-aurel-mountain-weather.mjs` | 19/19 checks (`evidence/checks.json`) at `QA_BASE_URL=http://127.0.0.1:4183`; port 4173 was held by the WP2 dev server. Fresh profile, external hosts aborted, fixtures built by the real middleware.                                                                                                                                 |
+| Browser check                           | QA screenshots inspected: `evidence/sheet-desktop.png` (1440×900), `sheet-mobile.png` (390×844), `sheet-library.png`, `chronicle-lane.png`. The first run showed table labels breaking mid-word; fixed (word wrapping, sticky label column) and re-run.                                                                               |
+| Live bounded sample                     | One real sheet at Kempty (30.49 N, 78.04 E, 1,400 m) through the middleware: 200 in 6.4 s, 140 deci-units, 50 GIBS requests; see SOURCE-ADMISSION.                                                                                                                                                                                    |
+| Code review                             | An independent review found the one-hour accumulation offset, focus/window decoupling, run-label caching, missing negative cache and snowfall label; all fixed with tests.                                                                                                                                                            |
+| `.env`                                  | Not read, printed or changed.                                                                                                                                                                                                                                                                                                         |
+
+The browser check used fixtures, not live providers, so the rendered values are
+synthetic; live behaviour was verified only at the middleware level.
 
 ## Limits
 
