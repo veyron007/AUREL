@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "id": "dehradun-peaks",
+  "theme": "peaks",
+  "name": "Dehradun skyline peaks",
+  "extent": [
+    75.95,
+    28.5,
+    80.15,
+    32.15
+  ],
+  "source": {
+    "id": "openstreetmap-geofabrik",
+    "label": "OpenStreetMap via Geofabrik Central Zone",
+    "url": "https://download.geofabrik.de/asia/india/central-zone.html",
+    "extractAt": "2026-11-05T21:23:02Z",
+    "retrievedAt": "2026-11-07T04:29:49.140Z",
+    "extractSha256": "b6eaf4f9c098d77a1c8a05996fd6752e83ee8550b022aefa0c4de255af20eaeb"
+  },
+  "license": {
+    "id": "ODbL-1.0",
+    "url": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "attribution": "© OpenStreetMap contributors"
+  },
+  "assets": [
+    {
+      "id": "peaks",
+      "path": "peaks.json",
+      "format": "peak-gazetteer",
+      "byteLength": 36886,
+      "sha256": "8d3f6593c7f8d18968a2c2c71267336f53f31f4f724773157b387d03e5e9b0a4"
+    }
+  ],
+  "counts": {
+    "peaks": 350,
+    "withElevation": 210,
+    "withHindiName": 6,
+    "skippedUnnamed": 225
+  },
+  "coverage": "partial",
+  "limitations": [
+    "Only OSM nodes tagged natural=peak with a name or name:hi are included; unnamed peaks are counted, not listed.",
+    "The Central Zone extract covers Uttarakhand and Uttar Pradesh; peaks in Himachal Pradesh, Nepal and Tibet are absent.",
+    "Elevations come from the OSM ele tag when it is an unambiguous metre value; other values are left unknown.",
+    "Community names and elevations can be wrong or outdated; compare each with the DEM height.",
+    "Source date is the extract snapshot time, not a survey date."
+  ]
+}
