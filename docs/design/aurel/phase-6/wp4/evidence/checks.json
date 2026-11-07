@@ -1,0 +1,88 @@
+{
+  "fixture": "Real CelesTrak TLE sets retrieved 2026-11-07; synthetic labelled catalogue, cloud forecast and ESA-schema plan. All other external traffic blocked; real free-source probes are recorded in SOURCE-ADMISSION.md.",
+  "base": "http://localhost:4184",
+  "checks": [
+    {
+      "name": "opening Orbit Witness makes no orbit, catalogue or cloud request",
+      "pass": true
+    },
+    {
+      "name": "one prediction reads the cached TLE group, one catalogue search and one cloud forecast",
+      "pass": true
+    },
+    {
+      "name": "all six spacecraft are listed",
+      "pass": true
+    },
+    {
+      "name": "four lanes are labelled with their classes",
+      "pass": true
+    },
+    {
+      "name": "every spacecraft shows \"propagated, epoch\" and its age",
+      "pass": true
+    },
+    {
+      "name": "cloud forecast is joined per pass with its hour",
+      "pass": true
+    },
+    {
+      "name": "Landsat states that no admissible plan is published",
+      "pass": true
+    },
+    {
+      "name": "nothing claims a photograph",
+      "pass": true
+    },
+    {
+      "name": "a loaded plan file confirms Sentinel-2A passes in session only",
+      "pass": true
+    },
+    {
+      "name": "the predicted swath is drawn on the globe as a modelled footprint",
+      "pass": true
+    },
+    {
+      "name": "the ride caption shows \"Dramatised ride · orbit propagated, epoch\" in recording mode",
+      "pass": true
+    },
+    {
+      "name": "the director owns the ride",
+      "pass": true
+    },
+    {
+      "name": "stopping the ride removes the caption",
+      "pass": true
+    },
+    {
+      "name": "the scene watch is the second Watchlist type and starts stopped",
+      "pass": true
+    },
+    {
+      "name": "no catalogue polling happens until monitoring is started",
+      "pass": true
+    },
+    {
+      "name": "phone Orbit Witness sheet is usable without horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    },
+    {
+      "name": "Free-only: no billable host was even attempted (external requests are blocked regardless)",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "requests": [
+    "tle",
+    "cloud",
+    "scenes"
+  ],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land"
+  ]
+}

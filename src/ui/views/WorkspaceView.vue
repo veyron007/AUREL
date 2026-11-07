@@ -22,6 +22,8 @@ const preferred = {
   explore: ['lens-panel', 'data-panel', 'global-context-panel', 'cctv-panel', 'street-level-panel', 'weather-panel'],
   compare: ['chronicle-panel', 'research-panel', 'recent-imagery-panel', 'data-panel'],
   plan: ['planner-panel', 'raindrop-panel', 'utilities-panel', 'weather-panel', 'data-panel'],
+  compare: ['chronicle-panel', 'research-panel', 'orbit-witness-panel', 'recent-imagery-panel', 'data-panel'],
+  plan: ['planner-panel', 'utilities-panel', 'weather-panel', 'data-panel'],
   library: ['fieldbook-panel', 'watchlist-panel', 'region-panel', 'local-commands-panel', 'scene-panel', 'utilities-panel'],
 };
 const primaryTools = computed(() => tools.value.filter((panel) => preferred[workspace.destination].includes(panel.id)));

@@ -10,6 +10,11 @@ import { createResearchTools } from './researchTools.js';
 import { createWatchlistTools } from './watchlistTools.js';
 import { createAgentDeskTools } from './agentDeskTools.js';
 import { createBreathTools } from './breathTools.js';
+import {
+  createOrbitWitnessTools,
+  createSceneWatchlistSource,
+  createChronicleSceneOpener,
+} from './orbitWitnessTools.js';
 import { createRegionTools } from './regionTools.js';
 import { createRaindropTools } from './raindropTools.js';
 import { useWorkspaceStore } from '../ui/stores/workspace.js';
@@ -200,7 +205,15 @@ export function createApplicationTools({
   defer(() => chronicle.destroy());
   const research = createResearchTools({ pinia: applicationPinia() });
   defer(() => research.destroy());
-  const watchlists = createWatchlistTools({ pinia: applicationPinia() });
+  const watchlists = createWatchlistTools({
+    pinia: applicationPinia(),
+    sceneSource: createSceneWatchlistSource(),
+    onOpenScene: createChronicleSceneOpener({
+      lens: personalWorkspace.lens,
+      chronicle: chronicle.controller,
+      workspace: useWorkspaceStore(applicationPinia()),
+    }),
+  });
   defer(() => watchlists.destroy());
   // Field Kit: answers a local MCP server's requests; writes need the owner's
   // per-session "Allow agent writes" toggle (src/fieldkit).
@@ -217,6 +230,13 @@ export function createApplicationTools({
     watchlists: watchlists.controller,
   });
   defer(() => breath.destroy());
+  const orbitWitness = createOrbitWitnessTools({
+    pinia: applicationPinia(),
+    viewer,
+    sceneDirector,
+    watchlists: watchlists.controller,
+  });
+  defer(() => orbitWitness.destroy());
   const regions = createRegionTools({
     pinia: applicationPinia(),
     geoFileImport,

@@ -1,0 +1,363 @@
+/* Orbit Witness: pass lanes in the shared rail. Tokens come from lamplight.css. */
+#left-panel-stack > #orbit-witness-panel {
+  position: relative;
+  min-height: 0;
+  pointer-events: auto;
+  overflow: hidden;
+  color: var(--workspace-text, var(--text-primary, #eee9df));
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 14px;
+  box-shadow: var(--workspace-shadow);
+}
+#left-panel-stack > #orbit-witness-panel:not(.collapsed) {
+  height: var(--left-panel-allocated-height, auto);
+  max-height: var(--left-panel-allocated-height, 100%);
+}
+#orbit-witness-panel > .orbit-witness-panel-inner {
+  --inspector-gutter: 18px;
+  box-sizing: border-box;
+  height: 100%;
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block-start: 80px;
+  padding: var(--inspector-gutter);
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
+}
+#orbit-witness-panel .panel-glow {
+  display: none;
+}
+#left-panel-stack > #orbit-witness-panel:not(.collapsed) .ui-panel__head {
+  position: sticky;
+  top: calc(-1 * var(--inspector-gutter));
+  z-index: 3;
+  box-sizing: border-box;
+  min-height: 68px;
+  margin: calc(-1 * var(--inspector-gutter)) calc(-1 * var(--inspector-gutter))
+    18px;
+  padding: 12px var(--inspector-gutter);
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+#orbit-witness-panel .ui-panel__title {
+  color: inherit;
+  font: 650 17px/1.35 var(--font-sans);
+  letter-spacing: 0;
+}
+.orbit-witness-workspace {
+  display: grid;
+  gap: 16px;
+  font: 14px/1.55 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.orbit-witness-workspace :is(p, h2, h3, dl, dd, ul, ol) {
+  margin: 0;
+}
+.orbit-witness-intro {
+  display: grid;
+  gap: 7px;
+}
+.orbit-witness-intro h2 {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.orbit-witness-eyebrow {
+  color: var(--workspace-accent, var(--accent, #d6ab55));
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.orbit-witness-intro p,
+.orbit-witness-help,
+.orbit-witness-limits,
+.orbit-witness-credit {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 12px;
+  line-height: 1.6;
+}
+.orbit-witness-limits {
+  padding-inline-start: 18px;
+  display: grid;
+  gap: 4px;
+}
+/* The four lanes read as one legend so no lane can borrow another's certainty. */
+.orbit-witness-legend {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.orbit-witness-legend li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-inline-start: 2px solid var(--workspace-border, var(--glass-border));
+  background: var(--workspace-raised, var(--surface-info-raised, #24282a));
+  font-size: 12px;
+}
+.orbit-witness-legend li[data-lane='predicted'] {
+  border-color: var(--state-info, #6fa7b1);
+}
+.orbit-witness-legend li[data-lane='planned'] {
+  border-color: var(--text-dim, #a7a39b);
+}
+.orbit-witness-legend li[data-lane='product'] {
+  border-color: var(--state-ok, #a6bf8e);
+}
+.orbit-witness-legend li[data-lane='ride'] {
+  border-color: var(--state-warn, #e38f45);
+}
+.orbit-witness-class {
+  color: var(--workspace-muted, var(--text-dim));
+  font: 600 10px/1.4 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.orbit-witness-workspace :is(button, input, select) {
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  background: var(--workspace-raised, var(--surface-info-raised, #24282a));
+  color: inherit;
+  font: inherit;
+}
+.orbit-witness-workspace button {
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.orbit-witness-workspace button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.orbit-witness-workspace button:hover:not(:disabled),
+.orbit-witness-workspace button[aria-pressed='true'] {
+  border-color: var(--workspace-accent, var(--accent, #d6ab55));
+}
+.orbit-witness-workspace .orbit-witness-primary {
+  color: var(--workspace-surface, var(--bg-dark, #181b1d));
+  background: var(--workspace-accent, var(--accent, #d6ab55));
+  border-color: transparent;
+}
+.orbit-witness-workspace :is(button, input, summary, a):focus-visible,
+#orbit-witness-ride-caption button:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--accent, #d6ab55));
+  outline-offset: 3px;
+}
+.orbit-witness-workspace a {
+  color: var(--workspace-accent, var(--accent, #d6ab55));
+}
+.orbit-witness-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.orbit-witness-notice {
+  padding: 10px 12px;
+  border-inline-start: 2px solid var(--workspace-accent, var(--accent, #d6ab55));
+  background: var(--workspace-raised, var(--surface-info-raised, #24282a));
+  font-size: 12px;
+}
+.orbit-witness-notice--error {
+  border-color: var(--state-error, #e8836d);
+}
+.orbit-witness-plans {
+  display: grid;
+  gap: 10px;
+}
+.orbit-witness-plans > summary {
+  min-height: 44px;
+  box-sizing: border-box;
+  align-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding-block: 8px;
+  color: var(--workspace-accent, var(--accent, #d6ab55));
+  border-block: 1px solid var(--workspace-border, var(--glass-border));
+}
+.orbit-witness-plan-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.orbit-witness-plan-list li {
+  display: grid;
+}
+.orbit-witness-sources {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.orbit-witness-sources div {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.4fr) 1fr;
+  gap: 8px;
+}
+.orbit-witness-sources dt {
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.orbit-witness-mission {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  padding-top: 16px;
+}
+.orbit-witness-mission > header {
+  display: grid;
+  gap: 3px;
+}
+.orbit-witness-mission h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.orbit-witness-epoch {
+  color: var(--state-info, #6fa7b1);
+  font: 500 11px/1.5 var(--font-mono);
+}
+.orbit-witness-passes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.orbit-witness-passes > li {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--workspace-raised, var(--surface-info-raised, #24282a));
+}
+.orbit-witness-pass-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.orbit-witness-pass-time strong {
+  font: 600 13px/1.4 var(--font-mono);
+}
+.orbit-witness-pass-time span {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 12px;
+}
+.orbit-witness-lanes {
+  display: grid;
+  gap: 6px;
+}
+.orbit-witness-lanes > div {
+  display: grid;
+  gap: 1px;
+  padding-inline-start: 8px;
+  border-inline-start: 2px solid var(--workspace-border, var(--glass-border));
+  font-size: 12px;
+}
+.orbit-witness-lanes > [data-lane='predicted'] {
+  border-color: var(--state-info, #6fa7b1);
+}
+.orbit-witness-lanes > [data-lane='product'] {
+  border-color: var(--state-ok, #a6bf8e);
+}
+.orbit-witness-lanes dt {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+/* The ride caption stays on screen in recording mode: it is the ride's HUD label. */
+#orbit-witness-ride-caption {
+  position: fixed;
+  z-index: 40;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(720px, calc(100vw - 32px));
+  padding: 8px 10px 8px 14px;
+  color: var(--hud-ink, #f2ebdd);
+  background: var(--glass-bg, rgba(34, 21, 19, 0.94));
+  border: 1px solid var(--hud-line, rgba(242, 235, 221, 0.25));
+  border-radius: 10px;
+  font: 500 12px/1.45 var(--font-sans);
+  pointer-events: auto;
+}
+#orbit-witness-ride-caption p {
+  margin: 0;
+}
+#orbit-witness-ride-caption .orbit-witness-class {
+  color: var(--state-warn, #e38f45);
+}
+#orbit-witness-ride-caption button {
+  flex: none;
+  min-height: 36px;
+  padding: 6px 10px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--accent, #d6ab55);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.watchlist-kind {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.watchlist-kind legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.watchlist-kind label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.watchlist-observations li button {
+  justify-self: start;
+  margin-top: 4px;
+}
+@media (max-width: 720px) {
+  #orbit-witness-ride-caption {
+    top: 8px;
+    flex-wrap: wrap;
+  }
+  body[data-workspace-appearance].mobile-shell[data-mobile-sheet='layers']
+    #left-panel-stack
+    > #orbit-witness-panel:not(.collapsed):not(
+      [data-workspace-suppressed='true']
+    ) {
+    display: block;
+  }
+  body[data-workspace-appearance].mobile-shell
+    #orbit-witness-panel
+    .ui-panel__head {
+    display: none;
+  }
+  body[data-workspace-appearance].mobile-shell
+    #orbit-witness-panel
+    > .orbit-witness-panel-inner {
+    padding: 8px;
+  }
+}

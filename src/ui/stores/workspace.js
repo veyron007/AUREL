@@ -45,6 +45,7 @@ export function workspaceSheetForPanel(panelId) {
       'raindrop-panel',
       'chronicle-panel',
       'research-panel',
+      'orbit-witness-panel',
       'watchlist-panel',
       'region-panel',
       'local-commands-panel',

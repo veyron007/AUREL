@@ -191,7 +191,11 @@
       "src/ui/views/panels/RegionPanel.vue",
       "src/ui/views/panels/WatchlistPanel.vue",
       "src/ui/stores/breath.js",
-      "src/ui/views/panels/BreathCard.vue"
+      "src/ui/views/panels/BreathCard.vue",
+      "src/ui/views/panels/OrbitWitnessPanel.vue",
+      "src/ui/stores/orbitWitness.js",
+      "src/orbitWitness/lanes.js",
+      "src/i18n/marker.js"
     ],
     "external": ["vue", "pinia", "vue-i18n"]
   },
@@ -3488,7 +3492,21 @@
       "src/airQuality/naqi.js",
       "src/airQuality/stations.js",
       "src/sources/airQualityStations.js",
-      "src/airQuality/indiaLayerSource.js"
+      "src/airQuality/indiaLayerSource.js",
+      "src/orbitWitness/missions.js",
+      "src/orbitWitness/swath.js",
+      "src/orbitWitness/tle.js",
+      "src/orbitWitness/plan.js",
+      "src/orbitWitness/lanes.js",
+      "src/orbitWitness/predict.js",
+      "src/orbitWitness/catalogueModel.js",
+      "src/orbitWitness/sources.js",
+      "src/orbitWitness/sceneWatch.js",
+      "src/orbitWitness/ride.js",
+      "src/orbitWitness/overlay.js",
+      "src/app/orbitWitnessTools.js",
+      "src/ui/orbitWitnessController.js",
+      "src/ui/stores/orbitWitness.js"
     ],
     "external": [
       "hls.js",

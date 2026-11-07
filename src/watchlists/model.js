@@ -9,6 +9,15 @@ import {
   validateStationCondition,
   validateStationState,
 } from '../airQuality/watch.js';
+  SCENE_WATCH_KIND,
+  validateSceneWatchDefinition,
+  validateSceneWatchRuntime,
+  emptySceneWatchRuntime,
+} from '../orbitWitness/sceneWatch.js';
+/** Watch types: FIRMS records carry no kind (version 1); scene watches are version 2. */
+export const WATCH_KINDS = Object.freeze(['firms', SCENE_WATCH_KIND]);
+export const watchKind = (value) =>
+  value?.kind === SCENE_WATCH_KIND ? SCENE_WATCH_KIND : 'firms';
 export const WATCH_LIMITS = Object.freeze({
   definitions: 8,
   active: 4,
@@ -116,6 +125,18 @@ export function validateWatchDefinition(value) {
     conditional ? [...DEFINITION_KEYS, 'condition'] : DEFINITION_KEYS,
   );
   if (conditional) validateStationCondition(value.condition);
+  if (value?.kind !== undefined) return validateSceneWatchDefinition(value);
+  fields(value, [
+    'version',
+    'id',
+    'title',
+    'place',
+    'bounds',
+    'intervalMs',
+    'createdAt',
+    'updatedAt',
+    'revision',
+  ]);
   if (value.version !== 1) fail();
   text(value.id);
   text(value.title, 160);
@@ -148,7 +169,8 @@ export function validateWatchDefinition(value) {
   if (!Number.isSafeInteger(value.revision)) fail();
   return copy(value);
 }
-export function emptyWatchRuntime() {
+export function emptyWatchRuntime(kind = 'firms') {
+  if (kind === SCENE_WATCH_KIND) return emptySceneWatchRuntime();
   return {
     baselineAt: null,
     lastAttemptAt: null,
@@ -191,6 +213,8 @@ export function validateWatchRuntime(value) {
   const station = Boolean(value) && Object.hasOwn(value, 'station');
   fields(value, station ? [...base, 'station'] : base);
   if (station) validateStationState(value.station);
+  if (value?.kind !== undefined) return validateSceneWatchRuntime(value);
+  fields(value, Object.keys(emptyWatchRuntime()));
   for (const key of [
     'baselineAt',
     'lastAttemptAt',
@@ -290,6 +314,7 @@ export function validateWatchRecord(value) {
       runtime.notifications.some((note) => note.kind === 'aq-crossing'))
   )
     fail();
+  if (watchKind(definition) !== watchKind(runtime)) fail();
   if (value.lease !== null) {
     fields(value.lease, ['ownerId', 'token', 'until']);
     text(value.lease.ownerId);

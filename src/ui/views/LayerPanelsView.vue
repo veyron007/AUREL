@@ -21,6 +21,7 @@ import RaindropPanel from './panels/RaindropPanel.vue';
 import ChroniclePanel from './panels/ChroniclePanel.vue';
 import ResearchPanel from './panels/ResearchPanel.vue';
 import WatchlistPanel from './panels/WatchlistPanel.vue';
+import OrbitWitnessPanel from './panels/OrbitWitnessPanel.vue';
 import RegionPanel from './panels/RegionPanel.vue';
 import LocalCommandsPanel from './panels/LocalCommandsPanel.vue';
 
@@ -56,6 +57,7 @@ async function importChosen(event) {
   <ChroniclePanel />
   <ResearchPanel />
   <WatchlistPanel />
+  <OrbitWitnessPanel />
   <RegionPanel />
   <LocalCommandsPanel />
   <!-- Data Layer Toggle Panel -->

@@ -33,6 +33,8 @@ export function createWatchlistTools({
   stationSource = createStationWatchSource({
     stations: createAirQualityStationsSource(),
   }),
+  sceneSource,
+  onOpenScene,
 } = {}) {
   const library = useFieldbookStore(pinia);
   const controller = new WatchlistController({
@@ -40,6 +42,8 @@ export function createWatchlistTools({
     ...(repository ? { repository } : {}),
     ...(source ? { source } : {}),
     stationSource,
+    ...(sceneSource ? { sceneSource } : {}),
+    ...(onOpenScene ? { onOpenScene } : {}),
     readSavedPlaces: () => savedPlaces(library.view),
     subscribeSavedPlaces: (listener) =>
       watch(() => library.view, listener, { flush: 'sync' }),
