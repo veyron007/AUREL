@@ -18,10 +18,10 @@ import {
   validateSavedFireContext,
 } from './analysisSources.js';
 import { validateHorizonSnapshot } from './horizonAnalysis.js';
+import { validateSavedMountainWeather } from './mountainWeatherSnapshot.js';
 
 /** Saved analysis kinds: Planner route/place context and Kshitij horizons. */
 export const ANALYSIS_KINDS = Object.freeze(['route-context', 'horizon']);
-import { validateSavedMountainWeather } from './mountainWeatherSnapshot.js';
 
 export const SOLAR_METHOD =
   'USNO low-precision solar position; standard -0.833° sunrise and -6° civil twilight; no terrain horizon';

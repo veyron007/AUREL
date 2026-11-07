@@ -128,9 +128,13 @@ export class WatchlistController {
           record.lease.until > this.now();
       return {
         id: d.id,
-        kind: d.condition ? 'station' : 'firms',
+        kind:
+          watchKind(d) === SCENE_WATCH_KIND
+            ? SCENE_WATCH_KIND
+            : d.condition
+              ? 'station'
+              : 'firms',
         condition: d.condition ? describeCondition(d.condition) : null,
-        kind: watchKind(d),
         title: d.title,
         placeName: d.place.name,
         bounds: d.bounds,
@@ -175,6 +179,8 @@ export class WatchlistController {
         ),
         t(
           'A station watch notes when one monitor crosses into a NAQI category on its 24 h mean (8 h for CO and O3), once per crossing, at most every six hours.',
+        ),
+        t(
           'Scene watches check the open STAC catalogues no more often than hourly. A catalogued scene can arrive hours to days after acquisition, and a catalogue outage reads as unknown, not as no scene.',
         ),
       ],
@@ -308,6 +314,22 @@ export class WatchlistController {
   }
   /** One acquisition and reduction for either watch kind. */
   async _check(record, { signal, baseline, interval }) {
+    if (watchKind(record.definition) === SCENE_WATCH_KIND) {
+      if (!this.sceneSource) throw Error('No scene source');
+      const result = await this.sceneSource.check(record.definition, {
+        signal,
+      });
+      return {
+        result,
+        needsKey: false,
+        runtime: reduceSceneWatchCheck(record.runtime, result.context, {
+          now: this.now(),
+          baseline,
+          intervalMs: interval,
+          lookbackDays: record.definition.scene.lookbackDays,
+        }),
+      };
+    }
     const condition = record.definition.condition;
     if (!condition) {
       const result = await this.source.check(record.definition.bounds, {
@@ -533,6 +555,7 @@ export class WatchlistController {
       );
       if (signal.aborted || !this._valid(id, session)) return;
       this.records.set(id, record);
+      const scene = watchKind(record.definition) === SCENE_WATCH_KIND;
       const checked = await this._check(record, {
         signal,
         baseline: session.baselinePending || gap,
@@ -541,25 +564,6 @@ export class WatchlistController {
       if (signal.aborted || !this._valid(id, session)) return;
       const { result } = checked;
       let runtime = checked.runtime;
-      const scene = watchKind(record.definition) === SCENE_WATCH_KIND;
-      const result = scene
-        ? await this.sceneSource.check(record.definition, { signal })
-        : await this.source.check(record.definition.bounds, { signal });
-      if (signal.aborted || !this._valid(id, session)) return;
-      const options = {
-        now: this.now(),
-        baseline: session.baselinePending || gap,
-        intervalMs: interval,
-      };
-      let runtime = scene
-        ? reduceSceneWatchCheck(record.runtime, result.context, {
-            ...options,
-            lookbackDays: record.definition.scene.lookbackDays,
-          })
-        : reduceWatchCheck(record.runtime, result.context, {
-            ...options,
-            bounds: record.definition.bounds,
-          });
       if (runtime.lastSuccessAt === record.runtime.lastSuccessAt) {
         runtime = {
           ...runtime,

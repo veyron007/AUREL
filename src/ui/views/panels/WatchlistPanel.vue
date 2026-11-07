@@ -242,8 +242,6 @@ async function create() {
           }}
           · {{ t('{value} min', { value: watch.intervalMinutes }) }}</p
         ><p v-else class="watchlist-source-name"
-          >{{ t('NASA FIRMS thermal detections') }} ·
-        ><p class="watchlist-source-name"
           >{{
             watch.kind === 'scene'
               ? t('Earth Search and NASA CMR-STAC scenes')

@@ -31,6 +31,35 @@ export const FREE_LEDGERS = Object.freeze([
     limits: Object.freeze({ minute: 10, day: 100, month: 2000 }),
   }),
   Object.freeze({
+    id: 'openaq',
+    provider: 'OpenAQ station observations (Breath)',
+    file: 'openaq-budget.json',
+    unit: 'upstream request',
+    limits: Object.freeze({ minute: 10, day: 100, month: 2000 }),
+  }),
+  Object.freeze({
+    id: 'mountain-weather',
+    provider:
+      'Open-Meteo forecast, ensemble and ERA5-Land (Planner checkpoints)',
+    file: 'mountain-weather-budget.json',
+    unit: 'weighted Open-Meteo unit',
+    limits: Object.freeze({ minute: 400, day: 4000, month: 60000 }),
+  }),
+  Object.freeze({
+    id: 'gibs-imerg',
+    provider: 'NASA GIBS IMERG precipitation (Planner rain lane)',
+    file: 'gibs-imerg-budget.json',
+    unit: 'tile or metadata request',
+    limits: Object.freeze({ minute: 120, day: 1000, month: 15000 }),
+  }),
+  Object.freeze({
+    id: 'orbit-witness-stac',
+    provider: 'Earth Search and NASA CMR-STAC scene search (Orbit Witness)',
+    file: 'orbit-witness-stac-budget.json',
+    unit: 'upstream request',
+    limits: Object.freeze({ minute: 10, day: 100, month: 2000 }),
+  }),
+  Object.freeze({
     id: 'research',
     provider: 'Earth Search Sentinel-2 L2A NDVI (Research)',
     file: 'research-budget.json',

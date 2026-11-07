@@ -9,12 +9,14 @@ import {
   validateStationCondition,
   validateStationState,
 } from '../airQuality/watch.js';
+import {
   SCENE_WATCH_KIND,
   validateSceneWatchDefinition,
   validateSceneWatchRuntime,
   emptySceneWatchRuntime,
 } from '../orbitWitness/sceneWatch.js';
-/** Watch types: FIRMS records carry no kind (version 1); scene watches are version 2. */
+/** Watch types: FIRMS records carry no kind (version 1; a station condition
+ * makes it a station watch); scene watches are version 2. */
 export const WATCH_KINDS = Object.freeze(['firms', SCENE_WATCH_KIND]);
 export const watchKind = (value) =>
   value?.kind === SCENE_WATCH_KIND ? SCENE_WATCH_KIND : 'firms';
@@ -119,24 +121,13 @@ const DEFINITION_KEYS = [
   'revision',
 ];
 export function validateWatchDefinition(value) {
+  if (value?.kind !== undefined) return validateSceneWatchDefinition(value);
   const conditional = Boolean(value) && Object.hasOwn(value, 'condition');
   fields(
     value,
     conditional ? [...DEFINITION_KEYS, 'condition'] : DEFINITION_KEYS,
   );
   if (conditional) validateStationCondition(value.condition);
-  if (value?.kind !== undefined) return validateSceneWatchDefinition(value);
-  fields(value, [
-    'version',
-    'id',
-    'title',
-    'place',
-    'bounds',
-    'intervalMs',
-    'createdAt',
-    'updatedAt',
-    'revision',
-  ]);
   if (value.version !== 1) fail();
   text(value.id);
   text(value.title, 160);
@@ -209,12 +200,11 @@ function sourceRows(rows) {
   }
 }
 export function validateWatchRuntime(value) {
+  if (value?.kind !== undefined) return validateSceneWatchRuntime(value);
   const base = Object.keys(emptyWatchRuntime());
   const station = Boolean(value) && Object.hasOwn(value, 'station');
   fields(value, station ? [...base, 'station'] : base);
   if (station) validateStationState(value.station);
-  if (value?.kind !== undefined) return validateSceneWatchRuntime(value);
-  fields(value, Object.keys(emptyWatchRuntime()));
   for (const key of [
     'baselineAt',
     'lastAttemptAt',
@@ -307,14 +297,14 @@ export function validateWatchRecord(value) {
   fields(value, ['definition', 'runtime', 'lease']);
   const definition = validateWatchDefinition(value.definition),
     runtime = validateWatchRuntime(value.runtime);
+  if (watchKind(definition) !== watchKind(runtime)) fail();
   // A FIRMS area watch never carries station state or station notes.
   if (
     !definition.condition &&
     (runtime.station ||
-      runtime.notifications.some((note) => note.kind === 'aq-crossing'))
+      runtime.notifications?.some((note) => note.kind === 'aq-crossing'))
   )
     fail();
-  if (watchKind(definition) !== watchKind(runtime)) fail();
   if (value.lease !== null) {
     fields(value.lease, ['ownerId', 'token', 'until']);
     text(value.lease.ownerId);

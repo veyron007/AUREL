@@ -110,7 +110,15 @@ test('ledger limits match the providers that keep them', async () => {
       'utf8',
     );
   const base = await read('field-context-budget.js');
-  const defaults = (key) => Number(new RegExp(`${key} = (\\d+)`).exec(base)[1]);
+  const ceilings = /FIELD_CONTEXT_CEILINGS = Object\.freeze\(\{([^}]*)\}/.exec(
+    base,
+  )[1];
+  const ceiling = (period) =>
+    Number(new RegExp(`${period}: (\\d+)`).exec(ceilings)[1]);
+  const defaults = (key) =>
+    ceiling(
+      { minuteLimit: 'minute', dailyLimit: 'day', monthlyLimit: 'month' }[key],
+    );
   const fieldContext = FREE_LEDGERS.find(
     (entry) => entry.id === 'field-context',
   );
@@ -135,12 +143,33 @@ test('ledger limits match the providers that keep them', async () => {
   for (const entry of FREE_LEDGERS)
     assert.match(
       await read(
-        entry.id === 'research'
-          ? 'research/service.js'
-          : entry.id === 'imagery-history'
-            ? 'imagery-history.js'
-            : 'field-context-budget.js',
+        {
+          research: 'research/service.js',
+          'imagery-history': 'imagery-history.js',
+          openaq: 'air-quality/openaq.js',
+          'mountain-weather': 'mountain-weather/budget.js',
+          'gibs-imerg': 'mountain-weather/budget.js',
+          'orbit-witness-stac': 'orbit-witness/index.js',
+        }[entry.id] ?? 'field-context-budget.js',
       ),
       new RegExp(entry.file.replace('.', '\\.')),
     );
+  // The ledgers added in Phase 6 keep the limits their providers construct.
+  const openaq = await read('air-quality/openaq.js');
+  assert.match(
+    openaq,
+    /dailyLimit: 100,[\s\S]*monthlyLimit: 2000,[\s\S]*minuteLimit: 10,/,
+  );
+  const mountain = await read('mountain-weather/budget.js');
+  for (const [id, name] of [
+    ['mountain-weather', 'MOUNTAIN_CEILINGS'],
+    ['gibs-imerg', 'GIBS_CEILINGS'],
+  ]) {
+    const block = new RegExp(`${name} = Object\\.freeze\\(\\{([^}]*)\\}`).exec(
+      mountain,
+    )[1];
+    const limits = FREE_LEDGERS.find((entry) => entry.id === id).limits;
+    for (const period of ['minute', 'day', 'month'])
+      assert.match(block, new RegExp(`${period}: ${limits[period]},`), id);
+  }
 });
