@@ -17,6 +17,7 @@ import UiSelect from '../kit/UiSelect.js';
 import LensPanel from './panels/LensPanel.vue';
 import FieldbookPanel from './panels/FieldbookPanel.vue';
 import PlannerPanel from './panels/PlannerPanel.vue';
+import RaindropPanel from './panels/RaindropPanel.vue';
 import ChroniclePanel from './panels/ChroniclePanel.vue';
 import ResearchPanel from './panels/ResearchPanel.vue';
 import WatchlistPanel from './panels/WatchlistPanel.vue';
@@ -51,6 +52,7 @@ async function importChosen(event) {
   <LensPanel />
   <FieldbookPanel />
   <PlannerPanel />
+  <RaindropPanel />
   <ChroniclePanel />
   <ResearchPanel />
   <WatchlistPanel />

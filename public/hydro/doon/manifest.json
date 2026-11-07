@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "id": "doon-dem",
+  "name": "Doon valley terrain grid",
+  "grid": {
+    "west": 77.6,
+    "north": 30.56,
+    "cols": 864,
+    "rows": 696,
+    "stepLonDeg": 0.0008333333333333334,
+    "stepLatDeg": 0.0008333333333333334
+  },
+  "extent": [77.6, 29.98, 78.32, 30.56],
+  "encoding": {
+    "type": "uint16-le",
+    "offsetM": -500,
+    "stepM": 0.25,
+    "missing": 65535,
+    "datum": "EGM96 orthometric (bundled geoid applied to an EGM2008-based ellipsoidal mesh)"
+  },
+  "source": {
+    "id": "reearth-mapterhorn-mesh",
+    "label": "Re:Earth / Mapterhorn terrain mesh",
+    "tileset": "mapterhorn-egm08 / cesium-mesh / ellipsoid",
+    "url": "https://terrain.reearth.land/cesium-mesh/ellipsoid",
+    "license": "CC BY 4.0",
+    "attribution": "Re:Earth Terrain, Mapterhorn, EGM2008 (NGA)",
+    "link": "https://terrain.reearth.land/",
+    "version": "5",
+    "level": 12,
+    "tiles": 252,
+    "failedTiles": 0,
+    "retrievedAt": "2026-11-07T04:29:56.005Z"
+  },
+  "missingCells": 0,
+  "asset": {
+    "path": "dem.u16",
+    "byteLength": 1202688,
+    "sha256": "6dfd900d2544bc3c08fe270fe99dfd83bba35cdf3b5831de92a69a3a82823412"
+  },
+  "limitations": [
+    "Grid spacing is 3 arc-seconds; the source mesh is simplified, so effective resolution is coarser on smooth ground.",
+    "Culverts, storm drains, embankments, bridges and buildings are not in the terrain and are ignored."
+  ]
+}

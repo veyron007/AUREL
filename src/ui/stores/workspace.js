@@ -42,6 +42,7 @@ export function workspaceSheetForPanel(panelId) {
       'lens-panel',
       'fieldbook-panel',
       'planner-panel',
+      'raindrop-panel',
       'chronicle-panel',
       'research-panel',
       'watchlist-panel',

@@ -1,0 +1,267 @@
+/* Raindrop: drop trace, catchment and rain cards, on the shared workspace rail.
+   Colours come from the Lamplight tokens through the workspace variables. */
+#left-panel-stack > #raindrop-panel {
+  position: relative;
+  min-height: 0;
+  pointer-events: auto;
+  overflow: hidden;
+  color: var(--workspace-text, var(--text-primary, #eee9df));
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 14px;
+  box-shadow: var(--workspace-shadow);
+}
+#left-panel-stack > #raindrop-panel:not(.collapsed) {
+  height: var(--left-panel-allocated-height, auto);
+  max-height: var(--left-panel-allocated-height, 100%);
+}
+#raindrop-panel > .raindrop-panel-inner {
+  --inspector-gutter: 18px;
+  box-sizing: border-box;
+  height: 100%;
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block-start: 80px;
+  padding: var(--inspector-gutter);
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
+}
+#raindrop-panel .panel-glow {
+  display: none;
+}
+#raindrop-panel .ui-panel__head {
+  margin-bottom: 18px;
+}
+#left-panel-stack > #raindrop-panel:not(.collapsed) .ui-panel__head {
+  position: sticky;
+  top: calc(-1 * var(--inspector-gutter));
+  z-index: 3;
+  box-sizing: border-box;
+  min-height: 68px;
+  margin: calc(-1 * var(--inspector-gutter)) calc(-1 * var(--inspector-gutter))
+    18px;
+  padding: 12px var(--inspector-gutter);
+  background: var(--workspace-surface, var(--surface-info, #181b1d));
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+#raindrop-panel .ui-panel__title {
+  color: inherit;
+  font: 650 17px/1.35 var(--font-sans);
+  letter-spacing: 0;
+}
+.raindrop-workspace {
+  display: grid;
+  gap: 16px;
+  font: 14px/1.55 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.raindrop-workspace :is(p, h2, h3, dl, dd, ul) {
+  margin: 0;
+}
+.raindrop-workspace :is(h2, h3) {
+  font-family: var(--font-sans);
+  color: inherit;
+}
+.raindrop-intro {
+  display: grid;
+  gap: 7px;
+}
+.raindrop-intro h2 {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.raindrop-eyebrow,
+.raindrop-tag {
+  color: var(--workspace-accent, var(--accent, #bda679));
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.raindrop-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.raindrop-intro p,
+.raindrop-help {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 12px;
+  line-height: 1.6;
+}
+.raindrop-workspace :is(input, button) {
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  background: var(--workspace-raised, var(--surface-info-raised, #24282a));
+  color: inherit;
+  font: inherit;
+}
+.raindrop-workspace input {
+  width: 100%;
+  padding: 9px 10px;
+}
+.raindrop-workspace button {
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.raindrop-workspace button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.raindrop-workspace button:hover:not(:disabled) {
+  border-color: var(--workspace-accent, var(--accent, #bda679));
+}
+.raindrop-workspace .raindrop-primary {
+  color: var(--workspace-surface, var(--bg-dark, #181b1d));
+  background: var(--workspace-accent, var(--accent, #bda679));
+  border-color: transparent;
+}
+.raindrop-workspace :is(button, input, summary, a):focus-visible {
+  outline: 2px solid var(--workspace-accent, var(--accent, #bda679));
+  outline-offset: 3px;
+}
+.raindrop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.raindrop-state {
+  color: var(--workspace-accent, var(--accent, #bda679));
+  font-size: 11px;
+}
+.raindrop-notice {
+  padding: 10px 12px;
+  border-inline-start: 2px solid var(--workspace-accent, var(--accent, #bda679));
+  background: var(--workspace-raised, var(--surface-info-raised, #24282a));
+  font-size: 12px;
+}
+.raindrop-notice--error {
+  border-color: var(--state-error, #c27668);
+}
+.raindrop-section,
+.raindrop-card {
+  display: grid;
+  gap: 10px;
+}
+.raindrop-card {
+  padding: 14px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 9px;
+  background: var(--workspace-raised, var(--surface-info-raised, #24282a));
+}
+.raindrop-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.raindrop-section-heading h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.raindrop-rivers {
+  color: var(--state-info, #7fc4d8);
+  font-weight: 600;
+}
+.raindrop-figure {
+  font: 500 23px/1.35 var(--font-sans);
+  letter-spacing: -0.025em;
+}
+.raindrop-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  gap: 8px 12px;
+  font-size: 12px;
+}
+.raindrop-facts dt {
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.raindrop-rain {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.raindrop-rain dt {
+  font-size: 11px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.raindrop-rain dd {
+  font: 500 15px/1.4 var(--font-sans);
+}
+.raindrop-rain small {
+  display: block;
+  font-size: 10px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.raindrop-method {
+  border-block: 1px solid var(--workspace-border, var(--glass-border));
+  font-size: 12px;
+}
+.raindrop-method > summary {
+  min-height: 44px;
+  box-sizing: border-box;
+  align-content: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--workspace-accent, var(--accent, #bda679));
+}
+.raindrop-method[open] > :not(summary) {
+  margin-block: 10px;
+}
+.raindrop-workspace a {
+  color: var(--workspace-accent, var(--accent, #bda679));
+  text-underline-offset: 3px;
+}
+.raindrop-authority {
+  font-size: 12px;
+}
+.raindrop-authority a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
+.raindrop-watch-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+.raindrop-watch-form label {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  font-weight: 600;
+}
+.raindrop-watches {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.raindrop-watches li {
+  display: grid;
+  gap: 6px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+.raindrop-watch-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.raindrop-watch-head button {
+  margin-inline-start: auto;
+}
+.raindrop-fired {
+  color: var(--state-warn, #d6ab55);
+  font-size: 12px;
+}
+body.gev-raindrop-pick .cesium-widget canvas {
+  cursor: crosshair;
+}

@@ -37,7 +37,10 @@
     "iNaturalist ↗",
     "{source} HTTP {status}",
     "▲ {frp} MW",
-    "{value}°"
+    "{value}°",
+    "Raindrop",
+    "India Meteorological Department",
+    "Central Water Commission"
   ],
   "de": [
     "1090 MHz",
@@ -215,7 +218,14 @@
     "≥ {value} MW",
     "▲ {frp} MW",
     "{value}°",
-    "Radius"
+    "Radius",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "{hours} h {minutes} min",
+    "Raindrop",
+    "{value} mm",
+    "India Meteorological Department",
+    "Central Water Commission"
   ],
   "es": [
     "1090 MHz",
@@ -357,7 +367,14 @@
     "iNaturalist",
     "{value}°",
     "{hours} h {minutes} min",
-    "Marginal"
+    "Marginal",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "Raindrop",
+    "{value} mm",
+    "India Meteorological Department",
+    "Central Water Commission",
+    "Local"
   ],
   "fr": [
     "1090 MHz",
@@ -554,7 +571,14 @@
     "▲ {frp} MW",
     "{value}°",
     "{hours} h {minutes} min",
-    "Date"
+    "Date",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "Raindrop",
+    "{value} mm",
+    "India Meteorological Department",
+    "Central Water Commission",
+    "Local"
   ],
   "it": [
     "1090 MHz",
@@ -736,7 +760,14 @@
     "iNaturalist ↗",
     "iNaturalist",
     "{value}°",
-    "{hours} h {minutes} min"
+    "{hours} h {minutes} min",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "Raindrop",
+    "{value} mm",
+    "Percentile {percentile}",
+    "India Meteorological Department",
+    "Central Water Commission"
   ],
   "ja": [
     "1090 MHz",
@@ -792,7 +823,13 @@
     "ΔN",
     "≥ {value} MW",
     "▲ {frp} MW",
-    "{value}°"
+    "{value}°",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "Raindrop",
+    "{value} mm",
+    "India Meteorological Department",
+    "Central Water Commission"
   ],
   "pt": [
     "1090 MHz",
@@ -933,7 +970,14 @@
     "iNaturalist ↗",
     "iNaturalist",
     "{value}°",
-    "{hours} h {minutes} min"
+    "{hours} h {minutes} min",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "Raindrop",
+    "{value} mm",
+    "India Meteorological Department",
+    "Central Water Commission",
+    "Local"
   ],
   "ru": [
     "AIS: --",
@@ -957,7 +1001,10 @@
     "acartia.io ↗",
     "iNaturalist",
     "iNaturalist ↗",
-    "{value}°"
+    "{value}°",
+    "Raindrop",
+    "India Meteorological Department",
+    "Central Water Commission"
   ],
   "uk": [
     "AIS: --",
@@ -976,7 +1023,10 @@
     "acartia.io ↗",
     "iNaturalist",
     "iNaturalist ↗",
-    "{value}°"
+    "{value}°",
+    "Raindrop",
+    "India Meteorological Department",
+    "Central Water Commission"
   ],
   "zh-CN": [
     "1090 MHz",
@@ -1040,7 +1090,13 @@
     "acartia.io ↗",
     "iNaturalist ↗",
     "iNaturalist",
-    "{value}°"
+    "{value}°",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "Raindrop",
+    "{value} mm",
+    "India Meteorological Department",
+    "Central Water Commission"
   ],
   "zh-Hant": [
     "1090 MHz",
@@ -1104,6 +1160,12 @@
     "acartia.io ↗",
     "iNaturalist ↗",
     "iNaturalist",
-    "{value}°"
+    "{value}°",
+    "{value} km²",
+    "{lo}–{hi} mm",
+    "Raindrop",
+    "{value} mm",
+    "India Meteorological Department",
+    "Central Water Commission"
   ]
 }

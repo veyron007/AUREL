@@ -1,0 +1,93 @@
+{
+  "fixture": "Bundled Doon DEM and HydroSHEDS subset (same-origin); /api/hydro/* answered by labelled synthetic fixtures; every external host blocked.",
+  "checks": [
+    {
+      "name": "mount performs no hydro requests",
+      "pass": true
+    },
+    {
+      "name": "Rajpur drop reaches the Song and then the Ganga",
+      "pass": true
+    },
+    {
+      "name": "Rajpur drop reaches the ocean through HydroRIVERS",
+      "pass": true
+    },
+    {
+      "name": "method card states DEM resolution, sink filling, D8 ambiguity and ignored structures",
+      "pass": true
+    },
+    {
+      "name": "cards carry class labels and the IMERG card shows ranges with latency and coverage",
+      "pass": true
+    },
+    {
+      "name": "forecast reads one ledgered request; GloFAS is not read until asked",
+      "pass": true
+    },
+    {
+      "name": "GloFAS shows a percentile rank and no discharge value",
+      "pass": true
+    },
+    {
+      "name": "IMD and CWC are linked as the authority",
+      "pass": true
+    },
+    {
+      "name": "no flood-depth, inundation, stage or evacuation wording",
+      "pass": true
+    },
+    {
+      "name": "Selaqui drop goes west to the Asan and the Yamuna",
+      "pass": true
+    },
+    {
+      "name": "basin watch fires exactly once for a crossing",
+      "pass": true
+    },
+    {
+      "name": "phone Raindrop sheet is visible with no horizontal overflow ({\"display\":\"block\",\"collapsed\":false,\"overflow\":0,\"sheet\":\"layers\"})",
+      "pass": true
+    },
+    {
+      "name": "no billable provider was contacted",
+      "pass": true
+    },
+    {
+      "name": "no browser runtime errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "requested": [
+    "imerg:24h",
+    "forecast:",
+    "glofas:",
+    "imerg:24h",
+    "forecast:",
+    "imerg:3h",
+    "imerg:3h",
+    "imerg:3h"
+  ],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ],
+  "rajpur": [
+    "Rispana",
+    "Saswa Nadi",
+    "Song",
+    "Ganga",
+    "Padma",
+    "Meghna"
+  ],
+  "selaqui": [
+    "Tons Nadi",
+    "Asan",
+    "Yamuna",
+    "Ganga",
+    "Padma",
+    "Meghna"
+  ]
+}

@@ -20,6 +20,7 @@ export const PANEL_RAIL_ITEMS = Object.freeze({
   'research-panel': { icon: 'satellite_alt', label: msg('Research') },
   'chronicle-panel': { icon: 'compare', label: msg('Chronicle') },
   'planner-panel': { icon: 'route', label: msg('Field planner') },
+  'raindrop-panel': { icon: 'water_drop', label: msg('Raindrop') },
   'data-panel': {
     icon: 'layers',
     label: msg('DATA LAYERS'),
