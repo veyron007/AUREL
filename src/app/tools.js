@@ -9,6 +9,7 @@ import { createChronicleTools } from './chronicleTools.js';
 import { createResearchTools } from './researchTools.js';
 import { createWatchlistTools } from './watchlistTools.js';
 import { createAgentDeskTools } from './agentDeskTools.js';
+import { createBreathTools } from './breathTools.js';
 import { createRegionTools } from './regionTools.js';
 import { createRaindropTools } from './raindropTools.js';
 import { useWorkspaceStore } from '../ui/stores/workspace.js';
@@ -211,6 +212,11 @@ export function createApplicationTools({
     watchlists: watchlists.controller,
   });
   if (agentDesk) defer(() => agentDesk.destroy());
+  const breath = createBreathTools({
+    pinia: applicationPinia(),
+    watchlists: watchlists.controller,
+  });
+  defer(() => breath.destroy());
   const regions = createRegionTools({
     pinia: applicationPinia(),
     geoFileImport,

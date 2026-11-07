@@ -1,0 +1,111 @@
+/* Breath (Lens): station, citizen and model air as separate tiers. Workspace
+   tokens only; Lamplight and Cyber theme files are not touched. */
+.breath-card {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+}
+.breath-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.breath-head h3 {
+  margin: 0;
+}
+.breath-tier {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 10px;
+  background: var(--workspace-raised, var(--raised));
+}
+/* The tier is stated by an edge, never by merging cards. */
+.breath-tier[data-tier='station'] {
+  border-inline-start: 3px solid var(--workspace-accent, var(--accent));
+}
+.breath-tier[data-tier='index'] {
+  border-inline-start: 3px dashed var(--workspace-accent, var(--accent));
+}
+.breath-tier[data-tier='citizen'],
+.breath-tier[data-tier='model'] {
+  border-inline-start: 3px dotted var(--workspace-muted, var(--text-secondary));
+}
+.breath-tier h4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0 0 8px;
+  font: 650 14px/1.4 var(--font-sans);
+}
+.breath-tier h5 {
+  margin: 12px 0 6px;
+  font: 650 13px/1.4 var(--font-sans);
+}
+.breath-state {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--workspace-surface, var(--glass-bg));
+  color: var(--workspace-text, var(--text-primary));
+}
+.breath-station + .breath-station {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+}
+.breath-station-name {
+  margin: 0 0 4px;
+}
+.breath-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.breath-table :is(th, td) {
+  padding: 4px 6px 4px 0;
+  text-align: start;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+.breath-table thead th {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-weight: 600;
+}
+.breath-index + .breath-index {
+  margin-top: 10px;
+}
+.breath-index-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+.breath-index-value strong {
+  font: 700 24px/1.2 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.breath-subindices ul,
+.breath-list {
+  margin: 6px 0;
+  padding-inline-start: 18px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.breath-watch {
+  display: grid;
+  gap: 6px;
+}
+.breath-watch select {
+  min-height: 44px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  background: var(--workspace-surface, var(--glass-bg));
+  color: var(--workspace-text, var(--text-primary));
+  font: 14px/1.4 var(--font-sans);
+}

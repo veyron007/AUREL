@@ -186,7 +186,9 @@
       "src/ui/stores/watchlists.js",
       "src/ui/views/panels/LocalCommandsPanel.vue",
       "src/ui/views/panels/RegionPanel.vue",
-      "src/ui/views/panels/WatchlistPanel.vue"
+      "src/ui/views/panels/WatchlistPanel.vue",
+      "src/ui/stores/breath.js",
+      "src/ui/views/panels/BreathCard.vue"
     ],
     "external": ["vue", "pinia", "vue-i18n"]
   },
@@ -3469,7 +3471,15 @@
       "src/horizon/envelope.js",
       "src/horizon/snapshot.js",
       "src/horizon/service.js",
-      "src/regions/peaks.js"
+      "src/regions/peaks.js",
+      "src/ui/stores/breath.js",
+      "src/ui/breathController.js",
+      "src/app/breathTools.js",
+      "src/airQuality/watch.js",
+      "src/airQuality/naqi.js",
+      "src/airQuality/stations.js",
+      "src/sources/airQualityStations.js",
+      "src/airQuality/indiaLayerSource.js"
     ],
     "external": [
       "hls.js",
@@ -4670,7 +4680,13 @@
       "src/layers/wildlifeSightings/bounds.js",
       "src/layers/wildlifeSightings/acartiaTaxa.js",
       "src/layers/wildlifeSightings/gridViewport.js",
-      "src/layers/wildlifeSightings/performance.js"
+      "src/layers/wildlifeSightings/performance.js",
+      "src/sources/requestDeadline.js",
+      "src/sources/fieldContextModel.js",
+      "src/airQuality/naqi.js",
+      "src/airQuality/stations.js",
+      "src/airQuality/indiaLayerSource.js",
+      "src/sources/airQualityStations.js"
     ],
     "external": []
   },

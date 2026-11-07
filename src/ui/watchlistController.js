@@ -7,6 +7,11 @@ import {
 } from '../watchlists/model.js';
 import { createWatchlistRepository } from '../watchlists/repository.js';
 import { createWatchlistSource } from '../watchlists/source.js';
+import {
+  createStationCondition,
+  describeCondition,
+  reduceStationWatchCheck,
+} from '../airQuality/watch.js';
 
 const iso = (value) =>
   value === null || value === undefined ? null : new Date(value).toISOString();
@@ -22,6 +27,7 @@ export class WatchlistController {
   constructor({
     repository = createWatchlistRepository(),
     source = createWatchlistSource(),
+    stationSource = null,
     readSavedPlaces = () => [],
     subscribeSavedPlaces,
     visibility = defaultVisibility,
@@ -34,6 +40,7 @@ export class WatchlistController {
     Object.assign(this, {
       repository,
       source,
+      stationSource,
       readSavedPlaces,
       subscribeSavedPlaces,
       visibility,
@@ -69,6 +76,7 @@ export class WatchlistController {
       Object.fromEntries(
         [
           'create',
+          'createStationWatch',
           'start',
           'stop',
           'remove',
@@ -109,6 +117,8 @@ export class WatchlistController {
           record.lease.until > this.now();
       return {
         id: d.id,
+        kind: d.condition ? 'station' : 'firms',
+        condition: d.condition ? describeCondition(d.condition) : null,
         title: d.title,
         placeName: d.place.name,
         bounds: d.bounds,
@@ -149,6 +159,9 @@ export class WatchlistController {
         ),
         t(
           'FIRMS thermal observations are not confirmed fires. Missing detections do not establish that no fire exists.',
+        ),
+        t(
+          'A station watch notes when one monitor crosses into a NAQI category on its 24 h mean (8 h for CO and O3), once per crossing, at most every six hours.',
         ),
       ],
     };
@@ -216,6 +229,87 @@ export class WatchlistController {
       this.busy = false;
       this.present();
     }
+  }
+  /** A watch on one monitor crossing a NAQI category; no saved place needed. */
+  async createStationWatch({
+    station,
+    pollutant = 'pm25',
+    category = 'poor',
+    intervalMinutes = 60,
+  } = {}) {
+    if (!this.live() || this.busy) return false;
+    this.busy = true;
+    this.error = null;
+    try {
+      if (!this.stationSource) throw Error();
+      const condition = createStationCondition({
+        station,
+        pollutant,
+        category,
+      });
+      const definition = createWatchDefinition(
+        {
+          place: {
+            id: `station:${station.id}`,
+            name: condition.stationName,
+            geometry: { coordinates: [station.lon, station.lat] },
+          },
+          title: condition.stationName,
+          intervalMinutes,
+          condition,
+        },
+        { now: this.now() },
+      );
+      const record = await this.repository.save(definition, {
+        expectedRevision: null,
+      });
+      if (!this.live()) return false;
+      this.records.set(record.definition.id, record);
+      this.feedback = t(
+        'Station watch saved. Start monitoring explicitly when you are ready.',
+      );
+      return true;
+    } catch {
+      this.error = t(
+        'The station watch could not be saved. At most eight watches are kept.',
+      );
+      return false;
+    } finally {
+      this.busy = false;
+      this.present();
+    }
+  }
+  /** One acquisition and reduction for either watch kind. */
+  async _check(record, { signal, baseline, interval }) {
+    const condition = record.definition.condition;
+    if (!condition) {
+      const result = await this.source.check(record.definition.bounds, {
+        signal,
+      });
+      return {
+        result,
+        needsKey: result.context.status === 'needs-key',
+        runtime: reduceWatchCheck(record.runtime, result.context, {
+          bounds: record.definition.bounds,
+          now: this.now(),
+          baseline,
+          intervalMs: interval,
+        }),
+      };
+    }
+    if (!this.stationSource) throw Error('No station source');
+    const result = await this.stationSource.check(condition, { signal });
+    return {
+      result,
+      needsKey: result.series.state === 'needs-key',
+      runtime: reduceStationWatchCheck(record.runtime, result.series, {
+        condition,
+        now: this.now(),
+        baseline,
+        intervalMs: interval,
+        limits: WATCH_LIMITS,
+      }),
+    };
   }
   _valid(id, session) {
     return (
@@ -412,16 +506,14 @@ export class WatchlistController {
       );
       if (signal.aborted || !this._valid(id, session)) return;
       this.records.set(id, record);
-      const result = await this.source.check(record.definition.bounds, {
+      const checked = await this._check(record, {
         signal,
+        baseline: session.baselinePending || gap,
+        interval,
       });
       if (signal.aborted || !this._valid(id, session)) return;
-      let runtime = reduceWatchCheck(record.runtime, result.context, {
-        bounds: record.definition.bounds,
-        now: this.now(),
-        baseline: session.baselinePending || gap,
-        intervalMs: interval,
-      });
+      const { result } = checked;
+      let runtime = checked.runtime;
       if (runtime.lastSuccessAt === record.runtime.lastSuccessAt) {
         runtime = {
           ...runtime,
@@ -451,7 +543,7 @@ export class WatchlistController {
       this.records.set(id, record);
       if (runtime.lastSuccessAt !== old.runtime.lastSuccessAt)
         session.baselinePending = false;
-      if (result.context.status === 'needs-key') pause = 'needs-key';
+      if (checked.needsKey) pause = 'needs-key';
       else if (runtime.errorCount >= 3) pause = 'paused-errors';
       session.state = runtime.errorCount ? 'paused-cooldown' : 'running';
     } catch {
@@ -491,11 +583,13 @@ export class WatchlistController {
               id,
               pause,
               false,
-              pause === 'needs-key'
-                ? t('FIRMS needs its saved API key. Monitoring is stopped.')
-                : t(
+              pause !== 'needs-key'
+                ? t(
                     'Monitoring paused after repeated errors. Start again when the source is available.',
-                  ),
+                  )
+                : this.records.get(id)?.definition.condition
+                  ? t('OpenAQ needs its saved API key. Monitoring is stopped.')
+                  : t('FIRMS needs its saved API key. Monitoring is stopped.'),
             );
           else this._schedule(id, session);
         }

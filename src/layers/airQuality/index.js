@@ -56,7 +56,7 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
     id: 'air-quality',
     name: 'Air quality',
     icon: '◍',
-    source: 'ECCC MSC GeoMet',
+    source: 'ECCC MSC GeoMet · OpenAQ',
     updateInterval: 1_200_000,
 
     init(viewer) {
@@ -97,7 +97,12 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
       const request = new AbortController();
       _request = request;
       try {
-        const readings = await source.getSnapshot({ signal: request.signal });
+        // The view lets a regional provider (India) bound its query; ECCC
+        // ignores it.
+        const readings = await source.getSnapshot({
+          signal: request.signal,
+          view: viewRectangle(),
+        });
         // A superseded or aborted request must not touch the scene, and neither
         // must one that lands after the layer was switched off.
         if (request.signal.aborted || _request !== request || !_enabled)
@@ -211,6 +216,7 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
      */
     getRowControls() {
       const provider = AIR_QUALITY_PROVIDERS.eccc;
+      const india = AIR_QUALITY_PROVIDERS['openaq-in'];
       const inView = readingsInView(_readings, viewRectangle(), READOUT_LIMIT);
       const newest = _readings.reduce(
         (max, reading) => Math.max(max, reading.observedMs || 0),
@@ -223,9 +229,9 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
         readout: true,
         summary: {
           label: t(provider.label),
-          coverage: t(provider.coverage),
+          coverage: `${t(provider.coverage)} · ${t(india.coverage)}`,
           validTime: newest ? new Date(newest).toISOString() : undefined,
-          detail: `${provider.network} · ${provider.scale}`,
+          detail: `${provider.network} · ${provider.scale} · ${india.network}`,
           status: _lastError
             ? translateFeedError(_lastError)
             : _count === 0

@@ -2,6 +2,8 @@ import { watch } from 'vue';
 import { WatchlistController } from '../ui/watchlistController.js';
 import { useWatchlistsStore } from '../ui/stores/watchlists.js';
 import { useFieldbookStore } from '../ui/stores/fieldbook.js';
+import { createStationWatchSource } from '../airQuality/watch.js';
+import { createAirQualityStationsSource } from '../sources/airQualityStations.js';
 
 /** A clean draft is saved only when the repository list acknowledges its exact revision. */
 function savedPlaces(view) {
@@ -24,12 +26,20 @@ function savedPlaces(view) {
 }
 
 /** Current saved places seed independent local watch definitions; monitoring is always explicit. */
-export function createWatchlistTools({ pinia, repository, source } = {}) {
+export function createWatchlistTools({
+  pinia,
+  repository,
+  source,
+  stationSource = createStationWatchSource({
+    stations: createAirQualityStationsSource(),
+  }),
+} = {}) {
   const library = useFieldbookStore(pinia);
   const controller = new WatchlistController({
     store: useWatchlistsStore(pinia),
     ...(repository ? { repository } : {}),
     ...(source ? { source } : {}),
+    stationSource,
     readSavedPlaces: () => savedPlaces(library.view),
     subscribeSavedPlaces: (listener) =>
       watch(() => library.view, listener, { flush: 'sync' }),

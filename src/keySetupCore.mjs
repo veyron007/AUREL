@@ -90,6 +90,16 @@ export const KEY_SETUP_KEYS = Object.freeze([
     tier: 'free',
   }),
   Object.freeze({
+    id: 'openaq',
+    title: 'OPENAQ', // i18n-ignore: provider product name
+    unlocks: msg(
+      'Indian monitoring stations (CPCB/UKPCB) for Breath air quality. Free: register at explore.openaq.org and paste the API key',
+    ),
+    getUrl: 'https://explore.openaq.org/register',
+    envVars: Object.freeze(['OPENAQ_API_KEY']),
+    tier: 'free',
+  }),
+  Object.freeze({
     id: 'tomtom',
     title: 'TOMTOM', // i18n-ignore: provider product name
     unlocks: msg('Real live traffic (keyless runs a simulation)'),
