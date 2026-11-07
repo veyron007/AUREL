@@ -67,11 +67,18 @@ function evidenceLane(rows, kind) {
     start: iso(
       kind === 'forecasts'
         ? row.validFrom
-        : kind === 'notes'
-          ? row.createdAt
-          : row.applicableTime,
+        : kind === 'precipitation'
+          ? row.start
+          : kind === 'notes'
+            ? row.createdAt
+            : row.applicableTime,
     ),
-    end: kind === 'forecasts' ? iso(row.validTo) : null,
+    end:
+      kind === 'forecasts'
+        ? iso(row.validTo)
+        : kind === 'precipitation'
+          ? iso(row.end)
+          : null,
     sourceId: text(row.sourceId, 160) || null,
     sourceLabel: text(row.sourceLabel) || null,
     ...(kind === 'notes' &&
@@ -104,6 +111,7 @@ function lanes(slots, evidence, notes) {
     imagery,
     observations: evidenceLane(evidence?.observations, 'observations'),
     forecasts: evidenceLane(evidence?.forecasts, 'forecasts'),
+    precipitation: evidenceLane(evidence?.precipitation, 'precipitation'),
     notes: [
       ...personal.filter(
         (note) => !saved.some((entry) => entry.id === note.id),

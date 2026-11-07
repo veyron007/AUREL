@@ -1,0 +1,154 @@
+/* Mountain-weather sheet inside a Planner checkpoint. Lamplight tokens only. */
+.checkpoint-sheet {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  min-width: 0;
+}
+.checkpoint-sheet h5,
+.checkpoint-sheet h6 {
+  margin: 0;
+  font: 600 13px/1.35 var(--font-sans);
+  letter-spacing: 0;
+}
+.checkpoint-sheet h6 {
+  font-size: 12px;
+}
+.checkpoint-sheet__elevation,
+.checkpoint-sheet__count {
+  font: 600 13px/1.45 var(--font-sans);
+  color: var(--workspace-text, var(--text-primary));
+}
+.checkpoint-sheet__count {
+  font-variant-numeric: tabular-nums;
+}
+.checkpoint-sheet__limits {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 10px 8px 24px;
+  border-left: 2px solid var(--accent-secondary);
+  background: var(--accent-dim);
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 12px;
+  line-height: 1.45;
+}
+.checkpoint-sheet table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.checkpoint-sheet caption {
+  padding-bottom: 6px;
+  text-align: left;
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 11px;
+}
+.checkpoint-sheet :is(th, td) {
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+  text-align: left;
+  vertical-align: top;
+}
+.checkpoint-sheet thead th {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.checkpoint-sheet tbody th {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-weight: 500;
+}
+.checkpoint-sheet__models {
+  min-width: 460px;
+}
+.checkpoint-sheet__run td {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.checkpoint-sheet td[data-unsupported] {
+  color: var(--text-dim);
+  font-style: italic;
+}
+.checkpoint-sheet__fan tr[data-focus] :is(th, td) {
+  background: var(--accent-dim);
+  color: var(--workspace-text, var(--text-primary));
+}
+.checkpoint-sheet__block {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.checkpoint-sheet__threshold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.checkpoint-sheet__threshold select {
+  min-height: 32px;
+  padding: 2px 8px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: var(--btn-radius, 6px);
+  color: var(--workspace-text, var(--text-primary));
+  background: var(--workspace-surface, var(--surface-info));
+  font: inherit;
+}
+.checkpoint-sheet__threshold select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.checkpoint-sheet__lane {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.checkpoint-sheet__imd {
+  stroke: var(--accent-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.checkpoint-sheet__imd-label,
+.checkpoint-sheet__lane-label {
+  fill: var(--workspace-muted, var(--text-secondary));
+  font: 9px var(--font-sans);
+}
+.checkpoint-sheet__imd-label {
+  text-anchor: middle;
+}
+.checkpoint-sheet__bar {
+  fill: var(--accent-strong);
+  rx: 2;
+}
+.checkpoint-sheet__lane [data-class='observed'] .checkpoint-sheet__bar {
+  fill: var(--accent-secondary);
+}
+.checkpoint-sheet__median {
+  stroke: var(--workspace-text, var(--text-primary));
+  stroke-width: 2;
+}
+.checkpoint-sheet__authority {
+  font-size: 12px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.checkpoint-sheet a {
+  color: var(--accent);
+}
+.planner-sheet-action {
+  justify-self: start;
+}
+/* The panel wraps anywhere for long values; table labels wrap at words only. */
+.checkpoint-sheet table {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.checkpoint-sheet__models th[scope='row'] {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 8.5em;
+  background: var(--workspace-raised, var(--surface-info-raised));
+}

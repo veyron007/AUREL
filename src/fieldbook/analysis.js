@@ -21,6 +21,7 @@ import { validateHorizonSnapshot } from './horizonAnalysis.js';
 
 /** Saved analysis kinds: Planner route/place context and Kshitij horizons. */
 export const ANALYSIS_KINDS = Object.freeze(['route-context', 'horizon']);
+import { validateSavedMountainWeather } from './mountainWeatherSnapshot.js';
 
 export const SOLAR_METHOD =
   'USNO low-precision solar position; standard -0.833° sunrise and -6° civil twilight; no terrain horizon';
@@ -168,7 +169,15 @@ export function validateAnalysisSnapshot(
   array(row.checkpoints, `${path}.checkpoints`, 5);
   for (const [i, entry] of row.checkpoints.entries()) {
     const at = `${path}.checkpoints[${i}]`;
-    fields(entry, at, ['lat', 'lon', 'distanceM', 'context']);
+    fields(entry, at, [
+      'lat',
+      'lon',
+      'distanceM',
+      'context',
+      ...(Object.hasOwn(entry ?? {}, 'mountainWeather')
+        ? ['mountainWeather']
+        : []),
+    ]);
     point(entry, at);
     number(entry.distanceM, `${at}.distanceM`, 0, 100000000);
     validateSavedFieldContext(entry.context, `${at}.context`);
@@ -177,6 +186,12 @@ export function validateAnalysisSnapshot(
       entry.context.requested.lon !== entry.lon
     )
       fail(at, 'context belongs to another checkpoint');
+    if (Object.hasOwn(entry, 'mountainWeather'))
+      validateSavedMountainWeather(
+        entry.mountainWeather,
+        `${at}.mountainWeather`,
+        entry,
+      );
   }
   nullable(row.fireContext, `${path}.fireContext`, validateSavedFireContext);
   return row;

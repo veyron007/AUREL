@@ -5,6 +5,7 @@ import { t } from '../../../i18n/index.js';
 import { usePlannerStore } from '../../stores/planner.js';
 import RailPanel from '../../rail/RailPanel.vue';
 import HorizonCard from './HorizonCard.vue';
+import CheckpointSheet from './CheckpointSheet.vue';
 
 const planner = usePlannerStore();
 const { view } = storeToRefs(planner);
@@ -599,6 +600,41 @@ async function analyze() {
                 ></details
               >
             </section>
+            <CheckpointSheet
+              v-if="checkpoint.mountainWeather"
+              :sheet="checkpoint.mountainWeather.sheet"
+              :elevation-source="checkpoint.mountainWeather.elevationSource"
+              :departure-at="snapshot.departureAt"
+            />
+            <template v-else-if="view?.canLoadSheets">
+              <button
+                type="button"
+                class="planner-sheet-action"
+                :data-checkpoint-sheet="index"
+                :disabled="view.busy || view.sheets?.[index] === 'loading'"
+                @click="planner.act('loadSheet', index)"
+                >{{
+                  view.sheets?.[index] === 'loading'
+                    ? t('Loading mountain sheet')
+                    : t('Open mountain sheet')
+                }}</button
+              >
+              <p class="planner-help">{{
+                t(
+                  'On request only: three models, the ECMWF ensemble, reanalysis and IMERG, using about 14 free Open-Meteo units and up to 50 NASA GIBS requests.',
+                )
+              }}</p>
+              <p
+                v-if="view.sheets?.[index] === 'error'"
+                class="planner-notice planner-notice--error"
+                role="alert"
+                >{{
+                  t(
+                    'The mountain sheet is unavailable. Other checkpoint values remain.',
+                  )
+                }}</p
+              >
+            </template>
           </article>
         </section>
         <section

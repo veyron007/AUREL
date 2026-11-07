@@ -42,6 +42,11 @@ const lanes = computed(() =>
       empty: t('No forecast windows attached.'),
     },
     {
+      key: 'precipitation',
+      label: t('Precipitation'),
+      empty: t('No saved mountain weather sheets for this place.'),
+    },
+    {
       key: 'notes',
       label: t('Interpretations'),
       empty: t('No dated interpretations saved.'),

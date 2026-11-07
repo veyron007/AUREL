@@ -12,7 +12,7 @@ import {
   timestamp,
 } from './fields.js';
 
-function sameProjection(value, normalized) {
+export function sameProjection(value, normalized) {
   if (value === normalized) return true;
   if (
     !value ||

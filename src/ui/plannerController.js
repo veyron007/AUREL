@@ -10,6 +10,7 @@ import { validateRouteSnapshot } from '../layers/directions/snapshot.js';
 import { normalizeLensSelection } from './lensPresentation.js';
 import { captureRoute } from '../fieldbook/capture.js';
 import { validateAnalysisSnapshot } from '../fieldbook/analysis.js';
+import { loadCheckpointSheet } from '../planner/checkpointSheetLoader.js';
 import {
   validateFieldContextPayload,
   unavailableFieldProvider,
@@ -82,6 +83,7 @@ export class PlannerController {
     getTerrain,
     getContext,
     getFireContext,
+    getMountainWeather = null,
     saveSnapshot,
     focusSample = () => {},
     publish = () => {},
@@ -94,10 +96,13 @@ export class PlannerController {
       getTerrain,
       getContext,
       getFireContext,
+      getMountainWeather,
       saveSnapshot,
       publish,
       store,
     });
+    this.sheets = {};
+    this.sheetRequests = new Map();
     this.focusOperation = focusSample;
     this.scope = 'place';
     this.generation = 0;
@@ -120,6 +125,7 @@ export class PlannerController {
       save: () => this.save(),
       setScope: (scope) => this.setScope(scope),
       focusSample: (index) => this.focusSample(index),
+      loadSheet: (index) => this.loadSheet(index),
     });
     this.unsubscribe = this.subscribeChanges?.(() => this._inputsChanged());
     this.present();
@@ -151,6 +157,8 @@ export class PlannerController {
       feedback: this.feedback,
       snapshot: this.snapshot,
       canSave: Boolean(this.snapshot && !this.busy && this.saveSnapshot),
+      canLoadSheets: Boolean(this.snapshot && this.getMountainWeather),
+      sheets: { ...this.sheets },
     };
     this.publish(view);
     this.store?.publish(view);
@@ -182,6 +190,7 @@ export class PlannerController {
       return;
     }
     this.cancel();
+    this._cancelSheets();
     this.snapshot = null;
     this.subject = null;
     this.inputKey = null;
@@ -242,6 +251,7 @@ export class PlannerController {
     const request = new AbortController();
     this.request = request;
     const generation = ++this.generation;
+    this._cancelSheets();
     this.busy = true;
     this.status = 'loading';
     this.snapshot = null;
@@ -411,6 +421,7 @@ export class PlannerController {
     if (!this.live() || !['place', 'route'].includes(scope)) return false;
     if (scope === this.scope) return true;
     this.cancel();
+    this._cancelSheets();
     this.scope = scope;
     this.snapshot = null;
     this.subject = null;
@@ -462,6 +473,59 @@ export class PlannerController {
       }
     }
   }
+  _cancelSheets() {
+    for (const request of this.sheetRequests.values()) request.abort();
+    this.sheetRequests.clear();
+    this.sheets = {};
+  }
+  /** Explicit, per-checkpoint mountain sheet; it never refreshes on its own. */
+  async loadSheet(index) {
+    if (
+      !this.live() ||
+      this.busy ||
+      !this.snapshot ||
+      !this.getMountainWeather ||
+      !Number.isInteger(index) ||
+      !this.snapshot.checkpoints[index] ||
+      this.sheetRequests.has(index)
+    )
+      return false;
+    const request = new AbortController();
+    const base = this.snapshot;
+    this.sheetRequests.set(index, request);
+    this.sheets = { ...this.sheets, [index]: 'loading' };
+    this.present();
+    try {
+      const next = await loadCheckpointSheet({
+        snapshot: copy(base),
+        index,
+        getMountainWeather: this.getMountainWeather,
+        getTerrain: this.getTerrain,
+        signal: request.signal,
+      });
+      if (!this.live() || this.snapshot === null || request.signal.aborted)
+        return false;
+      // Another checkpoint may have attached its sheet meanwhile; keep both.
+      const merged = {
+        ...this.snapshot,
+        checkpoints: this.snapshot.checkpoints.map((row, i) =>
+          i === index ? next.checkpoints[index] : row,
+        ),
+      };
+      validateAnalysisSnapshot(merged);
+      this.snapshot = freeze(copy(merged));
+      this.sheets = { ...this.sheets, [index]: 'ready' };
+      return true;
+    } catch {
+      if (this.live() && !request.signal.aborted)
+        this.sheets = { ...this.sheets, [index]: 'error' };
+      return false;
+    } finally {
+      if (this.sheetRequests.get(index) === request)
+        this.sheetRequests.delete(index);
+      if (this.live()) this.present();
+    }
+  }
   focusSample(index) {
     if (!this.live() || !Number.isInteger(index)) return false;
     const sample = this.snapshot?.profile?.samples[index];
@@ -473,6 +537,7 @@ export class PlannerController {
     this.destroyed = true;
     this.generation++;
     this.request?.abort();
+    this._cancelSheets();
     this.unsubscribe?.();
     this.store?.detach(this.owner);
   }

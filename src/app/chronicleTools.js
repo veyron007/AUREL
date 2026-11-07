@@ -3,6 +3,7 @@ import { ChronicleController } from '../ui/chronicleController.js';
 import { useChronicleStore } from '../ui/stores/chronicle.js';
 import { useLensStore } from '../ui/stores/lens.js';
 import { useFieldbookStore } from '../ui/stores/fieldbook.js';
+import { precipitationEvidence } from '../planner/precipitationLane.js';
 
 const boxFrom = ([west, south, east, north]) => ({ west, south, east, north });
 const inputKey = (input) =>
@@ -63,8 +64,10 @@ export function createChronicleBindings({ pinia, dataManager, fieldbook }) {
       lifetime.signal.aborted ? null : lens.view?.selection || null,
     subscribeSelection(listener) {
       if (lifetime.signal.aborted) return () => {};
+      // Saved evidence (analyses, notes) refreshes the lanes; the controller
+      // resets only when the selected place itself changes.
       const stop = watch(
-        () => lens.view?.selection,
+        () => [lens.view?.selection, library.view?.draft],
         () => listener(),
         { flush: 'sync' },
       );
@@ -78,13 +81,24 @@ export function createChronicleBindings({ pinia, dataManager, fieldbook }) {
       const draft = library.view?.draft,
         selection = lens.view?.selection;
       if (!draft || !selection)
-        return { observations: [], forecasts: [], notes: [] };
+        return {
+          observations: [],
+          forecasts: [],
+          precipitation: [],
+          notes: [],
+        };
       const place = draft.places.find((row) =>
         row.geometry.coordinates.every(
           (value, i) => value === selection.geometry?.coordinates?.[i],
         ),
       );
-      if (!place) return { observations: [], forecasts: [], notes: [] };
+      if (!place)
+        return {
+          observations: [],
+          forecasts: [],
+          precipitation: [],
+          notes: [],
+        };
       return {
         observations: draft.evidence
           .filter(
@@ -118,6 +132,9 @@ export function createChronicleBindings({ pinia, dataManager, fieldbook }) {
                 .filter(Boolean),
             ),
           ),
+        precipitation: precipitationEvidence(
+          draft.analyses.filter((row) => row.subjectId === place.id),
+        ),
         notes: draft.notes
           .filter((row) => row.subjectId === place.id)
           .map((row) => ({
