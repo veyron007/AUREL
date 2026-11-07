@@ -186,6 +186,18 @@ export const READ_TOOL_PROVENANCE = Object.freeze({
   find_radio_stations: entry('observed', [RADIO]),
   search_places: entry('observed', [OSM_PLACES]),
   places_nearby: entry('observed', [OSM_PLACES]),
+  horizon_at: entry(
+    'derived',
+    [
+      src(
+        'copernicus-glo30',
+        'Copernicus DEM GLO-30',
+        'Copernicus DEM licence (free, attribution)',
+      ),
+      src('osm-peaks', 'OpenStreetMap natural=peak', 'ODbL 1.0'),
+    ],
+    'Geometric visibility, terrain-only; refraction k = 0.13. The tool also returns its own per-number envelope.',
+  ),
   plan_route: entry(
     'derived',
     [ROUTING],

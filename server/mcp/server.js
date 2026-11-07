@@ -33,8 +33,8 @@ const INSTRUCTIONS =
 
 /**
  * The tools the local MCP server composes: Core's, then the Field Kit's.
- * `horizonAt` is the registration seam for WP1's horizon_at tool; until WP1
- * merges it stays null and horizon_at is not offered.
+ * `horizonAt` is the Field Kit's slot for horizon_at. WP1 delivered that tool
+ * as a core tool, so the slot stays null and the tool is offered once.
  */
 export function localMcpTools({ horizonAt = null } = {}) {
   return [...coreTools, ...createFieldKitTools({ horizonAt })];

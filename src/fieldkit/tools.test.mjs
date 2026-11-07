@@ -98,7 +98,8 @@ async function desk({ ledgerDir, capture } = {}) {
 test('the Field Kit is offered on MCP with tool annotations, plus Core', () => {
   const names = localMcpTools().map((tool) => tool.name);
   for (const tool of fieldKitTools) assert.ok(names.includes(tool.name));
-  assert.ok(!names.includes('horizon_at'));
+  // WP1 delivers horizon_at as a core tool; it is offered exactly once.
+  assert.equal(names.filter((name) => name === 'horizon_at').length, 1);
   const writes = fieldKitTools.filter(
     (tool) => tool.annotations.readOnlyHint === false,
   );
@@ -118,10 +119,10 @@ test('the Field Kit is offered on MCP with tool annotations, plus Core', () => {
   }
 });
 
-test('horizon_at has a documented slot and plugs in without code changes here', () => {
+test('the horizon_at slot is delivered by WP1 and still accepts a stand-in', () => {
   assert.deepEqual(
     FIELD_KIT_SLOTS.map((slot) => [slot.name, slot.status]),
-    [['horizon_at', 'pending']],
+    [['horizon_at', 'delivered']],
   );
   const horizonAt = defineTool({
     name: 'horizon_at',
@@ -253,7 +254,7 @@ test('a dry-run mission answers without the app; a written one needs the toggle'
     const steps = dry.structuredContent.plan.steps;
     assert.equal(
       steps.find((step) => step.tool === 'horizon_at').available,
-      false,
+      true,
     );
     assert.equal(
       steps.find((step) => step.tool === 'get_free_budget').available,

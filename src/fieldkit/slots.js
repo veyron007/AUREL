@@ -7,7 +7,7 @@ export const FIELD_KIT_SLOTS = Object.freeze([
   Object.freeze({
     name: 'horizon_at',
     owner: 'WP1 Kshitij Horizon Engine',
-    status: 'pending',
-    note: 'Pass its tool definition as createFieldKitTools({ horizonAt }) once WP1 merges.',
+    status: 'delivered',
+    note: 'Delivered by WP1 as a core tool (src/tools/queries/horizon.js); the slot stays empty so the tool is offered once.',
   }),
 ]);
