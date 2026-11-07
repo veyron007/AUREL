@@ -111,10 +111,17 @@ export function createAcquirer({
 /**
  * Bounded cache with in-flight coalescing. A failed refresh may return the
  * previous value as stale within `staleMs`, preserving its retrieval time.
+ * An upstream failure (not a local budget refusal) is remembered for
+ * `failMs`, so repeated sheets do not spend budget on the same failure.
  */
-export function createSourceCache({ now = Date.now, max = 96 } = {}) {
+export function createSourceCache({
+  now = Date.now,
+  max = 96,
+  failMs = 2 * 60000,
+} = {}) {
   const entries = new Map(),
-    inflight = new Map();
+    inflight = new Map(),
+    failures = new Map();
   function remember(key, entry) {
     entries.delete(key);
     entries.set(key, entry);
@@ -126,6 +133,13 @@ export function createSourceCache({ now = Date.now, max = 96 } = {}) {
     if (old && age >= 0 && age < ttlMs)
       return Promise.resolve({ ...old, stale: false, reason: null });
     if (inflight.has(key)) return inflight.get(key);
+    const failed = failures.get(key);
+    if (failed && failed.until > now()) {
+      if (old && age >= 0 && age <= staleMs)
+        return Promise.resolve({ ...old, stale: true, reason: failed.reason });
+      return Promise.reject(new SourceError(failed.reason));
+    }
+    failures.delete(key);
     const pending = (async () => {
       try {
         const value = await load();
@@ -134,6 +148,11 @@ export function createSourceCache({ now = Date.now, max = 96 } = {}) {
         return { ...entry, stale: false, reason: null };
       } catch (error) {
         const reason = error?.reason || 'upstream-unavailable';
+        if (error?.state !== 'blocked') {
+          failures.set(key, { until: now() + failMs, reason });
+          while (failures.size > max)
+            failures.delete(failures.keys().next().value);
+        }
         if (old && age >= 0 && age <= staleMs)
           return { ...old, stale: true, reason };
         throw error instanceof SourceError

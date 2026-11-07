@@ -130,6 +130,16 @@ const barWidth = (row) =>
       >{{ t('Focus hour') }} {{ stamp(model.focusAt) }} ·
       {{ stateLabel(model.forecastState) }}</p
     >
+    <p
+      v-if="model.departureAt && !model.focusIsDeparture"
+      class="planner-notice"
+      >{{
+        t(
+          'The departure is outside the forecast range, so this sheet shows the 24 h from {time}.',
+          { time: stamp(model.focusAt) },
+        )
+      }}</p
+    >
     <ul class="checkpoint-sheet__limits">
       <li>{{
         t(

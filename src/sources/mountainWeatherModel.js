@@ -17,6 +17,7 @@ export const FORECAST_MODELS = Object.freeze([
     id: 'icon',
     model: 'icon_seamless',
     meta: 'dwd_icon',
+    // i18n-ignore: product or dataset name, or a cited document title
     label: 'DWD ICON',
     resolutionKm: 13,
   }),
@@ -24,6 +25,7 @@ export const FORECAST_MODELS = Object.freeze([
     id: 'gfs',
     model: 'gfs_seamless',
     meta: 'ncep_gfs025',
+    // i18n-ignore: product or dataset name, or a cited document title
     label: 'NOAA GFS',
     resolutionKm: 25,
   }),
@@ -31,6 +33,7 @@ export const FORECAST_MODELS = Object.freeze([
     id: 'ifs',
     model: 'ecmwf_ifs025',
     meta: 'ecmwf_ifs025',
+    // i18n-ignore: product or dataset name, or a cited document title
     label: 'ECMWF IFS',
     resolutionKm: 25,
   }),
@@ -38,12 +41,15 @@ export const FORECAST_MODELS = Object.freeze([
 export const ENSEMBLE_MODEL = Object.freeze({
   model: 'ecmwf_ifs025',
   meta: 'ecmwf_ifs025_ensemble',
+  // i18n-ignore: product or dataset name, or a cited document title
   label: 'ECMWF ENS',
   members: 51,
   resolutionKm: 25,
 });
 export const ANTECEDENT_DATASETS = Object.freeze({
+  // i18n-ignore: product or dataset name, or a cited document title
   era5_land: Object.freeze({ label: 'ERA5-Land', resolutionKm: 9 }),
+  // i18n-ignore: product or dataset name, or a cited document title
   era5: Object.freeze({ label: 'ERA5', resolutionKm: 25 }),
 });
 /** name: [Open-Meteo variable, unit, min, max] */
@@ -225,6 +231,7 @@ function validateForecastModel(row, spec) {
     'grid',
     'elevationM',
     'unsupported',
+    'next24h',
     'hours',
     'days',
   ]);
@@ -266,7 +273,19 @@ function validateForecastModel(row, spec) {
       throw error();
   }
   checkOrdered(row.days, 'start', DAY);
-  if (row.state === 'missing' && (row.hours.length || row.days.length))
+  keys(row.next24h, ['precipitationMm', 'snowfallCm']);
+  if (
+    !nullableNumber(row.next24h.precipitationMm, 0, 24000) ||
+    !nullableNumber(row.next24h.snowfallCm, 0, 24000)
+  )
+    throw error();
+  if (
+    row.state === 'missing' &&
+    (row.hours.length ||
+      row.days.length ||
+      row.next24h.precipitationMm !== null ||
+      row.next24h.snowfallCm !== null)
+  )
     throw error();
 }
 function validateForecast(part) {
@@ -471,6 +490,7 @@ export function emptyPart(
         grid: null,
         elevationM: null,
         unsupported: [],
+        next24h: { precipitationMm: null, snowfallCm: null },
         hours: [],
         days: [],
       })),

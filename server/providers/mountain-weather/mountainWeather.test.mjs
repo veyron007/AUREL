@@ -8,7 +8,12 @@ import {
   createMountainWeatherBudget,
   createGibsBudget,
 } from './budget.js';
-import { WEIGHTS, normalizeForecastModel, imdWindows } from './openMeteo.js';
+import {
+  WEIGHTS,
+  normalizeForecastModel,
+  imdWindows,
+  sumAccumulated,
+} from './openMeteo.js';
 import {
   parseColormap,
   parseLatest,
@@ -17,7 +22,7 @@ import {
   imergCell,
 } from './imerg.js';
 import { readPaletteIndex } from './png.js';
-import { createMountainWeatherMiddleware } from './index.js';
+import { createMountainWeatherMiddleware, fromCovered } from './index.js';
 import { validateMountainWeatherPayload } from '../../../src/sources/mountainWeatherModel.js';
 import {
   CLOCK,
@@ -198,7 +203,8 @@ test('retries are bounded, reserve each attempt and stop on 429', async (t) => {
   assert.equal(archiveAttempts, 1);
   assert.equal(body.ensemble.state, 'unavailable');
   assert.equal(body.antecedent.reason, 'rate-limited');
-  assert.equal((await h.ledger()).dayCount, 3 * 13 + 2 * 51 + 10 + 4 * 10);
+  // Run metadata is read only after its data arrives: three, not four.
+  assert.equal((await h.ledger()).dayCount, 3 * 13 + 2 * 51 + 10 + 3 * 10);
 });
 
 test('a failed refresh returns stale values with their original retrieval time', async (t) => {
@@ -361,4 +367,70 @@ test('weighted reservations count units and refuse when they would exceed a peri
     JSON.parse(await readFile(path.join(dir, 'w.json'), 'utf8')).minuteCount,
     60,
   );
+});
+
+test('accumulations are hour-ending: an IMD day sums 04:00 to 03:00 stamps', () => {
+  const start = Date.parse('2026-11-07T00:00:00.000Z');
+  const times = Array.from({ length: 30 }, (_, i) => start + i * 3600000);
+  // Only the stamp at 03:00 (rain falling 02:00–03:00) is wet.
+  const values = times.map((at) => (at === start + 3 * 3600000 ? 5 : 0));
+  assert.equal(imdWindows(times, values, start + 3 * 3600000, 1)[0].sum, 0);
+  assert.equal(
+    sumAccumulated(times, values, start + 2 * 3600000, start + 3 * 3600000),
+    5,
+  );
+});
+
+test('the requested window must fit inside the fetched seven days', () => {
+  const today = Date.parse('2026-11-07T00:00:00.000Z');
+  assert.equal(fromCovered(today, CLOCK), true);
+  assert.equal(fromCovered(today - 3600000, CLOCK), false);
+  assert.equal(fromCovered(today + 6 * 86400000 - 3600000, CLOCK), true);
+  assert.equal(fromCovered(today + 6 * 86400000, CLOCK), false);
+});
+
+test('run time is stored with the data it labels', async (t) => {
+  let run = '2026-11-06T18:00:00.000Z';
+  const h = await harness(t, {
+    fixture: {
+      override: (url) =>
+        url.pathname.startsWith('/data/')
+          ? new Response(
+              JSON.stringify({
+                last_run_initialisation_time: Date.parse(run) / 1000,
+              }),
+            )
+          : null,
+    },
+  });
+  const first = await h.get('lat=30.49&lon=78.04&elev=2000');
+  run = '2026-11-07T00:00:00.000Z';
+  h.advance(10 * 60000);
+  const second = await h.get('lat=30.49&lon=78.04&elev=2000');
+  assert.equal(
+    second.body.forecast.models[0].runAt,
+    first.body.forecast.models[0].runAt,
+  );
+  assert.equal(second.body.ensemble.runAt, '2026-11-06T18:00:00.000Z');
+});
+
+test('an upstream failure is remembered briefly instead of spending budget again', async (t) => {
+  let tiles = 0;
+  const h = await harness(t, {
+    fixture: {
+      override: (url) => {
+        if (!url.pathname.endsWith('.png')) return null;
+        tiles++;
+        return new Response('missing', { status: 404 });
+      },
+    },
+  });
+  await h.get('lat=30.49&lon=78.04&elev=2000');
+  assert.equal(tiles, 48);
+  const again = await h.get('lat=30.49&lon=78.04&elev=2000');
+  assert.equal(tiles, 48);
+  assert.equal(again.body.imerg.state, 'unavailable');
+  h.advance(3 * 60000);
+  await h.get('lat=30.49&lon=78.04&elev=2000');
+  assert.equal(tiles, 96);
 });

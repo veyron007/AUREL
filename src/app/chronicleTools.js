@@ -64,8 +64,10 @@ export function createChronicleBindings({ pinia, dataManager, fieldbook }) {
       lifetime.signal.aborted ? null : lens.view?.selection || null,
     subscribeSelection(listener) {
       if (lifetime.signal.aborted) return () => {};
+      // Saved evidence (analyses, notes) refreshes the lanes; the controller
+      // resets only when the selected place itself changes.
       const stop = watch(
-        () => lens.view?.selection,
+        () => [lens.view?.selection, library.view?.draft],
         () => listener(),
         { flush: 'sync' },
       );

@@ -140,3 +140,15 @@
 .planner-sheet-action {
   justify-self: start;
 }
+/* The panel wraps anywhere for long values; table labels wrap at words only. */
+.checkpoint-sheet table {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.checkpoint-sheet__models th[scope='row'] {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 8.5em;
+  background: var(--workspace-raised, var(--surface-info-raised));
+}

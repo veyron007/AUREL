@@ -8,7 +8,7 @@ import {
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
 export const CLOCK = Date.parse('2026-11-07T04:20:00.000Z');
-const day0 = Math.floor(CLOCK / DAY) * DAY;
+const dayStart = (clock) => Math.floor(clock / DAY) * DAY;
 const stamp = (at) => new Date(at).toISOString().slice(0, 16);
 const hours = (start, count) =>
   Array.from({ length: count }, (_, i) => stamp(start + i * HOUR));
@@ -19,8 +19,9 @@ export function forecastRaw({
   elevation = 2000,
   unsupported = [],
   values = {},
+  clock = CLOCK,
 } = {}) {
-  const time = hours(day0, 7 * 24);
+  const time = hours(dayStart(clock), 7 * 24);
   const defaults = {
     temperature_2m: 4,
     freezing_level_height: 3900,
@@ -62,8 +63,9 @@ export function forecastRaw({
 export function ensembleRaw({
   members = ENSEMBLE_MODEL.members,
   rate = (m) => (m % 3) * 0.1,
+  clock = CLOCK,
 } = {}) {
-  const time = hours(day0, 7 * 24);
+  const time = hours(dayStart(clock), 7 * 24);
   const hourly = { time },
     units = { time: 'iso8601' };
   for (let m = 0; m < members; m++) {
@@ -88,7 +90,9 @@ export function historicalRaw({
   landEmpty = true,
   lagDays = 5,
   rate = 0.25,
+  clock = CLOCK,
 } = {}) {
+  const day0 = dayStart(clock);
   const start = day0 - 15 * DAY;
   const time = hours(start, 15 * 24);
   const cutoff = day0 - lagDays * DAY;
@@ -209,6 +213,7 @@ export function fixtureFetch({
   override = () => null,
   imergIndex = () => 2,
   calls = [],
+  clock = CLOCK,
 } = {}) {
   return async (input) => {
     const url = new URL(String(input));
@@ -228,14 +233,24 @@ export function fixtureFetch({
               ? ['freezing_level_height', 'visibility']
               : [],
           elevation: Number(url.searchParams.get('elevation') || 1446),
+          clock,
         }),
       );
     if (url.hostname === 'ensemble-api.open-meteo.com')
-      return json(ensembleRaw());
+      return json(ensembleRaw({ clock }));
     if (url.hostname === 'archive-api.open-meteo.com')
-      return json(historicalRaw());
+      return json(historicalRaw({ clock }));
     if (url.pathname.includes('/colormaps/')) return text(colormapXml());
-    if (url.pathname.endsWith('.xml')) return text(domainsXml());
+    if (url.pathname.endsWith('.xml'))
+      return text(
+        domainsXml(
+          clock === CLOCK
+            ? LATEST_IMERG
+            : new Date(Math.floor((clock - 6 * HOUR) / (HOUR / 2)) * (HOUR / 2))
+                .toISOString()
+                .replace('.000Z', 'Z'),
+        ),
+      );
     if (url.pathname.endsWith('.png'))
       return new Response(uniformTile(imergIndex(url)), {
         status: 200,
@@ -265,12 +280,13 @@ export async function sheetPayload({
   point = { lat: 30.49, lon: 78.04, elevationM: 1987 },
   from = null,
   fixture = {},
+  clock = CLOCK,
 } = {}) {
   const { createMountainWeatherMiddleware } =
     await import('../../server/providers/mountain-weather/index.js');
   const middleware = createMountainWeatherMiddleware({
-    now: () => CLOCK,
-    fetchImpl: fixtureFetch(fixture),
+    now: () => clock,
+    fetchImpl: fixtureFetch({ clock, ...fixture }),
     budget: memoryBudget(),
     gibsBudget: memoryBudget(),
     sleep: async () => {},

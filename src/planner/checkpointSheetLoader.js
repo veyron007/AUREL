@@ -1,5 +1,6 @@
 import { calculateProfile } from './profile.js';
 import { checkpointElevation } from './checkpointSheet.js';
+import { FORECAST_DAYS } from '../sources/mountainWeatherModel.js';
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -34,12 +35,17 @@ export async function resolveCheckpointElevation(
   return { elevationM: null, source: 'provider-dem' };
 }
 
-/** The sheet's focus hour: the departure hour when it lies inside the provider window. */
+/**
+ * The sheet's window start: the departure hour when a full 24 h after it lies
+ * inside the fetched forecast range (today 00 UTC plus FORECAST_DAYS); otherwise
+ * null, and the server uses the current hour.
+ */
 export function sheetFocusHour(departureAt, now = Date.now()) {
   const at = Date.parse(departureAt);
   if (!Number.isFinite(at)) return null;
   const hour = Math.floor(at / HOUR) * HOUR;
-  return hour >= now - 2 * DAY + HOUR && hour <= now + 15 * DAY
+  const today = Math.floor(now / DAY) * DAY;
+  return hour >= today && hour + DAY < today + FORECAST_DAYS * DAY
     ? new Date(hour).toISOString()
     : null;
 }

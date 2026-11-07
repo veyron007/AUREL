@@ -8,6 +8,7 @@ const HOUR = 3600000;
 /** IMD, SOP for Weather Forecasting and Warning (March 2021), Table 1.5 and the rainfall-spell table. */
 export const IMD_REFERENCE = Object.freeze({
   title:
+    // i18n-ignore: product or dataset name, or a cited document title
     'IMD Standard Operation Procedure: Weather Forecasting and Warning (March 2021)',
   link: 'https://mausam.imd.gov.in/imd_latest/contents/pdf/forecasting_sop.pdf',
   authority: 'https://mausam.imd.gov.in/',
@@ -109,11 +110,6 @@ function spreadOf(values) {
     ? Math.max(...numbers) - Math.min(...numbers)
     : null;
 }
-function sum24(hours, key) {
-  if (hours.length !== 24 || hours.some((h) => !Number.isFinite(h[key])))
-    return null;
-  return Math.round(hours.reduce((s, h) => s + h[key], 0) * 10) / 10;
-}
 const hourOf = (iso) => Math.floor(Date.parse(iso) / HOUR) * HOUR;
 
 function modelColumns(payload, focus) {
@@ -132,10 +128,9 @@ function modelColumns(payload, focus) {
       elevationM: model.elevationM,
       unsupported: model.unsupported,
       hour,
-      precipitation24Mm: sum24(model.hours, 'precipitationMm'),
-      snowfall24Cm: model.unsupported.includes('snowfallCm')
-        ? null
-        : sum24(model.hours, 'snowfallCm'),
+      // Hour-ending sums for the 24 h after the window start, from the server.
+      precipitation24Mm: model.next24h.precipitationMm,
+      snowfall24Cm: model.next24h.snowfallCm,
     };
   });
 }
@@ -154,15 +149,15 @@ function forecastRows(columns) {
       spread: round(spreadOf(values.map((v) => v.value)), row.digits),
     };
   });
-  for (const [key, field, unit] of [
-    ['precipitation24Mm', 'precipitation24Mm', 'mm'],
-    ['snowfall24Cm', 'snowfall24Cm', 'cm'],
+  for (const [key, field, unit, source] of [
+    ['precipitation24Mm', 'precipitation24Mm', 'mm', 'precipitationMm'],
+    ['snowfall24Cm', 'snowfall24Cm', 'cm', 'snowfallCm'],
   ]) {
     const values = columns.map((c) => ({
       id: c.id,
-      value: c[field],
+      value: round(c[field], 1),
       direction: null,
-      unsupported: false,
+      unsupported: c.unsupported.includes(source),
     }));
     rows.push({
       key,
@@ -284,6 +279,7 @@ function rainLane(sheet) {
   if (sheet.imerg.totalLowMm !== null)
     rows.push({
       key: 'imerg',
+      // i18n-ignore: product or dataset name, or a cited document title
       label: 'IMERG',
       class: 'observed',
       low: sheet.imerg.totalLowMm,
@@ -292,6 +288,7 @@ function rainLane(sheet) {
   if (sheet.antecedent.wettest)
     rows.push({
       key: 'antecedent',
+      // i18n-ignore: product or dataset name, or a cited document title
       label: sheet.antecedent.dataset === 'era5_land' ? 'ERA5-Land' : 'ERA5',
       class: 'modelled',
       low: sheet.antecedent.wettest.precipitationMm,
@@ -314,13 +311,20 @@ function rainLane(sheet) {
   };
 }
 
+/**
+ * The focus is always the start of the fetched window, so every value, total
+ * and lead describes the same 24 h. `focusIsDeparture` says whether that is
+ * the planned departure hour; when it is not, the view says so.
+ */
 export function buildCheckpointSheet(payload, { departureAt = null } = {}) {
-  const focus = departureAt
-    ? hourOf(departureAt)
-    : Date.parse(payload.window.from);
+  const focus = Date.parse(payload.window.from);
+  const departureHour = departureAt ? hourOf(departureAt) : null;
   const models = modelColumns(payload, focus);
   const sheet = {
     focusAt: new Date(focus).toISOString(),
+    focusIsDeparture: departureHour === focus,
+    departureAt:
+      departureHour === null ? null : new Date(departureHour).toISOString(),
     requested: payload.requested,
     queried: payload.queried,
     forecastState: payload.forecast.state,

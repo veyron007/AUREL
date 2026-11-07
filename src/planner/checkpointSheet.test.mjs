@@ -120,6 +120,7 @@ test('a departure hour moves the focus and its lead', async () => {
     departureAt: '2026-11-08T06:30:00.000Z',
   });
   assert.equal(sheet.focusAt, '2026-11-08T06:00:00.000Z');
+  assert.equal(sheet.focusIsDeparture, true);
   assert.equal(sheet.models[1].leadHours, 36);
   assert.equal(sheet.ensemble.focusDay.start, '2026-11-08T03:00:00.000Z');
 });
@@ -242,6 +243,12 @@ test('checkpoint elevation comes from the route profile, then a terrain lookup, 
     '2026-11-08T06:00:00.000Z',
   );
   assert.equal(sheetFocusHour('2026-12-30T06:00:00.000Z', now), null);
+  assert.equal(sheetFocusHour('2026-11-06T23:00:00.000Z', now), null);
+  assert.equal(
+    sheetFocusHour('2026-11-12T23:00:00.000Z', now),
+    '2026-11-12T23:00:00.000Z',
+  );
+  assert.equal(sheetFocusHour('2026-11-13T00:00:00.000Z', now), null);
   assert.equal(sheetFocusHour(null, now), null);
 });
 
@@ -354,4 +361,43 @@ test('the same-origin client validates the payload and the requested cell', asyn
       new Response(JSON.stringify({ ...payload, version: 2 })),
   });
   await assert.rejects(tampered.getSheet(point), /Invalid mountain weather/);
+});
+
+test('a departure outside the fetched window keeps the sheet on the window it describes', async () => {
+  const payload = await sheetPayload({ point });
+  const sheet = buildCheckpointSheet(payload, {
+    departureAt: '2026-11-27T06:00:00.000Z',
+  });
+  assert.equal(sheet.focusAt, payload.window.from);
+  assert.equal(sheet.focusIsDeparture, false);
+  assert.equal(sheet.departureAt, '2026-11-27T06:00:00.000Z');
+  assert.equal(sheet.models[0].leadHours, 10);
+});
+
+test('a model without snowfall says so in the 24 h snowfall row', async () => {
+  const payload = await sheetPayload({
+    point,
+    fixture: {
+      override: (url) =>
+        url.searchParams.get('models') === 'ecmwf_ifs025'
+          ? new Response(
+              JSON.stringify(
+                forecastRaw({
+                  unsupported: [
+                    'freezing_level_height',
+                    'visibility',
+                    'snowfall',
+                  ],
+                }),
+              ),
+            )
+          : null,
+    },
+  });
+  const row = buildCheckpointSheet(payload).rows.find(
+    (r) => r.key === 'snowfall24Cm',
+  );
+  assert.equal(row.values[2].unsupported, true);
+  assert.equal(row.values[2].value, null);
+  assert.equal(row.values[0].unsupported, false);
 });

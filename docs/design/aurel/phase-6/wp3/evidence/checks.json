@@ -1,0 +1,104 @@
+{
+  "fixture": "Synthetic Open-Meteo, ENS, ERA5 and IMERG payloads built by the real middleware over labelled fixtures; synthetic route heights. External hosts aborted. No live provider or credential use.",
+  "base": "http://127.0.0.1:4183",
+  "checks": [
+    {
+      "name": "mount performs no mountain-weather request",
+      "pass": true
+    },
+    {
+      "name": "route analysis does not fetch mountain weather until asked",
+      "pass": true
+    },
+    {
+      "name": "one sheet request at the Kempty checkpoint with its profile height",
+      "pass": true
+    },
+    {
+      "name": "three models side by side with run time and lead",
+      "pass": true
+    },
+    {
+      "name": "model disagreement is shown as spread",
+      "pass": true
+    },
+    {
+      "name": "ensemble member count at or above a threshold",
+      "pass": true
+    },
+    {
+      "name": "changing the threshold recounts members",
+      "pass": true
+    },
+    {
+      "name": "antecedent total names its reanalysis and window",
+      "pass": true
+    },
+    {
+      "name": "IMERG is an observed range drawn against IMD categories",
+      "pass": true
+    },
+    {
+      "name": "card states statistical downscaling and the cloudburst limit",
+      "pass": true
+    },
+    {
+      "name": "IMD is named as the warning authority with a link",
+      "pass": true
+    },
+    {
+      "name": "sheet copy has no go/no-go or safety wording",
+      "pass": true
+    },
+    {
+      "name": "snapshot with sheet saves to Fieldbook",
+      "pass": true
+    },
+    {
+      "name": "reopened Fieldbook sheet renders from the snapshot without a refetch",
+      "pass": true
+    },
+    {
+      "name": "place sheet uses a terrain lookup height",
+      "pass": true
+    },
+    {
+      "name": "Chronicle precipitation lane lists the saved sheet",
+      "pass": true
+    },
+    {
+      "name": "phone sheet is visible with no horizontal page overflow",
+      "pass": true
+    },
+    {
+      "name": "no request left the machine (Free-only, fixtures only)",
+      "pass": true
+    },
+    {
+      "name": "no browser runtime errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "mountainRequests": [
+    {
+      "kind": "mountain",
+      "lat": 30.49,
+      "lon": 78.04,
+      "elev": "1964",
+      "from": "2026-11-07T10:00:00.000Z"
+    },
+    {
+      "kind": "mountain",
+      "lat": 30.49,
+      "lon": 78.04,
+      "elev": "1964",
+      "from": "2026-11-07T10:00:00.000Z"
+    }
+  ],
+  "abortedExternalHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ]
+}

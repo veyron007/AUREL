@@ -31,6 +31,7 @@ import {
   normalizeHistorical,
   normalizeRunMeta,
   imdWindows,
+  sumAccumulated,
   isoDay,
   antecedentWindows,
 } from './openMeteo.js';
@@ -43,7 +44,7 @@ const TTL = {
   forecast: { ttlMs: 60 * 60000, staleMs: 6 * HOUR },
   ensemble: { ttlMs: 3 * HOUR, staleMs: 6 * HOUR },
   historical: { ttlMs: 12 * HOUR, staleMs: 48 * HOUR },
-  meta: { ttlMs: 30 * 60000, staleMs: 6 * HOUR },
+  meta: { ttlMs: 5 * 60000, staleMs: 0 },
 };
 const FIELD_NAMES = Object.keys(FORECAST_FIELDS);
 const iso = (ms) => new Date(ms).toISOString();
@@ -78,12 +79,24 @@ export function parseMountainQuery(url, clock) {
       !Number.isFinite(from))
   )
     throw new Error('query');
-  if (from < clock - 2 * DAY || from > clock + 16 * DAY)
+  if (
+    rawFrom !== null &&
+    new Date(from).toISOString().slice(0, 13) !== rawFrom.slice(0, 13)
+  )
     throw new Error('query');
+  if (!fromCovered(from, clock)) throw new Error('query');
   return { requested, queried, from };
 }
+/**
+ * The forecast request covers today 00 UTC plus FORECAST_DAYS; a 24 h window of
+ * hour-ending sums must fit inside it.
+ */
+export function fromCovered(from, clock) {
+  const today = Math.floor(clock / DAY) * DAY;
+  return from >= today && from + DAY < today + FORECAST_DAYS * DAY;
+}
 
-function projectForecastModel(spec, result, run, window) {
+function projectForecastModel(spec, result, window) {
   if (!result)
     return emptyPart('forecast').models.find((m) => m.id === spec.id);
   const data = result.value;
@@ -125,10 +138,26 @@ function projectForecastModel(spec, result, run, window) {
     label: spec.label,
     resolutionKm: spec.resolutionKm,
     state: 'ready',
-    runAt: run?.value ?? null,
+    runAt: data.runAt ?? null,
     grid: data.grid,
     elevationM: data.elevationM,
     unsupported: [...data.unsupported],
+    next24h: {
+      precipitationMm: sumAccumulated(
+        data.times,
+        data.columns.precipitationMm,
+        window.from,
+        window.to,
+      ),
+      snowfallCm: data.unsupported.includes('snowfallCm')
+        ? null
+        : sumAccumulated(
+            data.times,
+            data.columns.snowfallCm,
+            window.from,
+            window.to,
+          ),
+    },
     hours,
     days: trimDays(days),
   };
@@ -163,7 +192,7 @@ function partState(results, failures) {
 const earliest = (results) =>
   iso(Math.min(...results.map((r) => r.retrievedAt)));
 
-function forecastPart(settled, runs, window) {
+function forecastPart(settled, window) {
   const results = settled.map((s) =>
     s.status === 'fulfilled' ? s.value : null,
   );
@@ -171,7 +200,7 @@ function forecastPart(settled, runs, window) {
     s.status === 'rejected' ? s.reason : null,
   );
   const models = FORECAST_MODELS.map((spec, i) =>
-    projectForecastModel(spec, results[i], runs[i], window),
+    projectForecastModel(spec, results[i], window),
   );
   const used = results.filter(Boolean);
   let { state, reason } = partState(used, failures);
@@ -189,7 +218,7 @@ function forecastPart(settled, runs, window) {
     models,
   };
 }
-function ensemblePart(settled, run, window) {
+function ensemblePart(settled, window) {
   if (settled.status === 'rejected')
     return emptyPart(
       'ensemble',
@@ -215,7 +244,7 @@ function ensemblePart(settled, run, window) {
     ...SOURCES.ensemble,
     state: !days.length
       ? 'empty'
-      : state === 'ready' && !run?.value
+      : state === 'ready' && !data.runAt
         ? 'partial'
         : state,
     reason: !days.length ? 'no-data' : reason,
@@ -223,7 +252,7 @@ function ensemblePart(settled, run, window) {
     model: ENSEMBLE_MODEL.model,
     label: ENSEMBLE_MODEL.label,
     resolutionKm: ENSEMBLE_MODEL.resolutionKm,
-    runAt: run?.value ?? null,
+    runAt: data.runAt ?? null,
     grid: data.grid,
     memberCount: data.members.length,
     days,
@@ -291,10 +320,19 @@ export function createMountainWeatherMiddleware({
   const cell = (q) => `${q.lat},${q.lon}@${q.elevationM ?? 'dem'}`;
   const json = async (url, units, normalize) =>
     normalize(await acquire({ url, units, maxBytes: MAX_JSON }));
+  // Run metadata is read right after the data it labels (at most 5 min old)
+  // and stored with that data, so cached values never borrow a newer run.
   const run = (name) =>
     cache(`meta:${name}`, TTL.meta, () =>
       json(metaUrl(name), META_DECI_UNITS, normalizeRunMeta),
-    ).catch(() => null);
+    ).then(
+      (entry) => entry.value,
+      () => null,
+    );
+  const withRun = (name, load) => async () => ({
+    ...(await load()),
+    runAt: await run(name),
+  });
 
   async function sheet(query) {
     const { queried } = query;
@@ -304,17 +342,25 @@ export function createMountainWeatherMiddleware({
     };
     const forecasts = Promise.allSettled(
       FORECAST_MODELS.map((spec) =>
-        cache(`forecast:${spec.id}:${cell(queried)}`, TTL.forecast, () =>
-          json(
-            forecastUrl(queried, spec),
-            WEIGHTS.forecastModel,
-            normalizeForecastModel,
+        cache(
+          `forecast:${spec.id}:${cell(queried)}`,
+          TTL.forecast,
+          withRun(spec.meta, () =>
+            json(
+              forecastUrl(queried, spec),
+              WEIGHTS.forecastModel,
+              normalizeForecastModel,
+            ),
           ),
         ),
       ),
     );
-    const ensemble = cache(`ensemble:${cell(queried)}`, TTL.ensemble, () =>
-      json(ensembleUrl(queried), WEIGHTS.ensemble, normalizeEnsemble),
+    const ensemble = cache(
+      `ensemble:${cell(queried)}`,
+      TTL.ensemble,
+      withRun(ENSEMBLE_MODEL.meta, () =>
+        json(ensembleUrl(queried), WEIGHTS.ensemble, normalizeEnsemble),
+      ),
     );
     const clock = now();
     const historical = cache(
@@ -327,33 +373,26 @@ export function createMountainWeatherMiddleware({
           normalizeHistorical,
         ),
     );
-    const [
-      forecastSettled,
-      ensembleSettled,
-      historicalSettled,
-      imerg,
-      ...runs
-    ] = await Promise.all([
-      forecasts,
-      ensemble.then(
-        (value) => ({ status: 'fulfilled', value }),
-        (reason) => ({ status: 'rejected', reason }),
-      ),
-      historical.then(
-        (value) => ({ status: 'fulfilled', value }),
-        (reason) => ({ status: 'rejected', reason }),
-      ),
-      readImerg(queried),
-      ...FORECAST_MODELS.map((spec) => run(spec.meta)),
-      run(ENSEMBLE_MODEL.meta),
-    ]);
+    const [forecastSettled, ensembleSettled, historicalSettled, imerg] =
+      await Promise.all([
+        forecasts,
+        ensemble.then(
+          (value) => ({ status: 'fulfilled', value }),
+          (reason) => ({ status: 'rejected', reason }),
+        ),
+        historical.then(
+          (value) => ({ status: 'fulfilled', value }),
+          (reason) => ({ status: 'rejected', reason }),
+        ),
+        readImerg(queried),
+      ]);
     return validateMountainWeatherPayload({
       version: 1,
       requested: query.requested,
       queried,
       window: { from: iso(window.from), to: iso(window.to) },
-      forecast: forecastPart(forecastSettled, runs.slice(0, 3), window),
-      ensemble: ensemblePart(ensembleSettled, runs[3], window),
+      forecast: forecastPart(forecastSettled, window),
+      ensemble: ensemblePart(ensembleSettled, window),
       antecedent: antecedentPart(historicalSettled, clock),
       imerg,
     });

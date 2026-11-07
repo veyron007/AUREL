@@ -132,3 +132,53 @@ test('restored comparisons retain the saved divider position', async () => {
   assert.equal(f.calls.find((row) => row[0] === 'compare')[1].split, 0.72);
   f.bindings.destroy();
 });
+
+test('a saved mountain sheet reaches the precipitation lane and refreshes the lanes', async () => {
+  const { useFieldbookStore } = await import('../ui/stores/fieldbook.js');
+  const { sheetPayload } =
+    await import('../testSupport/mountainWeatherFixtures.mjs');
+  const f = fixture();
+  const lens = useLensStore(f.pinia);
+  const library = useFieldbookStore(f.pinia);
+  const point = { lat: 30.49, lon: 78.04 };
+  const selection = {
+    name: 'Kempty',
+    geometry: { type: 'Point', coordinates: [point.lon, point.lat] },
+  };
+  lens.publish({ selection });
+  let notified = 0;
+  const stop = f.bindings.subscribeSelection(() => notified++);
+  const sheet = await sheetPayload({ point: { ...point, elevationM: 1400 } });
+  library.publish({
+    draft: {
+      places: [{ id: 'place-1', geometry: selection.geometry }],
+      evidence: [],
+      notes: [],
+      analyses: [
+        {
+          id: 'analysis-1',
+          subjectId: 'place-1',
+          snapshot: {
+            departureAt: null,
+            checkpoints: [
+              {
+                ...point,
+                distanceM: 0,
+                mountainWeather: { elevationSource: 'terrain-lookup', sheet },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  });
+  assert.equal(notified, 1);
+  const evidence = f.bindings.readEvidence();
+  assert.deepEqual(
+    evidence.precipitation.map((row) => row.id),
+    ['analysis-1:0:imerg', 'analysis-1:0:antecedent', 'analysis-1:0:ensemble'],
+  );
+  assert.deepEqual(evidence.forecasts, []);
+  stop();
+  f.bindings.destroy();
+});

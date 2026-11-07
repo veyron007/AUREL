@@ -182,18 +182,26 @@ export function normalizeRunMeta(raw) {
   return new Date(seconds * 1000).toISOString();
 }
 
+/**
+ * Open-Meteo precipitation and snowfall are sums over the preceding hour, so
+ * the period (start, end] is the stamps start + 1 h … end. Null if any hour is
+ * missing.
+ */
+export function sumAccumulated(times, values, start, end) {
+  const index = new Map(times.map((at, i) => [at, i]));
+  let sum = 0;
+  for (let at = start + HOUR; at <= end; at += HOUR) {
+    const i = index.get(at);
+    if (i === undefined || values[i] === null) return null;
+    sum += values[i];
+  }
+  return Math.round(sum * 100) / 100;
+}
 /** Sum each complete 24 h IMD window (ending 03:00 UTC); incomplete windows are null. */
 export function imdWindows(times, values, firstStart, count) {
-  const index = new Map(times.map((at, i) => [at, i]));
   return Array.from({ length: count }, (_, day) => {
     const start = firstStart + day * DAY;
-    let sum = 0;
-    for (let at = start; at < start + DAY; at += HOUR) {
-      const i = index.get(at);
-      if (i === undefined || values[i] === null) return { start, sum: null };
-      sum += values[i];
-    }
-    return { start, sum: Math.round(sum * 100) / 100 };
+    return { start, sum: sumAccumulated(times, values, start, start + DAY) };
   });
 }
 export const isoDay = (start) => ({
