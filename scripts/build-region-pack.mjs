@@ -11,8 +11,16 @@ import {
   validateRegionExtent,
   REGION_LIMITS,
 } from '../src/regions/pack.js';
+import {
+  verifyPeaksPack,
+  validatePeakExtent,
+  PEAK_LIMITS,
+  PEAK_SOURCE_URL,
+} from '../src/regions/peaks.js';
 const run = promisify(execFile);
 export const DEFAULT_EXTENT = Object.freeze([78.022, 30.312, 78.05, 30.34]);
+/** Dehradun ± the 200 km horizon radius; the Central Zone extract holds Uttarakhand and Uttar Pradesh only. */
+export const DEFAULT_PEAK_EXTENT = Object.freeze([75.95, 28.5, 80.15, 32.15]);
 const encode = (value) => new TextEncoder().encode(JSON.stringify(value));
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 function points(value) {
@@ -134,6 +142,88 @@ const GENERATED_FILES = [
   'names.json',
   'LICENSE.txt',
 ];
+const PEAK_LICENSE_NOTICE = LICENSE_NOTICE.replace(
+  'Dehradun core region database',
+  'Dehradun skyline peaks database',
+);
+const THEMES = {
+  core: {
+    files: GENERATED_FILES,
+    notice: LICENSE_NOTICE,
+    verify: (manifest, assets) => verifyRegionPack(manifest, assets),
+  },
+  peaks: {
+    files: ['manifest.json', 'peaks.json', 'LICENSE.txt'],
+    notice: PEAK_LICENSE_NOTICE,
+    verify: (manifest, assets) => verifyPeaksPack(manifest, assets.peaks),
+  },
+};
+
+/** Peak gazetteer artifacts from the extractor's entries. */
+export function buildPeakArtifacts(
+  gazetteer,
+  {
+    extent = DEFAULT_PEAK_EXTENT,
+    extractAt,
+    retrievedAt = new Date().toISOString(),
+    extractSha256,
+    skippedUnnamed = 0,
+  } = {},
+) {
+  validatePeakExtent(extent);
+  const entries = [...gazetteer.entries].sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
+  if (entries.length > PEAK_LIMITS.features)
+    throw new Error('Peak gazetteer exceeds the feature limit');
+  const peaks = encode({ version: 1, entries });
+  if (peaks.byteLength > PEAK_LIMITS.bytes)
+    throw new Error('Peak gazetteer exceeds pack byte limit');
+  const manifest = {
+    version: 1,
+    id: 'dehradun-peaks',
+    theme: 'peaks',
+    name: 'Dehradun skyline peaks',
+    extent: [...extent],
+    source: {
+      id: 'openstreetmap-geofabrik',
+      label: 'OpenStreetMap via Geofabrik Central Zone',
+      url: PEAK_SOURCE_URL,
+      extractAt,
+      retrievedAt,
+      extractSha256,
+    },
+    license: {
+      id: 'ODbL-1.0',
+      url: 'https://opendatacommons.org/licenses/odbl/1-0/',
+      attribution: '© OpenStreetMap contributors',
+    },
+    assets: [
+      {
+        id: 'peaks',
+        path: 'peaks.json',
+        format: 'peak-gazetteer',
+        byteLength: peaks.byteLength,
+        sha256: digest(peaks),
+      },
+    ],
+    counts: {
+      peaks: entries.length,
+      withElevation: entries.filter((entry) => entry.eleM !== null).length,
+      withHindiName: entries.filter((entry) => entry.nameHi !== null).length,
+      skippedUnnamed,
+    },
+    coverage: 'partial',
+    limitations: [
+      'Only OSM nodes tagged natural=peak with a name or name:hi are included; unnamed peaks are counted, not listed.',
+      'The Central Zone extract covers Uttarakhand and Uttar Pradesh; peaks in Himachal Pradesh, Nepal and Tibet are absent.',
+      'Elevations come from the OSM ele tag when it is an unambiguous metre value; other values are left unknown.',
+      'Community names and elevations can be wrong or outdated; compare each with the DEM height.',
+      'Source date is the extract snapshot time, not a survey date.',
+    ],
+  };
+  return { manifest, assets: { peaks } };
+}
 async function syncDirectory(fileSystem, directory) {
   const handle = await fileSystem.open(directory, 'r');
   try {
@@ -157,7 +247,9 @@ export async function publishRegionPack(
   destination,
   { fileSystem = fs } = {},
 ) {
-  await verifyRegionPack(result.manifest, result.assets);
+  const theme = THEMES[result.manifest.theme ?? 'core'];
+  if (!theme) throw new Error('Unknown region pack theme');
+  await theme.verify(result.manifest, result.assets);
   const output = path.resolve(destination),
     parent = path.dirname(output);
   if (output === parent)
@@ -174,7 +266,7 @@ export async function publishRegionPack(
       if (!prior.isDirectory() || prior.isSymbolicLink())
         throw new Error('Region output must be a real directory');
       const entries = await fileSystem.readdir(output);
-      if (entries.some((name) => !GENERATED_FILES.includes(name)))
+      if (entries.some((name) => !theme.files.includes(name)))
         throw new Error('Refusing to replace unrelated output files');
       previous = true;
     } catch (error) {
@@ -197,7 +289,7 @@ export async function publishRegionPack(
     await writeDurable(
       fileSystem,
       path.join(stage, 'LICENSE.txt'),
-      LICENSE_NOTICE,
+      theme.notice,
     );
     const stagedManifest = JSON.parse(
       await fileSystem.readFile(path.join(stage, 'manifest.json'), 'utf8'),
@@ -212,7 +304,7 @@ export async function publishRegionPack(
         ]),
       ),
     );
-    await verifyRegionPack(stagedManifest, stagedAssets);
+    await theme.verify(stagedManifest, stagedAssets);
     await syncDirectory(fileSystem, stage);
     if (previous) {
       const candidate = stage + '.previous';
@@ -291,6 +383,54 @@ export async function buildRegionPack({
     await fs.rm(temp, { recursive: true, force: true });
   }
 }
+async function checkedInput(input) {
+  if (!input || !input.endsWith('.osm.pbf'))
+    throw new Error('Provide a local .osm.pbf input and output directory');
+  const stat = await fs.stat(input);
+  if (!stat.isFile() || stat.size > 400 * 1024 * 1024)
+    throw new Error('PBF input exceeds400MiB build limit');
+  const hash = createHash('sha256');
+  for await (const chunk of createReadStream(input)) hash.update(chunk);
+  return hash.digest('hex');
+}
+/** The `peaks` theme: named natural=peak nodes for the horizon engine. */
+export async function buildPeaksPack({
+  input,
+  output,
+  python = 'python3',
+  extent = DEFAULT_PEAK_EXTENT,
+}) {
+  if (!output)
+    throw new Error('Provide a local .osm.pbf input and output directory');
+  validatePeakExtent(extent);
+  const extractSha256 = await checkedInput(input);
+  const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'aurel-region-peaks-'));
+  try {
+    const rawPath = path.join(temp, 'peaks.json');
+    const helper = fileURLToPath(
+      new URL('./regions/peaks.py', import.meta.url),
+    );
+    const { stdout } = await run(
+      python,
+      [helper, path.resolve(input), rawPath, JSON.stringify(extent)],
+      { timeout: 300000, maxBuffer: 1024 * 1024 },
+    );
+    const meta = JSON.parse(stdout);
+    if ((await fs.stat(rawPath)).size > PEAK_LIMITS.bytes)
+      throw new Error('Peak gazetteer exceeds pack byte limit');
+    const gazetteer = JSON.parse(await fs.readFile(rawPath, 'utf8'));
+    const result = buildPeakArtifacts(gazetteer, {
+      extent,
+      extractAt: meta.extractAt,
+      skippedUnnamed: meta.skippedUnnamed,
+      extractSha256,
+    });
+    await publishRegionPack(result, output);
+    return result.manifest;
+  } finally {
+    await fs.rm(temp, { recursive: true, force: true });
+  }
+}
 if (
   process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
@@ -300,16 +440,24 @@ if (
   for (let i = 0; i < args.length; i += 2) {
     const key = args[i];
     if (
-      !['--input', '--output', '--python', '--extent'].includes(key) ||
+      !['--input', '--output', '--python', '--extent', '--theme'].includes(
+        key,
+      ) ||
       !args[i + 1]
     )
       throw new Error(
-        'Expected --input --output [--python] [--extent west,south,east,north]',
+        'Expected --input --output [--python] [--extent west,south,east,north] [--theme core|peaks]',
       );
     options[key.slice(2)] =
       key === '--extent' ? args[i + 1].split(',').map(Number) : args[i + 1];
   }
-  const manifest = await buildRegionPack(options);
+  const { theme = 'core', ...rest } = options;
+  if (!['core', 'peaks'].includes(theme))
+    throw new Error('Unknown --theme; expected core or peaks');
+  const manifest =
+    theme === 'peaks'
+      ? await buildPeaksPack(rest)
+      : await buildRegionPack(rest);
   console.log(
     JSON.stringify({
       id: manifest.id,

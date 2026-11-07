@@ -1,6 +1,7 @@
 import { t } from '../i18n/index.js';
 import { buildFieldbookBrief } from '../fieldbook/brief.js';
 import { validateAnalysisSnapshot } from '../fieldbook/analysis.js';
+import { validateHorizonSnapshot } from '../fieldbook/horizonAnalysis.js';
 import {
   addPlace,
   addRoute,
@@ -135,8 +136,14 @@ export function findSavedPlace(project, selection) {
 }
 
 /** Prepare the complete validated edit before the controller starts its one save. */
-export function prepareAnalysisSave(project, subject, snapshot) {
-  validateAnalysisSnapshot(snapshot);
+export function prepareAnalysisSave(
+  project,
+  subject,
+  snapshot,
+  kind = 'route-context',
+) {
+  if (kind === 'horizon') validateHorizonSnapshot(snapshot);
+  else validateAnalysisSnapshot(snapshot);
   let next = project;
   let target =
     subject?.kind === 'route'
@@ -165,11 +172,12 @@ export function prepareAnalysisSave(project, subject, snapshot) {
     next.analyses.some(
       (entry) =>
         entry.subjectId === target.id &&
+        entry.kind === kind &&
         JSON.stringify(entry.snapshot) === JSON.stringify(snapshot),
     )
   )
     return next;
-  return addAnalysis(next, { subjectId: target.id, snapshot });
+  return addAnalysis(next, { subjectId: target.id, kind, snapshot });
 }
 
 /** Detached presentation of the current editing owner; no storage or provider work. */

@@ -1,0 +1,29 @@
+{
+  "note": "Live Copernicus GLO-30 through the dev server on port 4187; browser external requests aborted.",
+  "computeMs": 411,
+  "text": "Kshitij horizon\nGeometric visibility, terrain-only\n\n30.4597° N, 78.1058° E · 30.45970°, 78.10580°\n\nDate\nShadow time\nEye height above the DEM surface (m)\nGnomon height (m)\nTime zone\nCompute horizon\nSave horizon to Fieldbook\n\nThe first horizon for an area reads about 30 MB of Copernicus DEM tiles; later ones use the local cache.\n\nObserver: DEM surface 1,989 m plus 1.7 m eye height.\n\n0°\n90°\n180°\n270°\n360°\nSunrise and sunset\nAstronomical sunrise (flat horizon)\n07:10 GMT+5:30\nSun clears the terrain\n07:56 GMT+5:30 · 46 min later\nAstronomical sunset (flat horizon)\n17:21 GMT+5:30\nSun drops behind the terrain\n14:44 GMT+5:30\nDirect sun on this date\n6 h 44 min\nMoonrise, flat horizon / over terrain\n14:32 GMT+5:30 / 15:23 GMT+5:30\nShadow at 12:30 GMT+5:30\nSun elevation\n36°\nSun azimuth\n184°\nTerrain\nSun above the terrain horizon\nShadow of a 1 m gnomon\n1.38 m · 4°\n\nTime source: the date and time entered on this device. Buildings and slopes are ignored.\n\nPeaks on the horizon\nNag Tibba\nOn the skyline\naz 17° · 14.8 km · elevation 3.9°\nDEM 3,001 m · OSM ele 3,022 m\nBandarpunch I\nOn the skyline\naz 35° · 74.1 km · elevation 3°\nDEM 6,213 m · OSM ele 6,316 m\nBandarpunch II\nOn the skyline\naz 33° · 73 km · elevation 2.8°\nDEM 5,967 m · OSM ele 6,102 m\nGangotri I\nOn the skyline\naz 54° · 87.3 km · elevation 2.7°\nDEM 6,565 m · OSM ele 6,672 m\nGangotri II\nOn the skyline\naz 55° · 87.3 km · elevation 2.6°\nDEM 6,517 m · OSM ele 6,590 m\nSwargarohini III\nOn the skyline\naz 28° · 80.8 km · elevation 2.6°\nDEM 6,118 m · OSM ele 6,209 m\nSwargarohini II\nOn the skyline\naz 28° · 80.9 km · elevation 2.6°\nDEM 6,118 m · OSM ele 6,247 m\nSwargarohini\nOn the skyline\naz 28° · 81.1 km · elevation 2.6°\nDEM 6,118 m · OSM ele 6,252 m\nSrikantha\nOn the skyline\naz 50° · 86.7 km · elevation 2.3°\nDEM 6,008 m · OSM ele 6,133 m\nArjit mountain\nMarginal\naz 42° · 75.5 km · elevation 1.7°\nDEM 4,610 m · OSM ele 4,650 m\nChagle\nMarginal\naz 47° · 106.1 km · elevation 1.7°\nDEM 5,842 m · OSM ele Unknown\nUchalara\nMarginal\naz 42° · 67.4 km · elevation 1.6°\nDEM 4,230 m · OSM ele 4,286 m\nTinthya\nMarginal\naz 45° · 69.8 km · elevation 1.6°\nDEM 4,223 m · OSM ele Unknown\nBakria\nMarginal\naz 46° · 58 km · elevation 1.5°\nDEM 3,789 m · OSM ele 3,804 m\n\n329 more named peaks in range are hidden by nearer terrain.\n\nSources and method\nDEM\nCopernicus DEM GLO-30 Public (AWS Open Data)\nDEM void samples\n0\nAbsent DEM tiles (read as sea level)\n0\nRefraction coefficient\nk = 0.13\nRadius\n200 km\nApplicable time\nTanDEM-X acquisitions 2011-2015 (Copernicus DEM 2021 release)\n\nproduced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\n\nOpenStreetMap natural=peak (Dehradun skyline peaks) · © OpenStreetMap contributors · ODbL-1.0\n\nSun and Moon positions are computed on this device. Trees, buildings, haze and cloud are not modelled; DEM voids and refraction can move these times by a few minutes.",
+  "globe": [
+    "kshitij-horizon-ring",
+    "kshitij-horizon-observer",
+    "kshitij-horizon-node/775963633",
+    "kshitij-horizon-node/342110908",
+    "kshitij-horizon-node/5247835451",
+    "kshitij-horizon-node/5255179574",
+    "kshitij-horizon-node/5255180062",
+    "kshitij-horizon-node/5247832383"
+  ],
+  "cameraHeightM": 14256,
+  "phone": {
+    "scrollWidth": 390,
+    "innerWidth": 390
+  },
+  "errors": [],
+  "terrain": [
+    "?lat=30.4597&lon=78.1058&radiusKm=200"
+  ],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ]
+}

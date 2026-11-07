@@ -4,6 +4,7 @@ import { useLocationStore } from '../ui/stores/location.js';
 import { SceneDirector } from '../scenes/director.js';
 import { createPersonalTools } from './personalTools.js';
 import { createPlannerTools } from './plannerTools.js';
+import { createHorizonTools } from './horizonTools.js';
 import { createChronicleTools } from './chronicleTools.js';
 import { createResearchTools } from './researchTools.js';
 import { createWatchlistTools } from './watchlistTools.js';
@@ -139,6 +140,12 @@ export function createApplicationTools({
     fieldbook: personalWorkspace.fieldbook,
   });
   defer(() => planner.destroy());
+  const horizon = createHorizonTools({
+    pinia: applicationPinia(),
+    viewer,
+    fieldbook: personalWorkspace.fieldbook,
+  });
+  defer(() => horizon.destroy());
   // DATA ▸ Recent Imagery: the box tool claims the pointer like Draw and the
   // panel lives on the right rail, so both belong to the application
   // lifetime. The tileset lets the layer drape while the globe is hidden.
@@ -203,6 +210,7 @@ export function createApplicationTools({
     watchlists: watchlists.controller,
     cancelWork: [
       () => planner.controller.cancel(),
+      () => horizon.controller.cancel(),
       () => chronicle.controller.cancel(),
       () => research.controller.cancel(),
     ],

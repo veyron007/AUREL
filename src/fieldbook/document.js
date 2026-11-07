@@ -339,6 +339,22 @@ const validators = {
   changeNotes: validateChangeNote,
 };
 
+/** A horizon belongs to a saved place and was computed at that place. */
+function validateHorizonSubject(project, entry) {
+  const place = project.places.find((value) => value.id === entry.subjectId);
+  if (!place || place.geometry?.type !== 'Point')
+    fail('$.analyses.subjectId', 'horizon analysis requires a saved place');
+  const [lon, lat] = place.geometry.coordinates;
+  const { observer } = entry.snapshot;
+  if (
+    Math.abs(observer.lat - lat) > 0.000006 ||
+    Math.abs(observer.lon - lon) > 0.000006
+  )
+    fail(
+      '$.analyses.snapshot.observer',
+      'horizon analysis was computed for another place',
+    );
+}
 /** Validate, without mutation. Do not substitute retrieval time for observation time. */
 export function validateFieldbook(project) {
   jsonTree(project);
@@ -402,6 +418,10 @@ export function validateFieldbook(project) {
         '$.analyses.subjectId',
         'analysis requires an existing place or route',
       );
+    if (entry.kind === 'horizon') {
+      validateHorizonSubject(project, entry);
+      continue;
+    }
     const route = project.routes.find((value) => value.id === entry.subjectId);
     if (route) {
       const saved = entry.snapshot.route;

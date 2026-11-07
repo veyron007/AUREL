@@ -8,6 +8,7 @@ import { fieldContextProxy } from './field-context.js';
 import { imageryHistoryProxy } from './imagery-history.js';
 import { researchProxy } from './research/index.js';
 import { terrainHeightsProxy } from './terrain.js';
+import { horizonProxy } from './horizon/index.js';
 import { adsbdbProxy } from './aircraft/enrichment.js';
 import { overpassProxy } from './overpass.js';
 import { militaryInstallationsProxy } from './military-installations.js';
@@ -67,6 +68,7 @@ function localProviderPlugins({
     researchProxy(),
     rocketLaunchesProxy(freeOnly ? { resolveToken: () => '' } : {}),
     terrainHeightsProxy(),
+    horizonProxy(),
     adsbdbProxy(),
     overpassProxy(),
     militaryInstallationsProxy(),
