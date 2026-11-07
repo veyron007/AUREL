@@ -93,6 +93,7 @@ test('the row presents exactly the five owner-approved sources', () => {
     'bing-labels',
     'esri-imagery',
     'osm',
+    'offline-overview',
   ]);
 });
 

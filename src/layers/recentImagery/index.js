@@ -34,6 +34,8 @@ import {
 } from './model.js';
 import { msg, t } from '../../i18n/index.js';
 import { READOUT_WORDS, displayDay, displayMetres } from './display.js';
+import { captureHistoricalInput, validateHistoryWindow } from './historical.js';
+import { requestWithDeadline } from '../../sources/requestDeadline.js';
 
 /**
  * Quiet time after the last arrow key before the focused day previews, so a
@@ -134,6 +136,8 @@ export function createRecentImageryLayer({
   let _searching = false;
   let _searchAbort = null;
   let _lastUpdate = null;
+  let _historyGeneration = 0;
+  let _historyMode = false;
 
   const _sources = { hls: true, viirs: false };
   let _showUnavailable = false;
@@ -570,12 +574,13 @@ export function createRecentImageryLayer({
     const list = stripList();
     if (!list.length) return;
     reconcileFocus();
-    thumbnails.requestOrdered(list, _box, {
-      focusIndex: Math.max(0, focusIndexIn(list)),
-      firstVisible: _visible.first,
-      lastVisible: _visible.last,
-      extra: 2,
-    });
+    if (!_historyMode)
+      thumbnails.requestOrdered(list, _box, {
+        focusIndex: Math.max(0, focusIndexIn(list)),
+        firstVisible: _visible.first,
+        lastVisible: _visible.last,
+        extra: 2,
+      });
     for (const key of new Set([
       _assigned.a,
       _assigned.b,
@@ -596,6 +601,7 @@ export function createRecentImageryLayer({
   }
 
   function cancelSearch() {
+    _historyGeneration += 1;
     _searchAbort?.abort();
     _searchAbort = null;
     _searching = false;
@@ -603,6 +609,7 @@ export function createRecentImageryLayer({
 
   async function runSearch() {
     cancelSearch();
+    _historyMode = false;
     const abort = new AbortController();
     _searchAbort = abort;
     _searching = true;
@@ -642,6 +649,94 @@ export function createRecentImageryLayer({
     syncRender();
     requestThumbnails();
     notify();
+  }
+
+  async function runHistorical(queries, signal) {
+    if (!_enabled || _destroyed)
+      throw new Error('Enable recent imagery before searching history');
+    if (typeof catalog.searchWindow !== 'function')
+      throw new Error('Historical imagery source unavailable');
+    const checked = queries.map((q) =>
+      validateHistoryWindow(q, { now: now() }),
+    );
+    signal?.throwIfAborted();
+    cancelSearch();
+    clearPending();
+    thumbnails.clear();
+    resetCatalog();
+    _historyMode = true;
+    _box = checked[0].box;
+    _boxError = null;
+    _focusKey = null;
+    _assigned.a = null;
+    _assigned.b = null;
+    _previewKey = null;
+    _followKey = null;
+    const abort = new AbortController(),
+      generation = _historyGeneration;
+    const cancel = () => abort.abort(signal.reason);
+    signal?.addEventListener('abort', cancel, { once: true });
+    _searchAbort = abort;
+    _searching = true;
+    syncRender();
+    notify();
+    try {
+      const combined = [];
+      for (const query of checked) {
+        const result = await catalog.searchWindow(query, {
+          signal: abort.signal,
+        });
+        if (
+          abort.signal.aborted ||
+          generation !== _historyGeneration ||
+          _destroyed
+        )
+          return false;
+        combined.push(...(result?.candidates || []));
+        _truncated ||= Boolean(result?.truncated);
+        _catalogErrors.push(...(result?.errors || []));
+      }
+      _candidates = [
+        ...new Map(
+          combined
+            .filter((c) => {
+              const parsed = parseCandidateKey(c?.key);
+              return (
+                parsed &&
+                parsed.product === c.product &&
+                parsed.day === c.day &&
+                checked.some(
+                  (q) =>
+                    q.products.includes(c.product) &&
+                    c.day >= q.fromDay &&
+                    c.day <= q.toDay,
+                )
+              );
+            })
+            .map((c) => [
+              c.key,
+              { ...c, historical: true, availability: 'unknown' },
+            ]),
+        ).values(),
+      ].slice(0, 93);
+      _sources.hls = checked.some((q) => q.products.some((p) => p !== 'VIIRS'));
+      _sources.viirs = checked.some((q) => q.products.includes('VIIRS'));
+      _lastUpdate = Date.now();
+      _focusKey = _candidates[0]?.key || null;
+      return true;
+    } catch (error) {
+      if (!abort.signal.aborted && generation === _historyGeneration)
+        _catalogError = error?.message || 'Historical imagery unavailable';
+      return false;
+    } finally {
+      signal?.removeEventListener('abort', cancel);
+      if (_searchAbort === abort) {
+        _searchAbort = null;
+        _searching = false;
+        syncRender();
+        notify();
+      }
+    }
   }
 
   function clearPending() {
@@ -933,6 +1028,175 @@ export function createRecentImageryLayer({
      */
     setBox(box) {
       return chooseBox(box);
+    },
+
+    /** Catalogue only: a selected day is probed explicitly rather than prefetching history. */
+    async searchWindow(query, { signal } = {}) {
+      await runHistorical([query], signal);
+      return this.getSnapshot();
+    },
+
+    /** One bounded probe on the existing thumbnail owner, without changing either pin. */
+    probeCandidate(key, { signal, timeoutMs = 12000 } = {}) {
+      const candidate = candidateFor(key),
+        generation = _historyGeneration;
+      if (!_enabled || !candidate || signal?.aborted)
+        return Promise.resolve({ status: 'cancelled', descriptor: null });
+      return new Promise((resolve) => {
+        let finished = false,
+          off = () => {},
+          timer;
+        const done = (status, descriptor = null) => {
+          if (finished) return;
+          finished = true;
+          off();
+          clearTimeout(timer);
+          signal?.removeEventListener('abort', cancel);
+          resolve({ status, descriptor });
+        };
+        const cancel = () => done('cancelled');
+        const check = () => {
+          if (
+            _destroyed ||
+            !_enabled ||
+            generation !== _historyGeneration ||
+            signal?.aborted
+          )
+            return cancel();
+          const thumbnail = thumbnails.get(key),
+            status = thumbnail?.status;
+          if (status === 'present') {
+            const descriptor = captureHistoricalInput(
+              { ...candidate, thumbnail },
+              _box,
+            );
+            done(descriptor ? 'present' : 'error', descriptor);
+          } else if (status === 'empty' || status === 'error') done(status);
+        };
+        off = this.subscribe(check);
+        signal?.addEventListener('abort', cancel, { once: true });
+        timer = setTimeout(
+          () => done('error'),
+          Math.min(15000, Math.max(1, timeoutMs)),
+        );
+        thumbnails.request(candidate, _box, 0);
+        check();
+      });
+    },
+
+    /** Restore only the two requested dates; never substitute a nearest/current acquisition. */
+    async restoreComparison(
+      { box, a, b, split = 0.5, swapped = false, alpha = 1 },
+      { signal } = {},
+    ) {
+      const queries = [a, b].map((input) => ({
+        box,
+        fromDay: input?.day,
+        toDay: input?.day,
+        products: [input?.product],
+      }));
+      if (a?.product === b?.product && a?.day === b?.day)
+        throw new TypeError('Choose two different dated images');
+      if (!(await runHistorical(queries, signal)))
+        return {
+          ok: false,
+          reason: 'cancelled-or-unavailable',
+          snapshot: this.getSnapshot(),
+        };
+      const generation = _historyGeneration,
+        keys = [`${a.product}:${a.day}`, `${b.product}:${b.day}`];
+      const probes = await Promise.all(
+        keys.map((key) => this.probeCandidate(key, { signal })),
+      );
+      if (
+        generation !== _historyGeneration ||
+        signal?.aborted ||
+        probes.some((p) => p.status !== 'present')
+      )
+        return {
+          ok: false,
+          reason: 'input-unavailable',
+          inputs: probes,
+          snapshot: this.getSnapshot(),
+        };
+      _mode = 'ab';
+      _assigned.a = keys[0];
+      _assigned.b = keys[1];
+      _previewKey = null;
+      _followKey = null;
+      _split = clampUnit(split, 0.5);
+      _splitFromLink = true;
+      _alpha = clampUnit(alpha, 1);
+      syncRender();
+      _swapped = Boolean(swapped);
+      syncRender({ comparison: false });
+      notify();
+      const ownsPair = () =>
+        generation === _historyGeneration &&
+        _assigned.a === keys[0] &&
+        _assigned.b === keys[1];
+      const rollback = () => {
+        if (!ownsPair()) return;
+        _assigned.a = null;
+        _assigned.b = null;
+        _previewKey = null;
+        _followKey = null;
+        syncRender();
+        notify();
+      };
+      try {
+        if (_lease?.ready)
+          await requestWithDeadline(() => _lease.ready, {
+            signal,
+            timeoutMs: 12000,
+          });
+      } catch {
+        rollback();
+        return {
+          ok: false,
+          reason: 'comparison-unavailable',
+          inputs: probes,
+          snapshot: this.getSnapshot(),
+        };
+      }
+      if (!ownsPair() || signal?.aborted || !_enabled) {
+        rollback();
+        return {
+          ok: false,
+          reason: 'cancelled',
+          inputs: probes,
+          snapshot: this.getSnapshot(),
+        };
+      }
+      const live = swipeLive(plan());
+      if (!live) rollback();
+      else publish([...BOX_EDGES, 'a', 'b', 'mode', 'split']);
+      return {
+        ok: live,
+        reason: live ? null : 'comparison-unavailable',
+        inputs: probes,
+        snapshot: this.getSnapshot(),
+      };
+    },
+
+    captureComparisonInputs() {
+      const shown = plan();
+      if (shown.swipe !== 'ab' || !swipeLive(shown)) return null;
+      const capture = (key) =>
+        captureHistoricalInput(
+          { ...candidateFor(key), thumbnail: thumbnails.get(key) },
+          _box,
+        );
+      const before = capture(shown.a),
+        after = capture(shown.b);
+      return before && after
+        ? {
+            before,
+            after,
+            extent: [_box.west, _box.south, _box.east, _box.north],
+            splitPosition: _split,
+          }
+        : null;
     },
 
     /**

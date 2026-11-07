@@ -1,0 +1,85 @@
+{
+  "contract": "AUREL personal spatial console: warm futuristic chrome, original lens identity, clearer typography and control hierarchy. Preserve map/data/assistant behavior, provider secrets, storage and share protocols. Desktop and phone layouts must retain reachable controls and attribution.",
+  "targetViewports": [
+    "1440x900",
+    "1280x720",
+    "390x844",
+    "667x375"
+  ],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "Scoped visual check: existing keyboard focus remains visible; welcome choices use inset focus inside scrolling list. Native labels, roles, disabled states and handlers preserved. Core text/accent contrast against #1a1e1f ranges from 6.01:1 to 13.89:1. Manrope loaded. This is not a full application WCAG certification."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Rendered desktop, phone and short landscape. At 390x844 document horizontal overflow was false. Mobile layer panel bottom 661px and Utilities top 669px show separation after fix. Landscape scroll reaches Explore Manually while dismissal remains available."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "loading.jpg shows branded loading mark, title, tagline and actual Google 3D Tiles loading status."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": "assistant.jpg shows empty AUREL chat, starter prompts and composer; no provider request sent."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "desktop.jpg/restored-session.jpg show an upstream camera Image Unavailable placeholder alongside available feeds; no concealment or invented replacement data. Automated voice error-state checks also passed."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "providers.jpg shows saved Google/AIS providers alongside unconfigured OpenAI/Gemini rows, distinct status and editable placeholder fields, without displaying keys."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "overview.jpg shows the rendered 3D map, layer controls, display controls and expanded preset tray. restored-session.jpg confirms restored live CCTV session."
+    },
+    "permission": {
+      "status": "not-applicable",
+      "reason": "No new permission workflow. Microphone/authentication/credential actions were deliberately not invoked during presentation QA; existing handlers remain unchanged."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "1440x900",
+      "artifact": "overview.jpg",
+      "observation": "Selected Mindspace treatment across data layers, Display, presets and command dock; attribution visible."
+    },
+    {
+      "viewport": "1280x720",
+      "artifact": "restored-session.jpg",
+      "observation": "Restored working session with live camera panel and original selected camera layer."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "mobile-layers.jpg",
+      "observation": "Layer list constrained without painting behind Utilities/Authoring; bottom tabs remain accessible."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "mobile-welcome.jpg",
+      "observation": "All four mission choices and dismissal fit in portrait."
+    },
+    {
+      "viewport": "667x375",
+      "artifact": "landscape-welcome.jpg",
+      "observation": "Scrolled to final mission; welcome footer remains reachable."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "loading.jpg",
+      "observation": "Branded loading state retains real status line."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "assistant.jpg",
+      "observation": "AUREL empty chat panel, prompts and composer."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "providers.jpg",
+      "observation": "Provider setup consistent with console typography, safe empty replacement fields and existing state indicators."
+    }
+  ]
+}

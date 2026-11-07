@@ -151,3 +151,81 @@ test('destroy removes the rails and stops following the stacks', async () => {
   assert.deepEqual(calls, []);
   ui.destroy();
 });
+
+test('workspace navigation opens one existing inspector across both sides', async () => {
+  const { calls, ui, navigation } = setup();
+  document.getElementById('global-context-panel').classList.remove('collapsed');
+  navigation.sync();
+  navigation.openPanel('scene-panel');
+  assert.deepEqual(calls, [
+    ['data-panel', true, { explicit: true }],
+    ['global-context-panel', true, { explicit: true }],
+    ['scene-panel', false, { explicit: true }],
+  ]);
+  navigation.destroy();
+  navigation.openPanel('data-panel');
+  assert.equal(calls.length, 3);
+  ui.destroy();
+});
+
+test('workspace comparison offers the data catalog when imagery is not mounted', () => {
+  const { calls, ui, navigation } = setup();
+  navigation.openPanel('recent-imagery-panel');
+  assert.deepEqual(calls, [['data-panel', false, { explicit: true }]]);
+  navigation.openPanel('unknown-panel');
+  assert.equal(calls.length, 1);
+  navigation.destroy();
+  ui.destroy();
+});
+
+test('workspace closes panels freshly borrowed by the mobile sheet before its store sync', () => {
+  const { calls, ui, navigation } = setup();
+  navigation._openMobileSheet = () =>
+    document
+      .getElementById('global-context-panel')
+      .classList.remove('collapsed');
+  navigation.openPanel('scene-panel');
+  assert.deepEqual(calls, [
+    ['data-panel', true, { explicit: true }],
+    ['global-context-panel', true, { explicit: true }],
+    ['scene-panel', false, { explicit: true }],
+  ]);
+  navigation.destroy();
+  ui.destroy();
+});
+
+test('restored open panels share one presentation without changing saved disclosure', () => {
+  const { calls, ui, navigation } = setup();
+  const data = document.getElementById('data-panel');
+  const context = document.getElementById('global-context-panel');
+  context.classList.remove('collapsed');
+  navigation.sync();
+  assert.equal(data.dataset.workspaceSuppressed, 'false');
+  assert.equal(context.dataset.workspaceSuppressed, 'true');
+  assert.equal(context.classList.contains('collapsed'), false);
+  assert.equal(calls.length, 0);
+  data.classList.add('collapsed');
+  navigation.sync();
+  assert.equal(context.dataset.workspaceSuppressed, 'false');
+  navigation.destroy();
+  assert.equal(context.hasAttribute('data-workspace-suppressed'), false);
+  ui.destroy();
+});
+
+test('mobile workspace navigation keeps focus out of a borrowed panel that closes', () => {
+  const { ui, navigation } = setup();
+  document.body.classList.add('mobile-shell');
+  const workspace = document.body.appendChild(document.createElement('div'));
+  workspace.id = 'aurel-workspace';
+  const activator = workspace.appendChild(document.createElement('button'));
+  const borrowed = document
+    .getElementById('data-panel')
+    .appendChild(document.createElement('button'));
+  activator.focus();
+  navigation._openMobileSheet = () => borrowed.focus();
+  navigation.openPanel('scene-panel');
+  assertSameNode(document.activeElement, activator);
+  navigation.destroy();
+  document.body.classList.remove('mobile-shell');
+  ui.destroy();
+});

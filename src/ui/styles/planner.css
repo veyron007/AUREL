@@ -1,0 +1,464 @@
+/* A readable, interactive planning surface inside the existing rail owner. */
+#left-panel-stack > #planner-panel {
+  position: relative;
+  min-height: 0;
+  pointer-events: auto;
+  overflow: hidden;
+  color: var(--workspace-text, var(--text-primary));
+  background: var(--workspace-surface, #181b1d);
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 14px;
+  box-shadow: var(--workspace-shadow);
+}
+#left-panel-stack > #planner-panel:not(.collapsed) {
+  height: var(--left-panel-allocated-height, auto);
+  max-height: var(--left-panel-allocated-height, 100%);
+}
+#planner-panel > .planner-panel-inner {
+  --inspector-gutter: 18px;
+  box-sizing: border-box;
+  height: 100%;
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block-start: 80px;
+  padding: var(--inspector-gutter);
+  background: var(--workspace-surface, #181b1d);
+}
+#planner-panel .panel-glow {
+  display: none;
+}
+#planner-panel .ui-panel__head {
+  margin-bottom: 18px;
+}
+/* Cover the full scrollport width, including its padding, while content scrolls. */
+#left-panel-stack > #planner-panel:not(.collapsed) .ui-panel__head {
+  position: sticky;
+  top: calc(-1 * var(--inspector-gutter));
+  z-index: 3;
+  box-sizing: border-box;
+  min-height: 68px;
+  margin: calc(-1 * var(--inspector-gutter)) calc(-1 * var(--inspector-gutter))
+    18px;
+  padding: 12px var(--inspector-gutter);
+  background: var(--workspace-surface, #181b1d);
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+#planner-panel .ui-panel__title {
+  color: inherit;
+  font: 650 17px/1.35 var(--font-sans);
+  letter-spacing: 0;
+}
+.planner-workspace {
+  display: grid;
+  gap: 16px;
+  color: var(--workspace-text, #eee9df);
+  font: 14px/1.55 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.planner-workspace :is(p, h2, h3, h4, h5, dl, dd) {
+  margin: 0;
+}
+.planner-workspace :is(h2, h3, h4, h5) {
+  color: inherit;
+  font-family: var(--font-sans);
+}
+.planner-intro {
+  display: grid;
+  gap: 8px;
+}
+.planner-intro h2 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  max-width: 17ch;
+}
+.planner-intro p,
+.planner-help {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 12px;
+  line-height: 1.6;
+}
+.planner-eyebrow {
+  color: var(--workspace-accent, #bda679);
+  font: 600 10px/1.4 var(--font-sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+#planner-form {
+  display: grid;
+  gap: 8px;
+}
+.planner-workspace label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.planner-workspace :is(button, input) {
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 0;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  color: inherit;
+  background: var(--workspace-raised, #24282a);
+  font: inherit;
+}
+.planner-workspace input {
+  width: 100%;
+  padding: 9px 10px;
+}
+.planner-workspace input[type='datetime-local'] {
+  color-scheme: dark;
+}
+.planner-workspace button {
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.planner-workspace button:hover:not(:disabled) {
+  border-color: var(--workspace-accent, #bda679);
+  background: var(--workspace-selection, #30312b);
+}
+.planner-workspace button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.planner-workspace .planner-primary {
+  background: var(--workspace-accent, #bda679);
+  color: var(--workspace-surface, #181b1d);
+  border-color: transparent;
+}
+.planner-workspace .planner-primary:hover:not(:disabled) {
+  background: var(--workspace-accent, #bda679);
+  filter: brightness(1.08);
+}
+.planner-workspace :is(button, input, summary, a):focus-visible {
+  outline: 2px solid var(--workspace-accent, #bda679);
+  outline-offset: 3px;
+}
+.planner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.planner-workspace a {
+  color: var(--workspace-accent, #bda679);
+  text-underline-offset: 3px;
+}
+.planner-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 11px;
+}
+.planner-state::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+.planner-state[data-status='ready'],
+.planner-state[data-status='partial'],
+.planner-state[data-status='stale'] {
+  color: var(--workspace-accent, #bda679);
+}
+.planner-notice {
+  padding: 10px 12px;
+  border-inline-start: 2px solid var(--workspace-accent, #bda679);
+  background: var(--workspace-raised, #24282a);
+  font-size: 12px;
+}
+.planner-notice--error {
+  border-color: #c27668;
+}
+.planner-empty {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 20px 0;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 13px;
+}
+.planner-empty > span {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--workspace-accent, #bda679);
+}
+.planner-section {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  padding-top: 20px;
+}
+.planner-section h3 {
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+.planner-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.planner-tag {
+  color: var(--workspace-accent, #bda679);
+  font-size: 10px;
+  letter-spacing: 0.035em;
+}
+.planner-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+.planner-metrics > div {
+  min-width: 0;
+}
+.planner-metrics dt {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.planner-metrics dd {
+  font: 500 13px/1.5 var(--font-mono);
+}
+.planner-summary .planner-metrics > div:nth-child(n + 3) {
+  grid-column: 1 / -1;
+}
+.planner-summary .planner-metrics > div:nth-child(-n + 2) dd {
+  font: 500 21px/1.25 var(--font-sans);
+  letter-spacing: -0.025em;
+}
+.planner-profile-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--workspace-raised, #24282a);
+  border-radius: 8px;
+}
+.planner-profile-axis {
+  fill: none;
+  stroke: var(--workspace-border, #4a4c4b);
+  stroke-width: 1;
+}
+.planner-profile-path {
+  fill: none;
+  stroke: var(--workspace-accent, #bda679);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.planner-profile-point {
+  fill: var(--workspace-accent, #bda679);
+}
+.planner-profile-cursor {
+  display: grid;
+  gap: 4px;
+}
+.planner-profile-cursor input {
+  accent-color: var(--workspace-accent, #bda679);
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+.planner-profile-cursor p {
+  font: 12px/1.5 var(--font-mono);
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.planner-details {
+  font-size: 12px;
+}
+.planner-details summary {
+  min-height: 44px;
+  display: list-item;
+  align-content: center;
+  padding-block: 8px;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-weight: 600;
+}
+.planner-details[open] > :not(summary) {
+  margin-block: 8px;
+}
+.planner-table-scroll {
+  max-width: 100%;
+  max-height: 280px;
+  overflow: auto;
+}
+.planner-profile-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+.planner-profile-table caption {
+  color: var(--workspace-muted, var(--text-secondary));
+  text-align: start;
+  padding-block: 8px;
+}
+.planner-profile-table :is(th, td) {
+  text-align: start;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+.planner-profile-table th {
+  font-weight: 600;
+}
+.planner-checkpoint {
+  padding: 14px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 10px;
+  display: grid;
+  gap: 16px;
+  background: var(--workspace-raised, #24282a);
+}
+.planner-checkpoint h4 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.planner-coordinate {
+  margin-top: 4px !important;
+  color: var(--workspace-muted, var(--text-secondary));
+  font: 10px/1.6 var(--font-mono);
+}
+.planner-source {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+}
+.planner-source h5 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.planner-source-state,
+.planner-validity {
+  font-size: 10px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.planner-source-state[data-state='stale'],
+.planner-source-state[data-state='blocked'] {
+  color: var(--workspace-accent, #bda679);
+}
+.planner-source-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 8px 12px;
+}
+.planner-source-details dt {
+  color: var(--workspace-muted, var(--text-secondary));
+}
+@media (max-width: 520px) {
+  #planner-panel > .planner-panel-inner {
+    --inspector-gutter: 14px;
+    padding: var(--inspector-gutter);
+  }
+  .planner-checkpoint {
+    padding: 12px;
+  }
+}
+
+.planner-detections {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.planner-detections li {
+  display: grid;
+  gap: 3px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+.planner-detections span {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 11px;
+}
+
+.planner-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  margin: 0 0 8px;
+  min-width: 0;
+}
+.planner-scope legend {
+  padding: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.planner-scope label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  flex: 1 1 120px;
+  padding: 8px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+.planner-scope label:has(input:checked) {
+  border-color: var(--workspace-accent, #bda679);
+  background: var(--workspace-selection, #30312b);
+}
+.planner-scope label:has(input:disabled) {
+  opacity: 0.5;
+}
+.planner-scope input[type='radio'] {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: var(--workspace-accent, #bda679);
+}
+.planner-route-summary {
+  font: 11px/1.65 var(--font-mono);
+  padding: 10px;
+  border-inline-start: 2px solid var(--workspace-accent, #bda679);
+  color: var(--workspace-muted, var(--text-secondary));
+}
+
+.planner-intro h2 {
+  font-size: 18px;
+  max-width: none;
+}
+.planner-settings {
+  min-width: 0;
+}
+.planner-settings > summary {
+  min-height: 44px;
+  box-sizing: border-box;
+  align-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--workspace-accent, #bda679);
+  border-block: 1px solid var(--workspace-border, var(--glass-border));
+}
+.planner-settings[open] > summary {
+  margin-bottom: 14px;
+}
+.planner-result-actions {
+  scroll-margin-top: 12px;
+  margin-top: 0;
+}
+
+@media (max-width: 720px) and (max-height: 520px) {
+  body[data-workspace-appearance].mobile-shell
+    #planner-panel
+    > .planner-panel-inner {
+    scroll-padding-block-start: 12px;
+  }
+}

@@ -475,3 +475,20 @@ NOAA density imagery with the raw GLM product.
 ## In-app attribution
 
 The required Google Maps / Cesium credit renders on the on-globe credit line (`#cesium-credits`, bottom-left) and must stay visible — including in clean-view and recording modes (the whole line, logo + "Google Maps" + the "Data attribution" link, stays on screen; only the GEV panels/HUD fade). The layer-specific credits (adsb.lol, adsbdb, TeleGeography, OSM datacenters/dams/roads, NASA FIRMS, CelesTrak, USGS, City of Austin, Fintraffic, GBFS, Radio Browser, OpenSky, AISStream) are registered into the expandable **"Data attribution"** popover on that credit line via `viewer.creditDisplay.addStaticCredit(new Cesium.Credit(html, /* showOnScreen */ false))` — see `src/data/dataCredits.js`. When you add a new data source, add its license and attribution to this file **and** append an entry to `DATA_CREDITS` in `src/data/dataCredits.js` so it surfaces in the app.
+
+
+## Offline overview — Natural Earth
+
+The `offline-overview` map uses the Natural Earth II level 0–2 image tiles
+already bundled with Cesium (`Assets/Textures/NaturalEarthII`). The existing
+Cesium build plugin serves/copies these assets locally. No new map account,
+external tile service or credential is used. Its terrain is a local WGS84
+ellipsoid, not measured elevation. It is a coarse global overview, not street
+imagery or a regional offline map pack.
+
+The overview is selectable directly and is the final fallback after online
+Esri/OSM imagery fails. Existing map IDs remain unchanged. Natural Earth data
+are public domain under the [official terms](https://www.naturalearthdata.com/about/terms-of-use/).
+The UI retains a source credit and identifies the overview's limited detail.
+“Offline” here means no internet is needed for this basemap while the locally
+installed application/server runs; other enabled layers may still use networks.

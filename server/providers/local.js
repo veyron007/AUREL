@@ -3,6 +3,10 @@ import { openSkyProxy } from './aircraft/opensky.js';
 import { celestrakProxy, rocketLaunchesProxy } from './space.js';
 import { tomtomProxy } from './traffic.js';
 import { firmsProxy } from './firms.js';
+import { firmsAreaProxy } from './firms-area.js';
+import { fieldContextProxy } from './field-context.js';
+import { imageryHistoryProxy } from './imagery-history.js';
+import { researchProxy } from './research/index.js';
 import { terrainHeightsProxy } from './terrain.js';
 import { adsbdbProxy } from './aircraft/enrichment.js';
 import { overpassProxy } from './overpass.js';
@@ -43,6 +47,7 @@ import { windProxy } from './wind.js';
 function localProviderPlugins({
   realtime,
   gemini,
+  freeOnly = false,
   nominatimStorageDir = NOMINATIM_CACHE_DIR,
 } = {}) {
   if (
@@ -52,11 +57,15 @@ function localProviderPlugins({
   )
     throw new TypeError('nominatimStorageDir must be an absolute directory');
   return [
-    openSkyProxy(),
+    openSkyProxy({ allowOpenSky: !freeOnly }),
     celestrakProxy(),
-    tomtomProxy(),
+    ...(!freeOnly ? [tomtomProxy()] : []),
+    firmsAreaProxy(),
     firmsProxy(),
-    rocketLaunchesProxy(),
+    fieldContextProxy(),
+    imageryHistoryProxy(),
+    researchProxy(),
+    rocketLaunchesProxy(freeOnly ? { resolveToken: () => '' } : {}),
     terrainHeightsProxy(),
     adsbdbProxy(),
     overpassProxy(),
@@ -64,7 +73,10 @@ function localProviderPlugins({
     regionalBriefProxy(),
     geocodeProxy({ storageDir: nominatimStorageDir }),
     weatherEffectsProxy(),
-    cctvProxy({ sourceRoot: defaultSourceRoot }),
+    cctvProxy({
+      sourceRoot: defaultSourceRoot,
+      ...(freeOnly ? { resolveStreetViewKey: () => '' } : {}),
+    }),
     radioBrowserProxy(),
     gbfsProxy(),
     localReceiversProxy(),
@@ -72,9 +84,9 @@ function localProviderPlugins({
     adsbLolProxy(),
     aisLiveProxy(),
     trackBackfillProxies(),
-    openAiRealtimeProxy({ realtime }),
-    ...(gemini ? [geminiLiveProxy({ realtime: gemini })] : []),
-    googlePlacesContextProxy(),
+    ...(!freeOnly ? [openAiRealtimeProxy({ realtime })] : []),
+    ...(!freeOnly && gemini ? [geminiLiveProxy({ realtime: gemini })] : []),
+    googlePlacesContextProxy(freeOnly ? { resolveApiKey: () => '' } : {}),
     windProxy(),
     weatherProxy(),
     cycloneProxy(),
@@ -85,7 +97,7 @@ function localProviderPlugins({
     droneAirspaceProxy(),
     inaturalistProxy(),
     acartiaProxy(),
-    keySetupEndpoint(),
+    keySetupEndpoint({ freeOnly }),
   ];
 }
 

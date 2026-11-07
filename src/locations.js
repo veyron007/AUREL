@@ -299,6 +299,32 @@ export function findPoiByName(query) {
 /** Distinguishes an authority veto from a genuine not-found result. */
 export const CANCELLED_SEARCH = Object.freeze({ cancelled: true });
 
+/** Detached resolved geography for search subscribers, independent of camera framing. */
+function destinationGeography(lat, lon, viewport) {
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lon) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lon) > 180
+  )
+    return {};
+  const box = [
+    viewport?.southwest?.lng,
+    viewport?.southwest?.lat,
+    viewport?.northeast?.lng,
+    viewport?.northeast?.lat,
+  ];
+  const [west, south, east, north] = box;
+  const validExtent =
+    box.every(Number.isFinite) &&
+    Math.abs(west) <= 180 &&
+    Math.abs(east) <= 180 &&
+    Math.abs(south) <= 90 &&
+    Math.abs(north) <= 90 &&
+    south <= north;
+  return { lat, lon, extent: validExtent ? box : null };
+}
+
 /**
  * Geocode a place name through the supplied service, then fly there at a scale
  * appropriate to the request. Countries and cities use their viewport by
@@ -379,6 +405,7 @@ export async function searchAndFlyTo(viewer, query, options = {}) {
         onCancel: options.onCancel,
       });
       return {
+        ...destinationGeography(lat, lng, viewport),
         label,
         navigationMode: 'natural-region-swath',
         rangeM: swath.rangeM,
@@ -414,6 +441,7 @@ export async function searchAndFlyTo(viewer, query, options = {}) {
     if (flight === CANCELLED_SEARCH) return CANCELLED_SEARCH;
     if (flight) {
       return {
+        ...destinationGeography(lat, lng, viewport),
         label,
         navigationMode,
         rangeM: null,
@@ -467,6 +495,7 @@ export async function searchAndFlyTo(viewer, query, options = {}) {
     onCancel: options.onCancel,
   });
   return {
+    ...destinationGeography(lat, lng, viewport),
     label,
     navigationMode: requestedRange
       ? 'explicit-range'

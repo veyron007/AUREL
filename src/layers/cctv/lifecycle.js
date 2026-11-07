@@ -38,7 +38,7 @@ export function createLifecycle({
     noteViewPose();
     parts.geometryQueue.enqueueViewGeometry();
     parts.cards.refreshAmbientCards();
-    if (changed || layerState._viewUnpublished) {
+    if (changed || layerState._viewUnpublished || layerState._activeCameraId) {
       layerState._viewUnpublished = false;
       parts.presentation.notifyListeners();
     }
@@ -82,6 +82,7 @@ export function createLifecycle({
     if (parts.rendering.refreshHorizonCulling())
       layerState._viewUnpublished = true;
     noteViewPose();
+    if (layerState._activeCameraId) parts.presentation.notifyListeners();
     parts.geometryQueue.enqueueViewGeometry();
     layerState._viewMotionPass = { at: now, ms: performance.now() - now };
   }

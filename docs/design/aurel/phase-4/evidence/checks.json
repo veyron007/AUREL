@@ -1,0 +1,57 @@
+{
+  "fixture": "Synthetic labelled imagery, dates and science pixels. All external traffic blocked or mocked; real free-source probes are documented separately.",
+  "checks": [
+    {
+      "name": "research and historical catalogue do not request on startup",
+      "pass": true
+    },
+    {
+      "name": "catalogue search does not automatically probe every image",
+      "pass": true
+    },
+    {
+      "name": "existing imagery owner displays exact dated A/B pair",
+      "pass": true
+    },
+    {
+      "name": "existing divider remains keyboard operable",
+      "pass": true
+    },
+    {
+      "name": "saved interpretation keeps an explicit unresolved classification",
+      "pass": true
+    },
+    {
+      "name": "opening saved comparison metadata makes no provider requests",
+      "pass": true
+    },
+    {
+      "name": "explicit scientific analysis displays native grid and mask provenance",
+      "pass": true
+    },
+    {
+      "name": "science raster uses validated native dimensions",
+      "pass": true
+    },
+    {
+      "name": "phone research inspector remains usable without horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "requests": [
+    "catalog",
+    "preview",
+    "preview",
+    "catalog",
+    "catalog",
+    "preview",
+    "preview",
+    "research-search",
+    "research-analysis"
+  ]
+}

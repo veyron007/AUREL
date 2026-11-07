@@ -1,0 +1,63 @@
+{
+  "fixture": "Synthetic forecasts, thermal empty-result and route heights. No live provider or credential use.",
+  "checks": [
+    {
+      "name": "mount performs no field context or profile requests",
+      "pass": true
+    },
+    {
+      "name": "Plan defaults to the selected place",
+      "pass": true
+    },
+    {
+      "name": "selected-place analysis uses one context request and no route profile",
+      "pass": true
+    },
+    {
+      "name": "forecast and AQ retain explicit model labels",
+      "pass": true
+    },
+    {
+      "name": "route uses at most two terrain batches and three context checkpoints",
+      "pass": true
+    },
+    {
+      "name": "profile shows its datum and incomplete data",
+      "pass": true
+    },
+    {
+      "name": "saved field snapshot appears in Library",
+      "pass": true
+    },
+    {
+      "name": "Pause feeds preserves the current unsaved route",
+      "pass": true
+    },
+    {
+      "name": "reopened historical snapshots do not refresh providers",
+      "pass": true
+    },
+    {
+      "name": "historical analysis retains source units and forecast context",
+      "pass": true
+    },
+    {
+      "name": "phone Planner is visible with no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "no browser runtime errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "requested": [
+    "context",
+    "fires",
+    "terrain",
+    "context",
+    "context",
+    "context",
+    "fires"
+  ]
+}

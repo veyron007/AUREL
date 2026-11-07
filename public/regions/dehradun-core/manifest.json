@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "dehradun-core",
+  "name": "Dehradun core",
+  "extent": [
+    78.022,
+    30.312,
+    78.05,
+    30.34
+  ],
+  "source": {
+    "id": "openstreetmap-geofabrik",
+    "label": "OpenStreetMap via Geofabrik Central Zone",
+    "url": "https://download.geofabrik.de/asia/india/central-zone.html",
+    "extractAt": "2026-11-05T21:23:02Z",
+    "retrievedAt": "2026-11-06T19:58:02.272Z",
+    "extractSha256": "b6eaf4f9c098d77a1c8a05996fd6752e83ee8550b022aefa0c4de255af20eaeb"
+  },
+  "license": {
+    "id": "ODbL-1.0",
+    "url": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "attribution": "© OpenStreetMap contributors"
+  },
+  "assets": [
+    {
+      "id": "geometry",
+      "path": "geometry.geojson",
+      "format": "geojson",
+      "byteLength": 3330635,
+      "sha256": "f560ebad10d613512fc73df4dd3531fa4c348b16dfdbacb2229044f8272653ae"
+    },
+    {
+      "id": "names",
+      "path": "names.json",
+      "format": "name-index",
+      "byteLength": 38235,
+      "sha256": "833975862628f8e1360c768e61961dba0427a4cd978f6b82bec7bd4dcd57853a"
+    }
+  ],
+  "counts": {
+    "features": 8647,
+    "positions": 54769,
+    "names": 318,
+    "roads": 1460,
+    "buildings": 6984,
+    "water": 18,
+    "places": 185,
+    "suppliedHeights": 1
+  },
+  "coverage": "partial",
+  "limitations": [
+    "Community mapping is incomplete and can be outdated; absence does not mean a feature does not exist.",
+    "This pack contains mapped footprints, roads, waterways and named places, not photography or a live digital twin.",
+    "Only complete geometries wholly within the selected extent are included; features crossing the crop boundary are omitted.",
+    "161 geometries with vertices both inside and outside the crop were omitted during this build.",
+    "Building heights appear only when an explicit usable OSM height tag is supplied; storey counts never become invented heights.",
+    "Search locations are bounding-box centers of mapped features and are not entrances or verified access points.",
+    "Source date is the extract snapshot time, not a survey date or proof of current conditions."
+  ]
+}

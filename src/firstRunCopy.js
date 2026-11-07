@@ -28,5 +28,5 @@ export function environmentalLabel(choice = ENVIRONMENTAL_LABEL_CHOICE) {
 
 /** The status line between missions. */
 export const FIRST_RUN_TIP = msg(
-  'Tip: the GEV MIC button in the dock lets you talk to the map.',
+  'Tip: the AUREL MIC button in the dock lets you talk to the map.',
 );

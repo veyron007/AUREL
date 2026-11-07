@@ -12,6 +12,7 @@ import {
   validateBox,
   viirsCandidates,
 } from './model.js';
+import { HISTORY_LIMITS, validateHistoryWindow } from './historical.js';
 
 const CMR_ENDPOINT = 'https://cmr.earthdata.nasa.gov/search';
 const DAY_MS = 86_400_000;
@@ -224,6 +225,71 @@ export async function searchHls({
   }));
   return {
     candidates: mergeCandidates([hls, viirsCandidates(endIso, days)]),
+    truncated,
+    errors,
+  };
+}
+
+/** Explicit bounded historical dates. Pixel availability remains unproven until WVS probes. */
+export async function searchWindow(
+  query,
+  { fetchImpl = globalThis.fetch, signal, now = Date.now() } = {},
+) {
+  const { box, fromDay, toDay, products } = validateHistoryWindow(query, {
+    now,
+  });
+  const granules = [],
+    errors = [];
+  let truncated = false;
+  for (const product of products.filter((p) => p !== 'VIIRS')) {
+    signal?.throwIfAborted();
+    try {
+      const result = await fetchCmrPages({
+        product,
+        url: cmrSearchUrl({
+          product,
+          box,
+          startIso: `${fromDay}T00:00:00Z`,
+          endIso: `${toDay}T23:59:59.999Z`,
+        }),
+        fetchImpl,
+        signal,
+        maxRecords: HISTORY_LIMITS.records,
+      });
+      granules.push(
+        ...result.granules.filter(
+          (g) =>
+            g.timeStart.slice(0, 10) >= fromDay &&
+            g.timeStart.slice(0, 10) <= toDay,
+        ),
+      );
+      truncated ||= result.truncated;
+    } catch (error) {
+      signal?.throwIfAborted();
+      errors.push({
+        product,
+        message:
+          error?.code === 'history-blocked'
+            ? 'Historical imagery request budget reached'
+            : 'Historical imagery catalog unavailable',
+      });
+    }
+  }
+  const hls = groupGranulesByDay(granules).map((c) => ({
+    ...c,
+    coverage: coverageFor(c, box),
+  }));
+  const days = (Date.parse(toDay) - Date.parse(fromDay)) / DAY_MS + 1;
+  return {
+    candidates: mergeCandidates([
+      hls,
+      products.includes('VIIRS') ? viirsCandidates(toDay, days) : [],
+    ]).map((c) => ({
+      ...c,
+      historical: true,
+      availability: 'unknown',
+      retrievedAt: new Date(now).toISOString(),
+    })),
     truncated,
     errors,
   };

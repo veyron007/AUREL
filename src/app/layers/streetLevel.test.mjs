@@ -86,3 +86,19 @@ test('every built-in provider is exported, so hosts can choose their own list', 
   });
   assert.deepEqual(layer.providerIds, ['google', 'kartaview', 'panoramax']);
 });
+
+test('Free-only omits Street View even when a saved link requests Google', () => {
+  const mapillary = {
+    getStatus() {},
+    getTile() {},
+    getSequenceImages() {},
+    nearestImages() {},
+  };
+  const layer = createApplicationStreetLevel({
+    sources: { mapillary },
+    freeOnly: true,
+  });
+  assert.deepEqual(layer.providerIds, ['mapillary', 'kartaview', 'panoramax']);
+  layer.setParams({ providerSwitches: 'google-1' });
+  assert.ok(!layer.providerIds.includes('google'));
+});

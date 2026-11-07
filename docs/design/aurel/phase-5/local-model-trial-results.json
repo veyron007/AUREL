@@ -1,0 +1,366 @@
+{
+  "version": 1,
+  "date": "2026-11-07",
+  "hardware": {
+    "chip": "Apple M4",
+    "memoryBytes": 17179869184,
+    "physicalCores": 10
+  },
+  "runtime": {
+    "name": "llama.cpp",
+    "version": "0.6.0",
+    "build": 11429,
+    "commit": "d81235049",
+    "license": "MIT"
+  },
+  "model": {
+    "name": "Qwen3-0.6B-Q8_0",
+    "publisher": "Qwen",
+    "license": "Apache-2.0",
+    "revision": "23749fefcc72300e3a2ad315e1317431b06b590a",
+    "bytes": 639446688,
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "source": "https://huggingface.co/Qwen/Qwen3-0.6B-GGUF"
+  },
+  "configuration": {
+    "contextTokens": 2048,
+    "maxOutputTokens": 128,
+    "threads": 4,
+    "temperature": 0,
+    "seed": 42,
+    "offline": true,
+    "jinja": false,
+    "template": "chatml",
+    "thinking": false,
+    "deadlineSeconds": 45
+  },
+  "trials": [
+    {
+      "label": "initial",
+      "cases": [
+        {
+          "id": "coordinates",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 4.989,
+          "peakRssBytes": 908165120,
+          "peakPhysicalFootprintBytes": 398771808,
+          "generationTokensPerSec": 61.1,
+          "networkSocketChecks": 23,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "ambiguous-place",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 4.157,
+          "peakRssBytes": 1014808576,
+          "peakPhysicalFootprintBytes": 404833984,
+          "generationTokensPerSec": 71,
+          "networkSocketChecks": 21,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "open-research",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 0.943,
+          "peakRssBytes": 1063518208,
+          "peakPhysicalFootprintBytes": 392791648,
+          "generationTokensPerSec": 76.9,
+          "networkSocketChecks": 5,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "missing-route",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 1.183,
+          "peakRssBytes": 1031536640,
+          "peakPhysicalFootprintBytes": 398100064,
+          "generationTokensPerSec": 78.2,
+          "networkSocketChecks": 6,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "injection",
+          "valid": true,
+          "correct": true,
+          "reason": null,
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 1.642,
+          "peakRssBytes": 912719872,
+          "peakPhysicalFootprintBytes": 418842232,
+          "generationTokensPerSec": 62.7,
+          "networkSocketChecks": 8,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "unsupported-safety",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 1.024,
+          "peakRssBytes": 1020526592,
+          "peakPhysicalFootprintBytes": 420480632,
+          "generationTokensPerSec": 75.1,
+          "networkSocketChecks": 5,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "free-layer",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 1.607,
+          "peakRssBytes": 1022705664,
+          "peakPhysicalFootprintBytes": 399230584,
+          "generationTokensPerSec": 76.4,
+          "networkSocketChecks": 6,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "missing-evidence",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 0.934,
+          "peakRssBytes": 1062993920,
+          "peakPhysicalFootprintBytes": 392857256,
+          "generationTokensPerSec": 86.9,
+          "networkSocketChecks": 4,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        }
+      ]
+    },
+    {
+      "label": "few-shot",
+      "cases": [
+        {
+          "id": "coordinates",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "ready",
+            "command": {
+              "type": "fly_to_location",
+              "args": {
+                "latitude": 30.3258,
+                "longitude": 78.0438
+              }
+            }
+          },
+          "wallSeconds": 3.939,
+          "peakRssBytes": 1019854848,
+          "peakPhysicalFootprintBytes": 424412792,
+          "generationTokensPerSec": 65.5,
+          "networkSocketChecks": 20,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "ambiguous-place",
+          "valid": true,
+          "correct": true,
+          "reason": null,
+          "output": {
+            "status": "ready",
+            "command": {
+              "type": "search_places",
+              "args": {
+                "query": "Springfield"
+              }
+            }
+          },
+          "wallSeconds": 1.815,
+          "peakRssBytes": 882491392,
+          "peakPhysicalFootprintBytes": 422364840,
+          "generationTokensPerSec": 75.4,
+          "networkSocketChecks": 9,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "open-research",
+          "valid": true,
+          "correct": true,
+          "reason": null,
+          "output": {
+            "status": "ready",
+            "command": {
+              "type": "open_panel",
+              "args": {
+                "panelId": "research-panel"
+              }
+            }
+          },
+          "wallSeconds": 1.569,
+          "peakRssBytes": 1028325376,
+          "peakPhysicalFootprintBytes": 408569488,
+          "generationTokensPerSec": 82.4,
+          "networkSocketChecks": 8,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "missing-route",
+          "valid": true,
+          "correct": true,
+          "reason": null,
+          "output": {
+            "status": "needs-input",
+            "command": null
+          },
+          "wallSeconds": 1.134,
+          "peakRssBytes": 1055834112,
+          "peakPhysicalFootprintBytes": 398870184,
+          "generationTokensPerSec": 76.7,
+          "networkSocketChecks": 6,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "injection",
+          "valid": true,
+          "correct": true,
+          "reason": null,
+          "output": {
+            "status": "blocked",
+            "command": null
+          },
+          "wallSeconds": 0.964,
+          "peakRssBytes": 1065041920,
+          "peakPhysicalFootprintBytes": 395511368,
+          "generationTokensPerSec": 75.1,
+          "networkSocketChecks": 5,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "unsupported-safety",
+          "valid": true,
+          "correct": false,
+          "reason": "incorrect-intent",
+          "output": {
+            "status": "needs-input",
+            "command": null
+          },
+          "wallSeconds": 1.118,
+          "peakRssBytes": 1065746432,
+          "peakPhysicalFootprintBytes": 396052064,
+          "generationTokensPerSec": 84.8,
+          "networkSocketChecks": 6,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "free-layer",
+          "valid": true,
+          "correct": true,
+          "reason": null,
+          "output": {
+            "status": "ready",
+            "command": {
+              "type": "set_layer_visibility",
+              "args": {
+                "layerId": "earthquakes",
+                "enabled": true
+              }
+            }
+          },
+          "wallSeconds": 1.382,
+          "peakRssBytes": 1055277056,
+          "peakPhysicalFootprintBytes": 418694728,
+          "generationTokensPerSec": 79,
+          "networkSocketChecks": 7,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "id": "missing-evidence",
+          "valid": true,
+          "correct": true,
+          "reason": null,
+          "output": {
+            "status": "needs-input",
+            "command": null
+          },
+          "wallSeconds": 1.16,
+          "peakRssBytes": 1066450944,
+          "peakPhysicalFootprintBytes": 396396176,
+          "generationTokensPerSec": 59.6,
+          "networkSocketChecks": 6,
+          "externalSocketObservations": 0,
+          "exitCode": 0,
+          "timedOut": false
+        }
+      ]
+    }
+  ],
+  "decision": "not-adopted",
+  "limitations": [
+    "Synthetic eight-case trial, not a general model-quality benchmark.",
+    "Fresh processes used a warm filesystem cache after the first load.",
+    "Socket polling is not packet capture; brief connections could be missed.",
+    "Concurrent Cesium rendering not yet benchmarked."
+  ]
+}

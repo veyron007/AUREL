@@ -1,0 +1,187 @@
+/* Lens uses workspace tokens and existing panel ownership, not a second rail. */
+/* New RailPanels need an interactive surface: the legacy rail itself passes
+   pointer input through to the globe, and its old skins name individual IDs. */
+#left-panel-stack > :is(#lens-panel, #fieldbook-panel) {
+  position: relative;
+  min-height: 0;
+  pointer-events: auto;
+  overflow: hidden;
+  background: var(--workspace-surface, var(--glass-bg));
+  color: var(--workspace-text, var(--text-primary));
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 14px;
+  box-shadow: var(--workspace-shadow);
+}
+#left-panel-stack > :is(#lens-panel, #fieldbook-panel):not(.collapsed) {
+  height: var(--left-panel-allocated-height, auto);
+  max-height: var(--left-panel-allocated-height, 100%);
+}
+:is(#lens-panel, #fieldbook-panel)
+  > :is(.lens-panel-inner, .fieldbook-panel-inner) {
+  box-sizing: border-box;
+  height: 100%;
+  max-height: inherit;
+  overflow-y: auto;
+  padding: 16px;
+}
+:is(#lens-panel, #fieldbook-panel) .panel-glow {
+  display: none;
+}
+:is(#lens-panel, #fieldbook-panel) .ui-panel__head {
+  margin-bottom: 16px;
+}
+:is(#lens-panel, #fieldbook-panel) .ui-panel__title {
+  font: 650 17px/1.35 var(--font-sans);
+  letter-spacing: 0;
+  color: var(--workspace-text, var(--text-primary));
+}
+.lens-content {
+  color: var(--workspace-text, var(--text-primary));
+  font: 14px/1.5 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.lens-content h2 {
+  margin: 6px 0;
+  font: 650 21px/1.3 var(--font-sans);
+}
+.lens-content h3 {
+  margin: 0 0 6px;
+  font: 650 15px/1.4 var(--font-sans);
+}
+.lens-identity {
+  margin: 20px 0 14px;
+}
+.lens-identity p {
+  margin: 5px 0;
+}
+.lens-eyebrow,
+.lens-kind {
+  color: var(--workspace-accent, var(--accent));
+  font-size: 12px;
+}
+.lens-coordinates {
+  font: 12px/1.5 var(--font-mono);
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.lens-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+  margin-bottom: 15px;
+}
+.lens-tabs button {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--workspace-muted, var(--text-secondary));
+  font: 600 13px/1.3 var(--font-sans);
+  cursor: pointer;
+}
+.lens-tabs [aria-selected='true'] {
+  color: var(--workspace-accent, var(--accent));
+  border-bottom-color: currentColor;
+}
+.lens-content :is(button, textarea, [role='tabpanel']):focus-visible {
+  outline: 2px solid var(--workspace-accent, var(--accent));
+  outline-offset: 3px;
+}
+.lens-top-actions,
+.lens-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lens-content .lens-actions > *,
+.lens-top-actions > * {
+  min-height: 44px;
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  background: var(--workspace-raised, var(--menu-bg));
+  color: var(--workspace-text, var(--text-primary));
+  cursor: pointer;
+}
+.lens-details {
+  margin: 10px 0 16px;
+}
+.lens-details > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+.lens-details dt {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 12px;
+}
+.lens-details dd {
+  margin: 0;
+  font-size: 13px;
+}
+.lens-explanation,
+.lens-empty,
+.lens-attribution {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 12px 0 16px;
+}
+.lens-source {
+  padding: 10px 0 16px;
+}
+.lens-kind {
+  display: inline-block;
+  margin-bottom: 4px;
+}
+.lens-feed-status {
+  margin-top: 16px;
+}
+.lens-feed-status table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 12px;
+  margin: 14px 0;
+}
+.lens-feed-status :is(th, td) {
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+  text-align: start;
+  vertical-align: top;
+}
+.lens-content textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  resize: vertical;
+  min-height: 120px;
+  margin: 8px 0;
+  padding: 12px;
+  background: var(--workspace-raised, var(--glass-bg));
+  color: var(--workspace-text, var(--text-primary));
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  font: 14px/1.5 var(--font-sans);
+}
+.lens-message {
+  padding: 10px 12px;
+  border-inline-start: 3px solid var(--workspace-accent, var(--accent));
+  color: var(--workspace-text, var(--text-primary));
+  font-size: 13px;
+}
+.lens-error {
+  border-inline-start-color: #be6a59;
+}
+.lens-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

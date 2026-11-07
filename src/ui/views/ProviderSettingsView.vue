@@ -39,7 +39,9 @@ onBeforeUnmount(() => themeObserver?.disconnect());
 const statusText = computed(() => ({
   text:
     view.value?.status ??
-    t('The Google Maps key buys the photorealistic planet — everything else stacks on top.'),
+    (view.value?.freeOnly
+      ? t('Saved keys are preserved. Restricted providers stay paused in Free-only mode.')
+      : t('The Google Maps key buys the photorealistic planet — everything else stacks on top.')),
   seq: view.value?.statusSeq ?? 0,
 }));
 const removeTitle = (title) =>
@@ -72,7 +74,8 @@ const removeTitle = (title) =>
       </button>
     </header>
     <h2 id="key-setup-title">{{ t('Power up the globe') }}</h2>
-    <p id="key-setup-description">{{ t('The globe already flies keyless. Every key below switches on another real feed — paste one and it\'s saved into this app\'s local configuration, then the server restarts itself. Server-side keys stay on this machine; Google Maps and Cesium ion run in the browser and must be provider-restricted. Keys you configured elsewhere are shown but never touched.') }}</p>
+    <p v-if="view?.freeOnly" id="key-setup-description">{{ t('Free-only mode is active. You can keep and save credentials here without enabling paid or unverified services. Saved does not mean active.') }}</p>
+    <p v-else id="key-setup-description">{{ t('The globe already flies keyless. Every key below switches on another real feed — paste one and it\'s saved into this app\'s local configuration, then the server restarts itself. Server-side keys stay on this machine; Google Maps and Cesium ion run in the browser and must be provider-restricted. Keys you configured elsewhere are shown but never touched.') }}</p>
     <div class="key-setup-rows ui-scroll" data-key-setup-rows>
       <section v-for="key in view?.rows ?? []" :key="`${key.id}:${view.generation}`" class="key-setup-row" :data-key-id="key.id" :data-set="String(key.set)" :data-managed="key.managed || undefined">
         <div class="key-setup-row-head">
@@ -84,11 +87,12 @@ const removeTitle = (title) =>
           <a class="key-setup-get" :href="key.getUrl" target="_blank" rel="noopener noreferrer">{{ key.set ? t('MANAGE ↗') : t('GET KEY ↗') }}</a>
         </div>
         <p class="key-setup-unlocks">{{ key.unlocks }}</p>
+        <p v-if="key.blocked" class="key-setup-policy">{{ t('Paused by Free-only — entitlement or cost not verified. Saved credentials are unchanged.') }}</p>
         <div v-if="!key.external" class="key-setup-fields">
           <input v-for="envVar in key.envVars" :key="envVar" type="password" autocomplete="off" spellcheck="false" :data-env-var="envVar" :aria-label="envVar" :placeholder="key.set ? t('{envVar} saved — paste to replace', { envVar }) : t('paste {envVar}', { envVar })" v-field-value="view.fields[envVar] ?? ''" @input="controls?.setField(envVar, $event.target.value)" />
           <button v-if="key.managed === 'file'" type="button" class="key-setup-remove" :data-key-setup-remove="JSON.stringify(key.envVars)" :title="removeTitle(key.title)" @click="controls?.remove(key.envVars)">{{ t('REMOVE') }}</button>
         </div>
-        <div v-if="key.id === 'openai'" class="key-setup-cloud-auth">
+        <div v-if="key.id === 'openai' && !key.blocked" class="key-setup-cloud-auth">
           <span class="key-setup-cloud-auth-state">{{ view.auth.mode === 'oauth' ? t('VOICE AUTH · CHATGPT OAUTH') : t('VOICE AUTH · API KEY') }}</span>
           <button type="button" class="key-setup-cloud-auth-toggle" data-cloud-voice-auth-toggle="true" :title="view.auth.mode === 'oauth' ? t('Use OPENAI_API_KEY for the next cloud voice session') : t('Use the signed-in local ChatGPT/Codex OAuth session for the next cloud voice session')" :aria-disabled="String(view.auth.busy)" @click="controls?.toggleAuth()">{{ view.auth.mode === 'oauth' ? t('USE API KEY') : t('USE CHATGPT OAUTH') }}</button>
         </div>

@@ -1,0 +1,255 @@
+/* Fieldbook uses the workspace's reading surfaces; every action stays native. */
+.fieldbook-workspace {
+  color: var(--workspace-text, var(--text-primary));
+  font: 14px/1.55 var(--font-sans);
+  display: grid;
+  gap: 16px;
+  overflow-wrap: anywhere;
+}
+.fieldbook-workspace :is(p, h3, h4, h5, ul, dl) {
+  margin: 0;
+}
+.fieldbook-workspace :is(h3, h4, h5) {
+  font-family: var(--font-sans);
+  color: inherit;
+}
+.fieldbook-workspace h3 {
+  font-size: 18px;
+  line-height: 1.35;
+}
+.fieldbook-workspace h4 {
+  font-size: 15px;
+}
+.fieldbook-workspace h5 {
+  font-size: 14px;
+}
+.fieldbook-workspace label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.fieldbook-workspace :is(button, input:not([type='checkbox']), textarea) {
+  box-sizing: border-box;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  color: inherit;
+  background: var(--workspace-raised, var(--menu-bg));
+  font: inherit;
+}
+.fieldbook-workspace :is(input:not([type='checkbox']), textarea) {
+  width: 100%;
+  padding: 10px 12px;
+}
+.fieldbook-workspace textarea {
+  resize: vertical;
+}
+.fieldbook-workspace input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--workspace-accent, var(--accent));
+}
+.fieldbook-workspace button {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.fieldbook-workspace button:hover:not(:disabled),
+.fieldbook-workspace button[aria-pressed='true'] {
+  background: var(--workspace-selection, var(--accent-dim));
+  border-color: var(--workspace-accent, var(--accent));
+}
+.fieldbook-workspace .fieldbook-primary {
+  color: var(--workspace-accent, var(--accent));
+  border-color: currentColor;
+}
+.fieldbook-workspace :is(button, input, textarea, summary, a):focus-visible {
+  outline: 2px solid var(--workspace-accent, var(--accent));
+  outline-offset: 3px;
+}
+.fieldbook-workspace button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.fieldbook-workspace a {
+  color: var(--workspace-accent, var(--accent));
+  text-underline-offset: 3px;
+}
+.fieldbook-local-label {
+  color: var(--workspace-accent, var(--accent));
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fieldbook-help,
+.fieldbook-empty {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 13px;
+}
+.fieldbook-create-form,
+#fieldbook-note-form {
+  display: grid;
+  gap: 8px;
+}
+.fieldbook-input-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+.fieldbook-actions,
+.fieldbook-library-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.fieldbook-library-toolbar {
+  justify-content: space-between;
+}
+.fieldbook-project-list,
+.fieldbook-item-list,
+.fieldbook-notes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.fieldbook-project-list button {
+  display: grid;
+  width: 100%;
+  text-align: start;
+  gap: 4px;
+}
+.fieldbook-project-list span {
+  font-size: 12px;
+  color: var(--workspace-muted, var(--text-secondary));
+  font-weight: 400;
+}
+.fieldbook-editor {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  padding-top: 18px;
+}
+.fieldbook-editor-heading {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.fieldbook-save-state {
+  color: var(--workspace-accent, var(--accent));
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.fieldbook-status {
+  font-size: 13px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.fieldbook-notice,
+.fieldbook-preview {
+  border-inline-start: 3px solid var(--workspace-accent, var(--accent));
+  padding: 10px 12px;
+  display: grid;
+  gap: 10px;
+  background: var(--workspace-raised, var(--menu-bg));
+}
+.fieldbook-notice--error {
+  border-inline-start-color: #c76e62;
+}
+.fieldbook-preview {
+  scroll-margin: 12px;
+}
+.fieldbook-counts {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+.fieldbook-counts dd {
+  margin: 0;
+  font-family: var(--font-mono);
+}
+.fieldbook-section {
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  padding-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+.fieldbook-section h4 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fieldbook-section h4 > span {
+  color: var(--workspace-muted, var(--text-secondary));
+  font: 12px var(--font-mono);
+}
+.fieldbook-item-list li {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  justify-content: space-between;
+  padding-block: 8px;
+}
+.fieldbook-item-list li > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.fieldbook-item-list :is(span, small) {
+  font-size: 12px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.fieldbook-item-list button {
+  flex-shrink: 0;
+}
+.fieldbook-coordinates {
+  font-family: var(--font-mono);
+}
+.fieldbook-notes li {
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+  padding-bottom: 10px;
+  display: grid;
+  gap: 6px;
+}
+.fieldbook-notes p,
+.fieldbook-brief p {
+  white-space: pre-wrap;
+}
+.fieldbook-notes button {
+  justify-self: start;
+  font-size: 12px;
+}
+.fieldbook-evidence summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 10px;
+  font-weight: 600;
+}
+.fieldbook-evidence dl {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(0, 1.2fr);
+  gap: 6px 12px;
+  font-size: 12px;
+}
+.fieldbook-evidence dt {
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.fieldbook-evidence dd {
+  margin: 0;
+}
+.fieldbook-brief {
+  display: grid;
+  gap: 12px;
+}
+.fieldbook-brief > section {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldbook-library-toolbar label {
+  min-height: 44px;
+}

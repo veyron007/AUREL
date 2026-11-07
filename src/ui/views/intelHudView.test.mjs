@@ -109,21 +109,18 @@ test('the first view renders the corners, edges and bottom bar', async (t) => {
   assert.equal(text('hud-ais-vessel'), 'AIS: --');
   assert.equal(
     root.querySelector('.hud-rec').textContent,
-    '● REC  2026-01-01 00:00:00Z',
+    '● VIEW  2026-01-01 00:00:00Z',
   );
   assert.equal(
     document.getElementById('hud-rec-dot').getAttribute('style'),
     null,
   );
-  assert.match(
-    root.querySelector('.hud-system').textContent,
-    /^KH11-\d+ {2}OPS-\d+$/,
-  );
+  assert.equal(root.querySelector('.hud-system').textContent, 'AUREL');
   assert.deepEqual(
     [...root.querySelectorAll('.hud-right-edge .hud-readout')].map(
       (line) => line.textContent,
     ),
-    ['BAND: PAN', 'BITS: 11', 'LVL: 1A'],
+    ['BAND: --', 'BITS: --', 'LVL: --'],
   );
 });
 

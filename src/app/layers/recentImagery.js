@@ -6,7 +6,10 @@ import { governorRequestRender } from '../../renderGovernor.js';
 /** Construct imagery presentation over one explicitly supplied acquisition source. */
 export function createApplicationRecentImagery({ source }) {
   return createRecentImageryLayer({
-    catalog: { searchHls: (...args) => source.searchHls(...args) },
+    catalog: {
+      searchHls: (...args) => source.searchHls(...args),
+      searchWindow: (...args) => source.searchWindow(...args),
+    },
     renderer: createRecentImageryRenderer({
       requestRender: governorRequestRender,
       tileTemplate: (...args) => source.getTileTemplate(...args),

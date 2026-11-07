@@ -513,3 +513,38 @@ test('the panel meta line reads a bearing that rounds to north as HDG 0°', () =
   assert.match(meta(359.4), /· HDG 359° ·/);
   assert.match(meta(359.6), /· HDG 0° ·/);
 });
+
+test('selected camera stays geographically labeled as the viewer moves to India', async (t) => {
+  const { controls, byId } = panel(t);
+  const state = {
+    enabled: true,
+    count: 1,
+    cameraIndex: [camera],
+    activeCameraId: 'a',
+    activeCamera: {
+      ...camera,
+      lat: 30.2672,
+      lon: -97.7431,
+      distanceFromViewerKm: 0,
+    },
+  };
+  controls._renderCctvState(state);
+  await nextTick();
+  assert.match(
+    byId('cctv-geographic-scope').textContent,
+    /Austin.*30.2672.*-97.7431.*0.0 km/,
+  );
+  controls._renderCctvState({
+    ...state,
+    activeCamera: { ...state.activeCamera, distanceFromViewerKm: 13000 },
+  });
+  await nextTick();
+  assert.match(
+    byId('cctv-geographic-scope').textContent,
+    /Selected camera: Austin.*13000.0 km from viewer position/,
+  );
+  assert.equal(byId('cctv-focus-btn').disabled, false);
+  controls._renderCctvState({ enabled: true, count: 1, cameraIndex: [camera] });
+  await nextTick();
+  assert.equal(byId('cctv-geographic-scope'), null);
+});

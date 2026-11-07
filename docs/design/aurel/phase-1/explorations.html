@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  /><title>AUREL / Workspace studies</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #101314;
+      color: #eee9df;
+      font:
+        15px/1.5 system-ui,
+        sans-serif;
+    }
+    main {
+      max-width: 1540px;
+      margin: auto;
+      padding: 52px 40px;
+    }
+    header {
+      max-width: 880px;
+      margin-bottom: 35px;
+    }
+    h1 {
+      font-size: 36px;
+      font-weight: 500;
+      letter-spacing: -0.04em;
+      margin: 8px 0;
+    }
+    p {
+      color: #bbc2b7;
+    }
+    small,
+    .eyebrow {
+      color: #d7b778;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-size: 11px;
+    }
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+    .switcher {
+      display: flex;
+      gap: 8px;
+      margin: 20px 0;
+    }
+    .switcher button {
+      background: #23292a;
+      border: 1px solid #596054;
+      color: #eee9df;
+      padding: 10px 18px;
+      border-radius: 7px;
+    }
+    .switcher button[aria-pressed='true'] {
+      color: #f1d49a;
+      border-color: #d7b778;
+      background: #3c3528;
+    }
+    .studies {
+      display: grid;
+      gap: 30px;
+    }
+    .study {
+      --panel: #1c2323;
+      --raise: #29312f;
+      --text: #f1ede4;
+      --sub: #bac4b8;
+      --accent: #e1c187;
+      --line: #53604f;
+      position: relative;
+      background: #192c29;
+      border: 1px solid #4a5148;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .study.field {
+      --panel: #f3f0e5;
+      --raise: #e6e1d2;
+      --text: #26312a;
+      --sub: #576351;
+      --accent: #76531a;
+      --line: #9ca18d;
+    }
+    .study.instrument {
+      --panel: #111b20;
+      --raise: #203139;
+      --text: #e3efe9;
+      --sub: #a3c3b6;
+      --accent: #b6d9ca;
+      --line: #536b68;
+      border-radius: 4px;
+    }
+    .caption {
+      padding: 20px 25px;
+      background: var(--panel);
+      color: var(--text);
+      display: flex;
+      gap: 35px;
+      align-items: center;
+      border-top: 1px solid var(--line);
+    }
+    .caption h2 {
+      font-size: 20px;
+      min-width: 180px;
+      margin: 0;
+    }
+    .caption p {
+      margin: 0;
+      color: var(--sub);
+      font-size: 14px;
+    }
+    .screen {
+      height: 520px;
+      position: relative;
+      overflow: hidden;
+    }
+    .top {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      padding: 10px 20px;
+      background: var(--panel);
+      color: var(--text);
+      position: relative;
+      z-index: 3;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      letter-spacing: 0.25em;
+      font-size: 19px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .brand img {
+      width: 32px;
+    }
+    .search {
+      background: var(--raise);
+      border: 1px solid var(--line);
+      padding: 10px 15px;
+      width: 34%;
+      border-radius: 8px;
+    }
+    .meta {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--sub);
+    }
+    .meta strong {
+      display: block;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .map {
+      position: absolute;
+      inset: 64px 0 0;
+      background:
+        radial-gradient(ellipse at 45% 60%, #4f6250, transparent 50%), #253a33;
+    }
+    .map svg {
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+    }
+    .maplabel {
+      position: absolute;
+      left: 44%;
+      top: 45%;
+      color: #f2eee2;
+      font-size: 20px;
+      text-shadow: 0 2px 8px #000;
+    }
+    .maplabel small {
+      display: block;
+      font-size: 10px;
+      color: #eee9df;
+      letter-spacing: 0.2em;
+    }
+    .cross {
+      position: absolute;
+      left: 44%;
+      top: 40%;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f1d49a;
+      border-radius: 50%;
+      box-shadow: 0 0 0 6px #f1d49a22;
+    }
+    .rail {
+      position: absolute;
+      left: 15px;
+      top: 80px;
+      z-index: 2;
+      background: var(--panel);
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: grid;
+      gap: 4px;
+      color: var(--sub);
+    }
+    .rail span {
+      padding: 12px 15px;
+      font-size: 12px;
+      text-align: center;
+      border-radius: 6px;
+    }
+    .rail .active {
+      color: var(--accent);
+      background: var(--raise);
+      box-shadow: inset 2px 0 var(--accent);
+    }
+    .tools {
+      position: absolute;
+      left: 126px;
+      top: 80px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      width: 180px;
+      font-size: 13px;
+      z-index: 2;
+    }
+    .tools p {
+      color: var(--sub);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 9px;
+    }
+    .inspector {
+      position: absolute;
+      right: 16px;
+      top: 80px;
+      bottom: 20px;
+      width: 290px;
+      z-index: 2;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .inspector small {
+      color: var(--accent);
+      font-size: 10px;
+    }
+    .inspector h3 {
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1.25;
+      margin: 10px 0 4px;
+    }
+    .inspector p {
+      color: var(--sub);
+      font-size: 13px;
+    }
+    .rule {
+      border-top: 1px solid var(--line);
+      margin-top: 18px;
+      padding-top: 12px;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin: 8px 0;
+      color: var(--sub);
+    }
+    .stat strong {
+      font-weight: 500;
+      color: var(--text);
+    }
+    .action {
+      background: var(--raise);
+      border: 1px solid var(--line);
+      color: var(--accent);
+      padding: 10px;
+      border-radius: 7px;
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+    }
+    .foot {
+      position: absolute;
+      bottom: 15px;
+      left: 20px;
+      font: 11px monospace;
+      color: #eee9df;
+      z-index: 2;
+    }
+    .instrument .screen {
+      height: 490px;
+    }
+    .instrument .top {
+      height: 54px;
+    }
+    .instrument .map {
+      top: 54px;
+    }
+    .instrument .rail,
+    .instrument .tools,
+    .instrument .inspector {
+      top: 70px;
+      border-radius: 3px;
+    }
+    .instrument .tools {
+      font-family: monospace;
+    }
+    .instrument .inspector {
+      width: 270px;
+    }
+    .instrument .telemetry {
+      position: absolute;
+      bottom: 46px;
+      left: 330px;
+      color: #b6d9ca;
+      font: 11px monospace;
+      z-index: 2;
+      letter-spacing: 0.08em;
+    }
+    .note {
+      font-size: 13px;
+      color: #aeb8aa;
+      margin: 24px 0;
+    }
+    .selected {
+      background: #d7b778;
+      color: #242a24;
+      font: 600 10px system-ui;
+      letter-spacing: 0.1em;
+      border-radius: 10px;
+      padding: 4px 9px;
+      margin-left: 10px;
+    }
+    @media (max-width: 800px) {
+      main {
+        padding: 25px 14px;
+      }
+      .screen {
+        height: 520px;
+      }
+      .tools {
+        display: none;
+      }
+      .top {
+        gap: 14px;
+        padding: 10px;
+      }
+      .meta {
+        display: none;
+      }
+      .search {
+        width: auto;
+        flex: 1;
+        font-size: 12px;
+      }
+      .brand {
+        font-size: 14px;
+      }
+      .inspector {
+        top: auto;
+        bottom: 16px;
+        left: 120px;
+        right: 16px;
+        width: auto;
+        height: 270px;
+        padding: 16px;
+      }
+      .inspector h3 {
+        font-size: 18px;
+      }
+      .caption {
+        display: block;
+      }
+      .caption p {
+        margin-top: 10px;
+      }
+      .rule {
+        margin-top: 8px;
+        padding-top: 5px;
+      }
+      .maplabel {
+        left: 43%;
+        top: 21%;
+      }
+      .cross {
+        left: 44%;
+        top: 17%;
+      }
+      .foot {
+        font-size: 9px;
+      }
+      .instrument .inspector {
+        width: auto;
+        top: auto;
+      }
+      .instrument .telemetry {
+        display: none;
+      }
+    }
+    @media (max-width: 800px) {
+      .study .screen {
+        height: 670px;
+      }
+      .study .inspector {
+        height: 390px;
+        overflow-y: auto;
+        bottom: 30px;
+      }
+      .study .top > small {
+        display: none;
+      }
+      .study .foot {
+        bottom: 8px;
+      }
+    }
+  </style>
+  <main>
+    <header>
+      <div class="eyebrow">AUREL · Phase 01 / Interface architecture</div>
+      <h1>A quieter frame.<br />A deeper view of the world.</h1>
+      <p>
+        Three working compositions for the same task. Search is permanent. Tools
+        follow intent. Evidence has one place to be read. These are layout
+        specimens, not fetched geographic data.
+      </p>
+      <div class="switcher" aria-label="Example workflow">
+        <button aria-pressed="true" data-task="explore">Explore</button
+        ><button aria-pressed="false" data-task="compare">Compare</button
+        ><button aria-pressed="false" data-task="plan">Plan</button
+        ><button aria-pressed="false" data-task="library">Library</button>
+      </div>
+    </header>
+    <div class="studies" id="studies"></div>
+    <p class="note">
+      Chosen: Observatory. It gives the central map the strongest continuity and
+      the most relaxed reading contrast. Field and Instrument share exactly the
+      same navigation and stay available as appearance preferences. Live app
+      testing remains required; these specimens do not establish coverage or
+      data availability.
+    </p>
+  </main>
+  <script>
+    const contours = `<svg viewBox="0 0 1300 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ccd6bc" opacity=".07"/></pattern></defs><rect width="1300" height="500" fill="url(#grid)"/><g fill="none" stroke="#cbd0a6" stroke-width="1" opacity=".17">${Array.from({ length: 25 }, (_, i) => `<path d="M${i * 55 - 150} -20 Q ${i * 35 + 90} 120 ${i * 42 + 100} 230 T${i * 50 + 100} 550"/>`).join('')}</g><path d="M0 380Q320 220 610 290T1300 90" fill="none" stroke="#c6c2a1" stroke-width="8" opacity=".2"/><path d="M0 380Q320 220 610 290T1300 90" fill="none" stroke="#e0d9bb" stroke-width="1.5" opacity=".6"/><path d="M760 0Q650 120 730 290T930 500" fill="none" stroke="#7ea5a0" stroke-width="4" opacity=".6"/></svg>`;
+    const specs = [
+      [
+        'observatory',
+        'Observatory',
+        'One reading surface, warm graphite and generous map space. Balanced for repeated daily exploration.',
+      ],
+      [
+        'field',
+        'Field',
+        'High-contrast reading surfaces and steady positions. Daylight preparation without changing the workflow.',
+      ],
+      [
+        'instrument',
+        'Instrument',
+        'Sharper framing and compact context for experienced use. Telemetry remains secondary to the evidence.',
+      ],
+    ];
+    const tasks = {
+      explore: [
+        'Explore',
+        'Place context',
+        'Dehradun',
+        'Uttarakhand, India',
+        'Layers · sources · coverage',
+        'Search by name or coordinates, then inspect the available map and layers.',
+        'Map source',
+        'Current selection',
+        'Inspect layers',
+      ],
+      compare: [
+        'Compare',
+        'Imagery comparison',
+        'Compare available captures',
+        'Source and acquisition date',
+        'Recent imagery · split view',
+        'Choose the imagery source and inspect its capture date before comparing.',
+        'Date',
+        'Source-dependent',
+        'Open comparison',
+      ],
+      plan: [
+        'Plan',
+        'Field preparation',
+        'Measure the next route',
+        'Distance and terrain',
+        'Utilities · weather · layers',
+        'Use the existing drawing and measurement tools. Terrain detail depends on the source.',
+        'Elevation',
+        'Source-dependent',
+        'Open utilities',
+      ],
+      library: [
+        'Library',
+        'Saved work',
+        'Scenes and imports',
+        'Existing local authoring',
+        'Scenes · sequences · overlays',
+        'Keep the existing scene and file workflows reachable. Fieldbook arrives in the next phase.',
+        'Storage',
+        'Local authoring',
+        'Open authoring',
+      ],
+    };
+    function render(task) {
+      const d = tasks[task];
+      document.getElementById('studies').innerHTML = specs
+        .map(
+          ([id, title, desc]) =>
+            `<section class="study ${id}"><div class="screen"><div class="top"><div class="brand"><img src="../../../../public/aurel-mark.svg" alt="">AUREL</div><div class="search">⌕ &nbsp; Dehradun, Uttarakhand</div><div class="meta">CURRENT VIEW<strong>30.3258° N &nbsp; 78.0438° E</strong></div><small>${title}</small></div><div class="map">${contours}<span class="cross"></span><div class="maplabel">Dehradun<small>UTTARAKHAND · INDIA</small></div></div><div class="rail">${Object.keys(
+              tasks,
+            )
+              .map(
+                (k) =>
+                  `<span class="${task === k ? 'active' : ''}">${tasks[k][0]}</span>`,
+              )
+              .join(
+                '',
+              )}</div><div class="tools"><strong>${d[0]}</strong><p>${d[4]}</p><div>All tools &nbsp; ›</div></div><aside class="inspector"><small>${d[1]}</small><h3>${d[2]}</h3><p>${d[3]}</p><div class="rule"><div class="stat"><span>${d[6]}</span><strong>${d[7]}</strong></div><div class="stat"><span>Operating mode</span><strong>Free-only</strong></div></div><p>${d[5]}</p><div class="action">${d[8]} &nbsp; →</div><p style="font-size:11px">Schematic interface specimen — no live data claims</p></aside>${id === 'instrument' ? '<div class="telemetry">VIEW 30.3258N / 78.0438E<br>SOURCE DETAIL UNKNOWN</div>' : ''}<div class="foot">AUREL · Layout study / Geographic illustration</div></div><div class="caption"><h2>${title}${id === 'observatory' ? '<span class="selected">SELECTED</span>' : ''}</h2><p>${desc}</p></div></section>`,
+        )
+        .join('');
+    }
+    document.querySelectorAll('[data-task]').forEach((b) =>
+      b.addEventListener('click', () => {
+        document
+          .querySelectorAll('[data-task]')
+          .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        render(b.dataset.task);
+      }),
+    );
+    render('explore');
+  </script>
+</html>

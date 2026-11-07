@@ -386,8 +386,13 @@ test('one ESC does one thing — a Cockpit utility disclosure stops later docume
   // they own the same contract: their capture handler is the only one that can
   // keep a later document listener (Cockpit exit, the launcher) off the key, and
   // only the immediate form does it.
-  const utilityEsc = ui.slice(ui.indexOf('if (!displayOpen && !radioOpen) return;'));
-  const claim = utilityEsc.slice(0, utilityEsc.indexOf('setCockpitDisclosure(kind, false'));
+  const utilityEsc = ui.slice(
+    ui.indexOf('if (!displayOpen && !radioOpen) return;'),
+  );
+  const claim = utilityEsc.slice(
+    0,
+    utilityEsc.indexOf('setCockpitDisclosure(kind, false'),
+  );
   assert.match(claim, /event\.preventDefault\(\);/);
   assert.match(claim, /event\.stopImmediatePropagation\(\);/);
   assert.doesNotMatch(
@@ -1020,6 +1025,19 @@ test('the voice TOOL SCHEMA matches the pinned contract — the mission mapping 
     'noir',
   ]);
   visualStyle.enum = [...visualStyle.enum, 'snow'];
+  // Phase 0 adds one explicitly reviewed free local basemap. Keep the legacy
+  // schema pin intact so unrelated tool changes are still caught here.
+  const mapStack = legacyTools.find((tool) => tool.name === 'set_map_stack')
+    .parameters.properties.stack;
+  assert.deepEqual(mapStack.enum, [
+    'photoreal',
+    'bing-aerial',
+    'bing-labels',
+    'esri-imagery',
+    'osm',
+    'offline-overview',
+  ]);
+  mapStack.enum = mapStack.enum.filter((id) => id !== 'offline-overview');
   // Tilt to an angle adds pitchDeg and rewords direction; restore
   // the legacy camera fields to keep the pin.
   const camera = legacyTools.find((tool) => tool.name === 'move_camera')

@@ -154,3 +154,22 @@ test('PanelChrome reads a panel’s state from its store, not classes written ou
     globalThis.document = prior;
   }
 });
+
+test('AUREL automatic reveals keep one desktop inspector across both stacks', () => {
+  const f = fixture(),
+    prior = globalThis.document;
+  f.doc.body = {
+    dataset: { workspaceAppearance: 'observatory' },
+    classList: { contains: () => false },
+  };
+  globalThis.document = f.doc;
+  try {
+    f.owner.setPanelCollapsed('global-context-panel', false);
+    assert.equal(f.layers.classList.contains('collapsed'), true);
+    f.owner.setPanelCollapsed('scene-panel', false);
+    assert.equal(f.context.classList.contains('collapsed'), true);
+    assert.equal(f.scenes.classList.contains('collapsed'), false);
+  } finally {
+    globalThis.document = prior;
+  }
+});

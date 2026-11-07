@@ -8,9 +8,10 @@ import { applicationServices } from './services/application.js';
  * off-nadir angle come from the live camera, and the clocks show the current
  * UTC time. Sun elevation is an approximate estimate from that position and
  * time. The classification banner, mission and orbit identifiers, the
- * BAND/BITS/LVL strip and the REC blink are styling, and the GSD/NIIRS
- * figures are scaled from camera altitude; none of them comes from imagery
- * metadata, and COLL is the current time, not a capture time. Readouts update
+ * BAND/BITS/LVL strip and REC blink are styling. Normal view reports unknown
+ * imagery resolution/orbit; cinematic styles explicitly label altitude-scaled
+ * GSD/NIIRS and fictional sensor markings as simulated. UTC is the current
+ * clock, never an imagery capture time. Readouts update
  * on independent fixed cadences.
  *
  * The HUD auto-activates when a military-style shader (NVG, FLIR, CRT) is
@@ -222,7 +223,7 @@ const NEARBY_POINTS = Object.values(CITY_POIS).flatMap((city) =>
  * semantic summary line built from the view and its data feeds, alongside
  * styling that is not sensor metadata: the classification banner, generated
  * mission, sensor and orbit identifiers, the fixed sensor strip, the REC blink
- * and the altitude-scaled GSD/NIIRS figures. Readouts update on independent
+ * and explicitly simulated cinematic GSD/NIIRS figures. Readouts update on independent
  * fixed cadences.
  */
 export class IntelHUD {
@@ -360,7 +361,7 @@ export class IntelHUD {
         ? t(MODE_LABELS[this._currentStyle])
         : this._currentStyle.toUpperCase(),
       summaryLabel: t('SUMMARY'),
-      rec: t('REC'),
+      rec: this._currentStyle === 'normal' ? t('VIEW') : t('REC'),
       ...(this._view.vessel.active
         ? {}
         : { vessel: { active: false, text: t('AIS: --') } }),
@@ -380,23 +381,23 @@ export class IntelHUD {
       active: false,
       variant: this._variant,
       colors: null,
-      classification: 'TOP SECRET // SI-TK // NOFORN',
-      system: `${this._missionId}  ${this._sensorId}`,
+      classification: t('Geographic view'),
+      system: 'AUREL',
       mode: t(MODE_LABELS.normal),
       summaryLabel: t('SUMMARY'),
       summary: t('Awaiting telemetry...'),
-      rec: t('REC'),
+      rec: this._currentStyle === 'normal' ? t('VIEW') : t('REC'),
       recShown: null,
       timestamp: '2026-01-01 00:00:00Z',
-      orbital: `ORB: ${this._orbitNum}  PASS: DESC-${this._passNum}`,
+      orbital: t('Orbit unknown'),
       mgrs: 'MGRS: ---',
       latlon: `--°--'--"N ---°--'--"W`,
-      gsd: 'GSD: --m  NIIRS: --',
+      gsd: t('Imagery resolution unknown'),
       alt: 'ALT: --m   SUN: --° EL',
       vessel: { active: false, text: t('AIS: --') },
-      coll: 'COLL: --:--:--Z',
+      coll: 'UTC: --:--:--Z',
       ona: 'ONA: --°',
-      sensor: ['BAND: PAN', 'BITS: 11', 'LVL: 1A'],
+      sensor: ['BAND: --', 'BITS: --', 'LVL: --'],
       bottom: 'LAT: --  LON: --  MGRS: ---',
     };
     this._present({});
@@ -428,7 +429,9 @@ export class IntelHUD {
     // REC blink — every 800ms
     this._recBlinkInterval = setInterval(() => {
       this._recBlinkState = !this._recBlinkState;
-      this._present({ recShown: this._recBlinkState });
+      this._present({
+        recShown: this._currentStyle !== 'normal' && this._recBlinkState,
+      });
     }, 800);
 
     // Camera-derived data — 4 updates/second (250ms). Skipped in a hidden
@@ -497,7 +500,7 @@ export class IntelHUD {
    * Derive all camera-based telemetry and push values to the DOM.
    * Reads the viewer camera's cartographic position and computes MGRS,
    * lat/lon DMS, GSD, NIIRS, sun elevation, off-nadir angle, and
-   * collection timestamp. Stores results in {@link _latestMetrics}.
+   * current UTC clock. Stores results in {@link _latestMetrics}.
    */
   _updateCameraData() {
     const camera = this.viewer.camera;
@@ -521,7 +524,23 @@ export class IntelHUD {
       /* the readout keeps its dashes */
     }
     // i18n-ignore: sensor codes
-    const readouts = { mgrs: `MGRS: ${mgrsLabel}` };
+    const cinematic = this._currentStyle !== 'normal';
+    // i18n-ignore: fictional cinematic markings and sensor codes
+    const readouts = {
+      mgrs: `MGRS: ${mgrsLabel}`,
+      rec: cinematic ? t('REC') : t('VIEW'),
+      recShown: cinematic ? this._recBlinkState : false,
+      classification: cinematic
+        ? 'SIMULATED LABELS // TOP SECRET // SI-TK // NOFORN'
+        : t('Geographic view'),
+      system: cinematic ? `${this._missionId}  ${this._sensorId}` : 'AUREL',
+      orbital: cinematic
+        ? `SIM ORB: ${this._orbitNum}  PASS: DESC-${this._passNum}`
+        : t('Orbit unknown'),
+      sensor: cinematic
+        ? ['SIM BAND: PAN', 'SIM BITS: 11', 'SIM LVL: 1A']
+        : ['BAND: --', 'BITS: --', 'LVL: --'],
+    };
 
     // Lat/Lon DMS
     readouts.latlon = `${latDMS} ${lonDMS}`;
@@ -540,7 +559,10 @@ export class IntelHUD {
       Math.min(9, 10.25 - 3.32 * Math.log10(gsdInches)),
     );
     // i18n-ignore: sensor codes
-    readouts.gsd = `GSD: ${gsd.toFixed(2)}m  NIIRS: ${niirs.toFixed(1)}`;
+    readouts.gsd =
+      this._currentStyle === 'normal'
+        ? t('Imagery resolution unknown')
+        : `SIM GSD: ${gsd.toFixed(2)}m  NIIRS: ${niirs.toFixed(1)}`;
 
     // Altitude — reported as height above MEAN SEA LEVEL. `altM` is the raw
     // ellipsoidal camera height, which reads far below zero wherever the geoid
@@ -553,13 +575,13 @@ export class IntelHUD {
     // i18n-ignore: sensor codes
     readouts.alt = `ALT: ${Math.round(altMslM)}m   SUN: ${sunEl.toFixed(1)}° EL`;
 
-    // Collection timestamp
+    // Current clock; never an imagery acquisition timestamp
     const now = new Date();
     const h = String(now.getUTCHours()).padStart(2, '0');
     const m = String(now.getUTCMinutes()).padStart(2, '0');
     const s = String(now.getUTCSeconds()).padStart(2, '0');
     // i18n-ignore: sensor codes
-    readouts.coll = `COLL: ${h}:${m}:${s}Z`;
+    readouts.coll = `UTC: ${h}:${m}:${s}Z`;
 
     // Off-nadir angle (ONA): camera pitch of -90 deg is nadir (straight down),
     // so ONA = 90 + pitch gives 0 at nadir and increases toward the horizon.
@@ -1105,6 +1127,8 @@ export class IntelHUD {
         '--hud-border': colors.border,
       },
     });
+
+    if (this._visible) this._updateCameraData();
 
     // Auto show/hide
     if (this._autoMode) {

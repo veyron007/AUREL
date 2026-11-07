@@ -36,3 +36,24 @@ test('Portuguese summary values are translated', () => {
     assert.equal(summaryViewBandLabel('city'), 'CIDADE');
   });
 });
+
+test('selected-camera distance follows viewer position without changing the camera', async () => {
+  const { cameraDistanceFromViewerKm } = await import('./presentation.js');
+  const camera = { lat: 30.2672, lon: -97.7431 };
+  const position = (lat, lon) => ({
+    latitude: (lat * Math.PI) / 180,
+    longitude: (lon * Math.PI) / 180,
+  });
+  assert.ok(
+    cameraDistanceFromViewerKm(camera, position(30.2672, -97.7431)) < 0.001,
+  );
+  assert.ok(
+    cameraDistanceFromViewerKm(camera, position(30.3258, 78.0438)) > 12000,
+  );
+  assert.equal(cameraDistanceFromViewerKm(camera, null), null);
+  assert.equal(
+    cameraDistanceFromViewerKm({ lat: null, lon: null }, position(0, 0)),
+    null,
+  );
+  assert.deepEqual(camera, { lat: 30.2672, lon: -97.7431 });
+});

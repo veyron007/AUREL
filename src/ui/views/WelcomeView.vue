@@ -32,6 +32,7 @@ function onSuppress(event) {
   <aside v-if="!launcher?.removed" id="first-run-launcher" role="dialog" aria-labelledby="first-run-title" aria-describedby="first-run-description" :class="{ visible: launcher?.visible }" :hidden="!launcher?.shown" :aria-hidden="launcher?.closing ? 'true' : undefined" :aria-busy="launcher?.busy ?? undefined" :data-state="launcher?.state ?? undefined">
     <div class="first-run-scanline" aria-hidden="true"></div>
     <header class="first-run-header">
+      <div class="aurel-welcome-brand" translate="no"><img src="/aurel-mark.svg" alt="" width="40" height="40" /><span>AUREL</span></div>
       <span class="first-run-kicker">{{ t('MISSION CONTROL · FIRST LAUNCH') }}</span>
     </header>
     <h2 id="first-run-title">{{ t('Choose your first view') }}</h2>

@@ -12,6 +12,10 @@ scene playback and voice. It delegates; new behavior belongs with its owner.
 | `visualSettings.js` | Effects, detection overrides, visual restoration and render-loop lifetime |
 | `panelChrome.js` | Disclosure, docking, layout and Cockpit panel restoration |
 | `panelNavigation.js` | Desktop panel rails: each side's offered panels and the open one |
+| `stores/workspace.js` + `views/WorkspaceView.vue` | AUREL task destinations, appearance preference and inspector size; actions delegate to PanelNavigation and existing panel owners |
+| `personalWorkspace.js` + `app/personalTools.js` | Compose Lens and Fieldbook through named existing selection, search, navigation and capture owners; application lifetime owns teardown |
+| `lensController.js` + `stores/lens.js` + `views/panels/LensPanel.vue` | Place selection, source evidence and notes; consumes owner publications without provider requests |
+| `fieldbookController.js` + `stores/fieldbook.js` + `views/panels/FieldbookPanel.vue` | Local project edits, draft recovery and explicit backup previews; IndexedDB repository owns atomic revision checks |
 | `aircraftDisplay.js` | Shared commercial/military 3D display preferences and controls |
 | `layerBindings.js` | Data-manager attachment, selected-tracker adoption and camera-entry listeners |
 | `displayBindings.js` | Keyboard/display subscriptions and frame-rate monitor lifetime |

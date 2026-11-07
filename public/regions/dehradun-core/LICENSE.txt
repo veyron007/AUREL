@@ -1,0 +1,8 @@
+Dehradun core region database
+© OpenStreetMap contributors
+Licensed under the Open Data Commons Open Database License (ODbL) 1.0.
+https://opendatacommons.org/licenses/odbl/1-0/
+https://www.openstreetmap.org/copyright
+Derived locally from the public Geofabrik Central Zone extract.
+https://download.geofabrik.de/asia/india/central-zone.html
+Keep this notice and manifest provenance with redistributed database copies.

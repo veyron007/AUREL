@@ -37,4 +37,11 @@ export const MAP_STACKS = [
     kind: 'osm',
     requiresIon: false,
   },
+  {
+    id: 'offline-overview',
+    label: 'Natural Earth · offline overview', // i18n-ignore: imagery product name
+    shortLabel: 'Overview',
+    kind: 'offline-overview',
+    requiresIon: false,
+  },
 ];

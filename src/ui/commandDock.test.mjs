@@ -44,6 +44,28 @@ test('before VisualSettings publishes, the dock shows NORMAL', (t) => {
   assert.equal($('#active-style-name').textContent, 'NORMAL');
 });
 
+test('persistent search remains outside collapsed trays and submits through its owner', async (t) => {
+  const { $, pinia } = fixture(t);
+  const field = $('#location-search');
+  assert.equal(field.closest('[role="search"]')?.id, 'aurel-search');
+  assert.equal(field.closest('.panel-collapsible'), null);
+  assert.equal(document.querySelectorAll('#location-search').length, 1);
+  let submitted = 0;
+  const store = useLocationStore(pinia);
+  store.connect({ submitSearch: () => submitted++ });
+  $('#search-submit').click();
+  assert.equal(submitted, 1);
+  store.publish({ searching: true, status: {} });
+  await nextTick();
+  assert.equal($('#aurel-search').getAttribute('aria-busy'), 'true');
+  assert.ok($('#location-search-status').textContent.length > 0);
+  assert.equal($('#location-search') === field, true);
+  store.publish({ searching: false, status: {} });
+  await nextTick();
+  assert.equal($('#aurel-search').getAttribute('aria-busy'), 'false');
+  assert.equal($('#location-search-status').textContent, '');
+});
+
 test('the active style marks its button and labels the dock and the corner', async (t) => {
   const { $, settings, active } = fixture(t);
   settings._publishActiveStyle('thermal');

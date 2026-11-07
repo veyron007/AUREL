@@ -9,7 +9,15 @@ export class MapStackController extends MapSourceController {
   constructor(viewer, options = {}) {
     const googleApiKey =
       typeof window !== 'undefined' ? window.__GOOGLE_MAPS_API_KEY__ : '';
-    const registry = createDefaultMapSources({ ...options, googleApiKey });
+    const freeOnly =
+      (typeof import.meta.env !== 'undefined' &&
+        import.meta.env.GEV_FREE_ONLY === true) ||
+      options.freeOnly === true;
+    const registry = createDefaultMapSources({
+      ...options,
+      googleApiKey,
+      freeOnly,
+    });
     super(viewer, {
       registry,
       initialStack: options.googleTileset

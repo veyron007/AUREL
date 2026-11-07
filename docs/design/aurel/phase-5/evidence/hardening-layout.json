@@ -1,0 +1,1482 @@
+{
+  "mode": "layout",
+  "generatedAt": "2026-11-06T20:17:54.640Z",
+  "scope": "Isolated Chromium profile. All external HTTP and every /api/ request blocked. Local coordinate fixtures and two empty local project fixtures exercise existing owners. This is not a live-source, populated-result, screen-reader or complete WCAG audit. Latencies are owner action through two animation frames, not FPS.",
+  "checks": [
+    {
+      "name": "1440x900 Lens: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 627
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgba(0, 0, 0, 0)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "lens-inspect-view",
+            "text": "Inspect current view",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Clear",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "lens-tab-overview",
+            "text": "Overview",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "lens-tab-evidence",
+            "text": "Evidence",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "lens-tab-notes",
+            "text": "Notes",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "lens-save-place",
+            "text": "Save place to Fieldbook",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Return to selection",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Plan here",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Compare imagery",
+            "height": 36
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "lens-panel-inner ui-scroll",
+          "height": 625,
+          "scrollHeight": 625,
+          "top": 93,
+          "bottom": 718
+        }
+      }
+    },
+    {
+      "name": "1440x900 Lens: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "lens-inspect-view",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Lens: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Compare imagery",
+        "top": 665.1875,
+        "bottom": 701.1875,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "1440x900 Fieldbook: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 382
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgba(0, 0, 0, 0)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Import backup",
+            "height": 41.6875
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "fieldbook-panel-inner ui-scroll",
+          "height": 380,
+          "scrollHeight": 380,
+          "top": 93,
+          "bottom": 473
+        }
+      }
+    },
+    {
+      "name": "1440x900 Fieldbook: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "INPUT",
+        "id": "fieldbook-new-title",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Fieldbook: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Import backup",
+        "top": 341.171875,
+        "bottom": 382.859375,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "1440x900 Field planner: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 647.390625
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "planner-analyze",
+            "text": "Analyze",
+            "height": 38.59375
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "planner-panel-inner ui-scroll",
+          "height": 645,
+          "scrollHeight": 711,
+          "top": 93,
+          "bottom": 738.390625
+        }
+      }
+    },
+    {
+      "name": "1440x900 Field planner: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Field planner: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "planner-analyze",
+        "text": "Analyze",
+        "top": 617.125,
+        "bottom": 655.71875,
+        "hit": "planner-analyze"
+      }
+    },
+    {
+      "name": "1440x900 Chronicle: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 647.390625
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "chronicle-search",
+            "text": "Find dated imagery",
+            "height": 38.59375
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "chronicle-panel-inner ui-scroll",
+          "height": 645,
+          "scrollHeight": 1582,
+          "top": 93,
+          "bottom": 738.390625
+        }
+      }
+    },
+    {
+      "name": "1440x900 Chronicle: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Chronicle: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "chronicle-search",
+        "text": "Find dated imagery",
+        "top": 524.46875,
+        "bottom": 563.0625,
+        "hit": "chronicle-search"
+      }
+    },
+    {
+      "name": "1440x900 Research: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 647.390625
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "research-search",
+            "text": "Find Sentinel scenes",
+            "height": 38.59375
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "research-panel-inner ui-scroll",
+          "height": 645,
+          "scrollHeight": 704,
+          "top": 93,
+          "bottom": 738.390625
+        }
+      }
+    },
+    {
+      "name": "1440x900 Research: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Research: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "research-size",
+        "text": "128 × 128 pixels · 1.28 km square256 × 256 pixels · 2.56 km ",
+        "top": 615.328125,
+        "bottom": 659.328125,
+        "hit": "research-size"
+      }
+    },
+    {
+      "name": "1440x900 Watchlists: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 647.390625
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Refresh saved list",
+            "height": 38.59375
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "watchlist-panel-inner ui-scroll",
+          "height": 645,
+          "scrollHeight": 901,
+          "top": 93,
+          "bottom": 738.390625
+        }
+      }
+    },
+    {
+      "name": "1440x900 Watchlists: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Watchlists: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Refresh saved list",
+        "top": 681.65625,
+        "bottom": 720.25,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "1440x900 Offline region: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 524
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "region-preview",
+            "text": "Preview bundled pack",
+            "height": 38.59375
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "region-panel-inner ui-scroll",
+          "height": 522,
+          "scrollHeight": 522,
+          "top": 93,
+          "bottom": 615
+        }
+      }
+    },
+    {
+      "name": "1440x900 Offline region: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "region-preview",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Offline region: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "region-preview",
+        "text": "Preview bundled pack",
+        "top": 290.375,
+        "bottom": 328.96875,
+        "hit": "region-preview"
+      }
+    },
+    {
+      "name": "1440x900 Local commands: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 1076,
+          "y": 92,
+          "width": 344,
+          "height": 647.390625
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "−",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Clear",
+            "height": 37
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "find Dehradun, India",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "go to 30.3258, 78.0438",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "save place",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "save route",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "show earthquakes",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "brief selected evidence",
+            "height": 36
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Prepare workspace command",
+            "height": 37
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Prepare workspace command",
+            "height": 37
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "text": "Prepare workspace command",
+            "height": 37
+          }
+        ],
+        "navigationTop": 900,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "",
+          "className": "local-commands-panel-inner ui-scroll",
+          "height": 645,
+          "scrollHeight": 1234,
+          "top": 93,
+          "bottom": 738.390625
+        }
+      }
+    },
+    {
+      "name": "1440x900 Local commands: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "INPUT",
+        "id": "local-command-input",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "1440x900 Local commands: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Prepare workspace command",
+        "top": 701.125,
+        "bottom": 738.125,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "390x844 Lens: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 424.09375,
+          "width": 372,
+          "height": 645.390625
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgba(0, 0, 0, 0)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 661,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Lens: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "lens-inspect-view",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Lens: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Compare imagery",
+        "top": 734.484375,
+        "bottom": 778.484375,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "390x844 Fieldbook: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 381.09375,
+          "width": 372,
+          "height": 389.296875
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgba(0, 0, 0, 0)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 405,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Fieldbook: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "INPUT",
+        "id": "fieldbook-new-title",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Fieldbook: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Import backup",
+        "top": 655.109375,
+        "bottom": 699.109375,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "390x844 Field planner: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 399.09375,
+          "width": 372,
+          "height": 715.453125
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 731,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Field planner: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Field planner: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "planner-analyze",
+        "text": "Analyze",
+        "top": 734.21875,
+        "bottom": 778.21875,
+        "hit": "planner-analyze"
+      }
+    },
+    {
+      "name": "390x844 Chronicle: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 208.09375,
+          "width": 372,
+          "height": 1574.40625
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 1590,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Chronicle: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Chronicle: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "chronicle-search",
+        "text": "Find dated imagery",
+        "top": 733.5625,
+        "bottom": 777.5625,
+        "hit": "chronicle-search"
+      }
+    },
+    {
+      "name": "390x844 Research: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 300.09375,
+          "width": 372,
+          "height": 695.109375
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 711,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Research: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Research: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "research-size",
+        "text": "128 × 128 pixels · 1.28 km square256 × 256 pixels · 2.56 km ",
+        "top": 733.828125,
+        "bottom": 777.828125,
+        "hit": "research-size"
+      }
+    },
+    {
+      "name": "390x844 Watchlists: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 204.09375,
+          "width": 372,
+          "height": 886.34375
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 902,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Watchlists: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SUMMARY",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Watchlists: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Refresh saved list",
+        "top": 733.75,
+        "bottom": 777.75,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "390x844 Offline region: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 239.09375,
+          "width": 372,
+          "height": 531.453125
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 547,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Offline region: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "region-preview",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Offline region: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "region-preview",
+        "text": "Preview bundled pack",
+        "top": 623.46875,
+        "bottom": 667.46875,
+        "hit": "region-preview"
+      }
+    },
+    {
+      "name": "390x844 Local commands: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 424.09375,
+          "width": 372,
+          "height": 1244.328125
+        },
+        "contentOverflow": false,
+        "headerVisible": true,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 779,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 362,
+          "scrollHeight": 1260,
+          "top": 415.09375,
+          "bottom": 778
+        }
+      }
+    },
+    {
+      "name": "390x844 Local commands: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "INPUT",
+        "id": "local-command-input",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "390x844 Local commands: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Prepare workspace command",
+        "top": 734.421875,
+        "bottom": 778.421875,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "667x375 Lens: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": -213,
+          "width": 649,
+          "height": 513.890625
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgba(0, 0, 0, 0)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 530,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Lens: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "667x375 Lens: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Compare imagery",
+        "top": 264.890625,
+        "bottom": 308.890625,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "667x375 Fieldbook: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 12,
+          "width": 649,
+          "height": 289.015625
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgba(0, 0, 0, 0)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 305,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Fieldbook: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "fieldbook-create",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "667x375 Fieldbook: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Import backup",
+        "top": 264.875,
+        "bottom": 308.875,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "667x375 Field planner: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 89,
+          "width": 649,
+          "height": 595.796875
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 612,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Field planner: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "INPUT",
+        "id": "planner-scope-place",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "667x375 Field planner: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "planner-analyze",
+        "text": "Analyze",
+        "top": 264.75,
+        "bottom": 308.75,
+        "hit": "planner-analyze"
+      }
+    },
+    {
+      "name": "667x375 Chronicle: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": -154,
+          "width": 649,
+          "height": 1379.09375
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 1395,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Chronicle: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "INPUT",
+        "id": "chronicle-start",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "667x375 Chronicle: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "chronicle-search",
+        "text": "Find dated imagery",
+        "top": 264.90625,
+        "bottom": 308.90625,
+        "hit": "chronicle-search"
+      }
+    },
+    {
+      "name": "667x375 Research: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": -42,
+          "width": 649,
+          "height": 591.734375
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 608,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Research: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "INPUT",
+        "id": "research-start",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "667x375 Research: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "research-size",
+        "text": "128 × 128 pixels · 1.28 km square256 × 256 pixels · 2.56 km ",
+        "top": 265.359375,
+        "bottom": 309.359375,
+        "hit": "research-size"
+      }
+    },
+    {
+      "name": "667x375 Watchlists: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": -157,
+          "width": 649,
+          "height": 725.40625
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 741,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Watchlists: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "SELECT",
+        "id": "watchlist-place",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "667x375 Watchlists: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Refresh saved list",
+        "top": 265.28125,
+        "bottom": 309.28125,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "667x375 Offline region: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": -146,
+          "width": 649,
+          "height": 447.265625
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 463,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Offline region: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "0.15s, 0.15s, 0.15s"
+      }
+    },
+    {
+      "name": "667x375 Offline region: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "region-preview",
+        "text": "Preview bundled pack",
+        "top": 247.1875,
+        "bottom": 291.1875,
+        "hit": "region-preview"
+      }
+    },
+    {
+      "name": "667x375 Local commands: inspector remains within the viewport without horizontal overflow",
+      "pass": true,
+      "detail": {
+        "visible": true,
+        "documentOverflow": false,
+        "rect": {
+          "x": 9,
+          "y": 136,
+          "width": 649,
+          "height": 988.15625
+        },
+        "contentOverflow": false,
+        "headerVisible": false,
+        "headerBackground": "rgb(24, 29, 30)",
+        "smallControls": [],
+        "navigationTop": 310,
+        "reducedMotion": true,
+        "scrollOwner": {
+          "id": "left-panel-stack",
+          "className": "ui-scroll",
+          "height": 79,
+          "scrollHeight": 1004,
+          "top": 229,
+          "bottom": 309
+        }
+      }
+    },
+    {
+      "name": "667x375 Local commands: keyboard focus is visible and reduced motion applies",
+      "pass": true,
+      "detail": {
+        "tag": "BUTTON",
+        "id": "",
+        "visibleFocus": true,
+        "onScreen": true,
+        "animation": "none",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "667x375 Local commands: bottom controls remain reachable in the actual scroll owner",
+      "pass": true,
+      "detail": {
+        "reachable": true,
+        "id": "",
+        "text": "Prepare workspace command",
+        "top": 265.15625,
+        "bottom": 309.15625,
+        "hit": "BUTTON"
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ],
+  "apiAttempts": [
+    "/api/local-receivers/aircraft",
+    "/api/openai/hud-summary/status",
+    "/api/setup/status",
+    "/api/realtime/debug-log",
+    "/api/overpass/status",
+    "/api/overpass",
+    "/api/terrain/heights"
+  ],
+  "measurements": {}
+}

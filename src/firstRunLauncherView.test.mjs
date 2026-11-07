@@ -88,7 +88,7 @@ test('the card is hidden until initialized, then revealed with its copy', async 
   assert.equal(list.dataset.scrollable, 'true');
   assert.equal(
     root.querySelector('[data-first-run-status]').textContent,
-    'Tip: the GEV MIC button in the dock lets you talk to the map.',
+    'Tip: the AUREL MIC button in the dock lets you talk to the map.',
   );
   assert.equal(
     root.querySelector('[data-first-run-environmental-title]').textContent,

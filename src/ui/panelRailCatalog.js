@@ -12,6 +12,14 @@ export const PANEL_RAIL_FALLBACK_ICON = 'more_horiz';
  * Data Layers' `active`).
  */
 export const PANEL_RAIL_ITEMS = Object.freeze({
+  'lens-panel': { icon: 'search', label: msg('Lens') },
+  'fieldbook-panel': { icon: 'bookmarks', label: msg('Fieldbook') },
+  'watchlist-panel': { icon: 'visibility', label: msg('Watchlists') },
+  'local-commands-panel': { icon: 'bolt', label: msg('Local commands') },
+  'region-panel': { icon: 'public', label: msg('Offline region') },
+  'research-panel': { icon: 'satellite_alt', label: msg('Research') },
+  'chronicle-panel': { icon: 'compare', label: msg('Chronicle') },
+  'planner-panel': { icon: 'route', label: msg('Field planner') },
   'data-panel': {
     icon: 'layers',
     label: msg('DATA LAYERS'),

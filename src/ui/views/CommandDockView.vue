@@ -65,6 +65,20 @@ function selectMapSource(chip) {
 </script>
 
 <template>
+  <!-- One stable input remains connected to LocationControls while trays change. -->
+  <div id="aurel-search" role="search" :aria-label="t('Search any location')" :aria-busy="String(!!loc?.searching)">
+    <div class="aurel-search-field">
+      <button id="search-toggle" class="search-toggle-btn" type="button" :title="t('Search any location')" :aria-label="t('Search any location')" @click="locationControls?.toggleSearch()">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
+      <input type="search" id="location-search" class="aurel-search-input" v-class-toggle="{ expanded: !!loc?.searchExpanded, searching: !!loc?.searching }" :placeholder="t('Search any location...')" autocomplete="off" spellcheck="false" enterkeyhint="search" :aria-label="t('Search location by name or coordinates')" :aria-invalid="loc?.searchError ? 'true' : null" :aria-describedby="loc?.searchError ? 'location-search-error' : null" />
+      <button id="search-submit" type="button" :aria-label="t('Search')" :title="t('Search')" @click="locationControls?.submitSearch()"><span aria-hidden="true">↵</span></button>
+    </div>
+    <div class="aurel-search-feedback">
+      <span id="location-search-status" role="status" aria-live="polite">{{ loc?.searching ? t('Searching...') : '' }}</span>
+      <p id="location-search-error" class="location-search-error" role="alert">{{ loc?.searchError }}</p>
+    </div>
+  </div>
   <!-- Unified bottom command dock: locations, voice, visual presets -->
   <div id="command-dock" class="ui-scroll" :aria-label="t('Navigation, voice, and visual preset controls')">
   <template v-for="slot in dockOrder" :key="slot">
@@ -149,14 +163,7 @@ function selectMapSource(chip) {
         <div class="location-bar-divider" id="location-bar-divider" v-class-toggle="{ visible: !!loc?.poisExpanded }"></div>
         <div class="location-city-row">
           <div id="location-pills" class="location-pills"><UiButton v-for="city in loc?.cities" :key="city.id" class="location-pill" :pressed="Boolean(city.active)" pressed-class="active" :data-location-id="city.id" @click="locationControls?.chooseCity(city.id)">{{ city.label }}</UiButton></div>
-          <div class="location-search-wrap">
-            <button id="search-toggle" class="search-toggle-btn" :title="t('Search any location')" @click="locationControls?.toggleSearch()">
-              <span>&#x1F50E;</span>
-            </button>
-            <input type="text" id="location-search" v-class-toggle="{ expanded: !!loc?.searchExpanded, searching: !!loc?.searching }" :placeholder="t('Search any location...')" autocomplete="off" spellcheck="false" :aria-label="t('Search location by name or coordinates')" :aria-invalid="loc?.searchError ? 'true' : null" :aria-describedby="loc?.searchError ? 'location-search-error' : null" />
-          </div>
         </div>
-        <p id="location-search-error" class="location-search-error" role="alert">{{ loc?.searchError }}</p>
       </div>
     </div>
   </div>

@@ -1,4 +1,14 @@
+import { createSessionControls } from './sessionControls.js';
+import { createLocalCommandTools } from './localCommandTools.js';
+import { useLocationStore } from '../ui/stores/location.js';
 import { SceneDirector } from '../scenes/director.js';
+import { createPersonalTools } from './personalTools.js';
+import { createPlannerTools } from './plannerTools.js';
+import { createChronicleTools } from './chronicleTools.js';
+import { createResearchTools } from './researchTools.js';
+import { createWatchlistTools } from './watchlistTools.js';
+import { createRegionTools } from './regionTools.js';
+import { useWorkspaceStore } from '../ui/stores/workspace.js';
 import { initAnnotations } from '../annotations/index.js';
 import { initDrawTool } from '../annotations/drawTool.js';
 import { initGeoFileImport } from '../ui/geoFileImport.js';
@@ -100,6 +110,35 @@ export function createApplicationTools({
     connect: connectDisplay,
   });
   defer(() => geoFileImport?.destroy());
+  let planner, chronicle;
+  const personalWorkspace = createPersonalTools({
+    viewer,
+    styleManager,
+    dataManager,
+    mapStackController,
+    operations,
+    annotations,
+    sceneDirector,
+    pinia: applicationPinia(),
+    onPlanPlace: () => planner?.controller.setScope('place'),
+    onOpenComparison: (saved) => {
+      personalWorkspace.lens.select(saved.subject, {
+        reveal: false,
+        origin: 'fieldbook',
+      });
+      chronicle?.controller.reopen(saved);
+      useWorkspaceStore(applicationPinia()).chooseDestination('compare');
+    },
+  });
+  defer(() => personalWorkspace.destroy());
+  planner = createPlannerTools({
+    pinia: applicationPinia(),
+    viewer,
+    dataManager,
+    operations,
+    fieldbook: personalWorkspace.fieldbook,
+  });
+  defer(() => planner.destroy());
   // DATA ▸ Recent Imagery: the box tool claims the pointer like Draw and the
   // panel lives on the right rail, so both belong to the application
   // lifetime. The tileset lets the layer drape while the globe is hidden.
@@ -137,6 +176,42 @@ export function createApplicationTools({
       imageryBoxTool?.destroy();
     });
   }
+  chronicle = createChronicleTools({
+    pinia: applicationPinia(),
+    dataManager,
+    fieldbook: personalWorkspace.fieldbook,
+  });
+  defer(() => chronicle.destroy());
+  const research = createResearchTools({ pinia: applicationPinia() });
+  defer(() => research.destroy());
+  const watchlists = createWatchlistTools({ pinia: applicationPinia() });
+  defer(() => watchlists.destroy());
+  const regions = createRegionTools({
+    pinia: applicationPinia(),
+    geoFileImport,
+    viewer,
+    styleManager,
+    onSelectPlace: (selection) =>
+      personalWorkspace.lens.select(selection, {
+        reveal: false,
+        origin: 'local-region',
+      }),
+  });
+  defer(() => regions.destroy());
+  const sessionControls = createSessionControls({
+    dataManager,
+    watchlists: watchlists.controller,
+    cancelWork: [
+      () => planner.controller.cancel(),
+      () => chronicle.controller.cancel(),
+      () => research.controller.cancel(),
+    ],
+  });
+  const workspaceStore = useWorkspaceStore(applicationPinia());
+  const sessionToken = workspaceStore.connect({
+    pauseFeeds: () => sessionControls.pauseLiveData(),
+  });
+  defer(() => workspaceStore.detach(sessionToken));
   if (startChrome)
     defer(startChrome({ loadingScreen, styleManager, dataManager, signal }));
   // Idle render governor: flips the scene into requestRenderMode whenever
@@ -232,6 +307,31 @@ export function createApplicationTools({
       delete window.__gevVoiceCommands;
   });
   debug.voiceCommands = voiceCommands;
+  const localCommands = createLocalCommandTools({
+    pinia: applicationPinia(),
+    personalWorkspace,
+    chronicle,
+    dataManager,
+    runCoordinate: async (args, { signal: commandSignal }) => {
+      const result = await voiceCommands.runner('fly_to_location', args, {
+        signal: commandSignal,
+      });
+      return result?.ok === true;
+    },
+    stageSearch: async (query, { signal: commandSignal }) => {
+      commandSignal.throwIfAborted();
+      await useWorkspaceStore(applicationPinia()).act(
+        'openPanel',
+        'location-bar',
+      );
+      commandSignal.throwIfAborted();
+      return (
+        useLocationStore(applicationPinia()).controls?.stageSearch(query) ===
+        true
+      );
+    },
+  });
+  defer(() => localCommands.destroy());
   defer(
     installViews({
       shell: styleManager,

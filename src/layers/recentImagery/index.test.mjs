@@ -681,6 +681,12 @@ function failingMapController() {
     },
   };
   const registry = createDefaultMapSources({ googleTileset: { show: true } });
+  // This fixture specifically exercises the legacy final Google recovery.
+  // Make the new local fallback unavailable here; its normal online-to-local
+  // recovery is exercised by maps/controller.test.mjs.
+  registry.sources.find(
+    (source) => source.descriptor.id === 'offline-overview',
+  ).available = false;
   for (const source of registry.sources) {
     if (!source.imagery) continue;
     const id = source.descriptor.id;

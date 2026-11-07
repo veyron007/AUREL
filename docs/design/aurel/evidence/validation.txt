@@ -1,0 +1,32 @@
+AUREL verification — 2026-11-06
+
+Final full suite: npm test
+  10,985 tests; 10,982 passed; 0 failed; 3 skipped.
+  Exit code 0. Node 26 skips the separate Node-24-calibrated allocation probes.
+
+Production build: npm run build
+  Passed. Existing large-chunk warning remains.
+
+Formatting: npm run format:check
+  Passed; checked 1,841 source files.
+
+Localization: npm run i18n
+  Passed; 2,943 messages complete in all 11 locales.
+
+Focused final checks: voice control/card locale, chat, first-run launcher,
+locale catalogs, credit attribution and mobile shell: 96/96 passed.
+Earlier focused dock/Cyber/rail/mobile tests: 131/131 passed.
+Startup/locale isolated rerun: 27/27 passed.
+
+git diff --check: passed.
+Evidence validator: passed (record completeness; actual renders separately reviewed).
+Local application: HTTP 200 at http://localhost:4173/.
+
+Browser review: 1440x900, 1280x720, 390x844, 667x375.
+Checked startup/loading, welcome/dismissal/short-screen scrolling, desktop
+panels, Location and Visual Presets disclosure, mobile Layers/Search switching,
+assistant empty state and provider setup. Restored working map session.
+No saved provider keys changed; no assistant message or paid job submitted.
+
+Not claimed: full-app accessibility certification, external provider availability,
+or live microphone/authentication verification. Those integrations were unchanged.

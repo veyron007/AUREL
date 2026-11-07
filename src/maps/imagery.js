@@ -4,6 +4,21 @@ import * as Cesium from 'cesium';
 export const ESRI_ATTRIBUTION_HTML =
   '<a href="https://www.esri.com" target="_blank" rel="noopener">Powered by Esri</a>';
 
+export const OVERVIEW_ATTRIBUTION_HTML =
+  '<a href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noopener">Natural Earth</a> — offline overview; not street imagery';
+
+/** Cesium ships these public-domain tiles locally; no ion token or remote API. */
+export function createOfflineOverviewImagery() {
+  return Cesium.TileMapServiceImageryProvider.fromUrl(
+    Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII'),
+    { maximumLevel: 2, credit: OVERVIEW_ATTRIBUTION_HTML },
+  );
+}
+
+export function createOfflineOverviewTerrain() {
+  return { provider: new Cesium.EllipsoidTerrainProvider() };
+}
+
 export function createOsmImagery() {
   return new Cesium.OpenStreetMapImageryProvider({
     url: 'https://tile.openstreetmap.org/',

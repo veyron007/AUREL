@@ -21,7 +21,9 @@ export function launchLibraryRequestHeaders(token = process.env.LL2_API_TOKEN) {
 }
 
 /** Proxy the public Launch Library 2 recent-launch feed server-side. */
-export function rocketLaunchesProxy() {
+export function rocketLaunchesProxy({
+  resolveToken = () => process.env.LL2_API_TOKEN,
+} = {}) {
   const ttlMs = LL2_CACHE_TTL_MS;
   const maxResponseBytes = 12 * 1024 * 1024;
   const maxDiskCacheBytes = 24 * 1024 * 1024;
@@ -87,7 +89,7 @@ export function rocketLaunchesProxy() {
     const url = launchLibraryRecentUrl(end);
     const upstream = await fetch(url, {
       signal: AbortSignal.timeout(20000),
-      headers: launchLibraryRequestHeaders(),
+      headers: launchLibraryRequestHeaders(resolveToken()),
     });
     if (!upstream.ok) {
       const deadline = Date.now() + providerCooldownMs(upstream);

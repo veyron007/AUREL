@@ -147,6 +147,37 @@ export function createApplicationRequestServices({
       },
     },
     terrain: {
+      async getProfileHeights(points, { signal } = {}) {
+        if (
+          !Array.isArray(points) ||
+          !points.length ||
+          points.length > 64 ||
+          points.some(
+            (point) =>
+              !Number.isFinite(point?.lat) ||
+              !Number.isFinite(point?.lon) ||
+              Math.abs(point.lat) > 90 ||
+              Math.abs(point.lon) > 180,
+          )
+        )
+          throw new Error(
+            'Terrain profile needs 1–64 valid geographic points.',
+          );
+        const query = points
+          .map(({ lat, lon }) => `${lon.toFixed(5)},${lat.toFixed(5)}`)
+          .join(';');
+        const response = await request(
+          `${urls.terrain}?provenance=1&points=${encodeURIComponent(query)}`,
+          { signal },
+        );
+        if (
+          !response.ok &&
+          Array.isArray(response.data?.partial) &&
+          response.data.partial.length === points.length
+        )
+          return response.data.partial;
+        return requireOk(response, 'Terrain profile')?.results;
+      },
       async getHeights(points, { signal } = {}) {
         const query = points
           .map(({ lat, lon }) => `${lon.toFixed(5)},${lat.toFixed(5)}`)

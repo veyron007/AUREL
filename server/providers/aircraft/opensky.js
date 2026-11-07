@@ -477,13 +477,36 @@ function openSkySourceIsStale(sourceEpochMs, now = Date.now()) {
  *
  * @returns {import('vite').Plugin}
  */
-export function openSkyProxy() {
+export function openSkyProxy({ allowOpenSky = true } = {}) {
   const installMiddleware = (server) => {
     server.middlewares.use('/api/flights', async (req, res, next) => {
       try {
         // This mount also matches its /track route, served by its own handler.
         if (new URL(req.url || '/', 'http://localhost').pathname !== '/')
           return next();
+        if (!allowOpenSky) {
+          res.setHeader('X-Feed-Source', 'adsb.lol');
+          if (
+            await serveAdsbLolPointFallback(
+              req,
+              res,
+              'disabled',
+              'free_only_policy',
+            )
+          )
+            return;
+          res.writeHead(503, {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          });
+          res.end(
+            JSON.stringify({
+              error: 'Regional aircraft source unavailable',
+              code: 'FREE_ONLY_SOURCE_UNAVAILABLE',
+            }),
+          );
+          return;
+        }
         res.setHeader('X-Feed-Source', 'OpenSky Network');
         const requestedMode = normalizeOpenSkyAuthMode(
           process.env.OPENSKY_AUTH_MODE,

@@ -1,3 +1,4 @@
+import { freeOnlyPlugin, freeOnlyBrowserKeys } from './free-only.js';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import { resolveAllowedHosts } from '../../build/allowedHosts.js';
@@ -21,9 +22,11 @@ export function standaloneConfig(
     if (process.env[key] === undefined) process.env[key] = value;
   }
   const tools = standaloneVoiceTools();
-  return createBrowserViteConfig({
+  const browserConfig = createBrowserViteConfig({
     plugins: [
+      freeOnlyPlugin(),
       ...localProviderPlugins({
+        freeOnly: true,
         realtime: { tools },
         gemini: { tools },
         nominatimStorageDir,
@@ -33,15 +36,20 @@ export function standaloneConfig(
       apiNotFoundPlugin(),
       unwatchedRuntimeDirsPlugin(),
     ],
-    googleApiKey: process.env.GOOGLE_MAPS_API_KEY,
-    cesiumToken: process.env.CESIUM_ION_TOKEN,
+    ...freeOnlyBrowserKeys(process.env),
     photonUrl: process.env.PHOTON_URL,
-    mapillaryToken: process.env.MAPILLARY_CLIENT_TOKEN,
     host: process.env.HOST,
     port: process.env.PORT,
     allowedHosts: resolveAllowedHosts(process.env.GEV_ALLOWED_HOSTS),
     command,
   });
+  return {
+    ...browserConfig,
+    define: {
+      ...browserConfig.define,
+      'import.meta.env.GEV_FREE_ONLY': 'true',
+    },
+  };
 }
 
 export default defineConfig(standaloneConfig);

@@ -1,0 +1,1135 @@
+{
+  "mode": "stress",
+  "generatedAt": "2026-11-06T20:13:03.445Z",
+  "scope": "Isolated Chromium profile. All external HTTP and every /api/ request blocked. Local coordinate fixtures and two empty local project fixtures exercise existing owners. This is not a live-source, populated-result, screen-reader or complete WCAG audit. Latencies are owner action through two animation frames, not FPS.",
+  "checks": [
+    {
+      "name": "50 coordinate and 50 saved-project switches completed through existing owners",
+      "pass": true,
+      "detail": {
+        "locationMs": 52.80000001192093,
+        "projectMs": 51.89999997615814
+      }
+    },
+    {
+      "name": "post-GC DOM and listener counts remain bounded after repeated switches",
+      "pass": true,
+      "detail": {
+        "nodes": 0,
+        "jsEventListeners": 0,
+        "documents": 0,
+        "heapUsedBytes": 1589176
+      }
+    },
+    {
+      "name": "globe resource owners do not accumulate layers or data sources",
+      "pass": true,
+      "detail": {
+        "before": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "sharpen",
+                "at": 1793995970481
+              },
+              {
+                "reason": "bloom",
+                "at": 1793995970481
+              },
+              {
+                "reason": "bloom",
+                "at": 1793995970481
+              },
+              {
+                "reason": "sharpen",
+                "at": 1793995970481
+              },
+              {
+                "reason": "sharpen",
+                "at": 1793995970481
+              },
+              {
+                "reason": "detection-visibility",
+                "at": 1793995970482
+              },
+              {
+                "reason": "map-stack",
+                "at": 1793995970485
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995975477
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995975480
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995975483
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995975891
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995975892
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995975892
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995975986
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995975986
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995975986
+              }
+            ]
+          },
+          "resources": 74,
+          "canvasCount": 8,
+          "projectCount": 2
+        },
+        "after": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995982651
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995982767
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995982767
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995982768
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995982896
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995982898
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995982899
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995983051
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995983051
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995983052
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995983168
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995983169
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995983169
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995983284
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995983284
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995983285
+              }
+            ]
+          },
+          "resources": 124,
+          "canvasCount": 8,
+          "projectCount": 2
+        }
+      }
+    },
+    {
+      "name": "render diagnostics remain capped without accumulating continuous-render owners",
+      "pass": true,
+      "detail": {
+        "installed": true,
+        "mode": "idle",
+        "holds": [],
+        "recentRequests": [
+          {
+            "reason": "layer-params:satellites",
+            "at": 1793995982651
+          },
+          {
+            "reason": "layer-params:flights",
+            "at": 1793995982767
+          },
+          {
+            "reason": "layer-params:military",
+            "at": 1793995982767
+          },
+          {
+            "reason": "layer-params:satellites",
+            "at": 1793995982768
+          },
+          {
+            "reason": "layer-params:flights",
+            "at": 1793995982896
+          },
+          {
+            "reason": "layer-params:military",
+            "at": 1793995982898
+          },
+          {
+            "reason": "layer-params:satellites",
+            "at": 1793995982899
+          },
+          {
+            "reason": "layer-params:flights",
+            "at": 1793995983051
+          },
+          {
+            "reason": "layer-params:military",
+            "at": 1793995983051
+          },
+          {
+            "reason": "layer-params:satellites",
+            "at": 1793995983052
+          },
+          {
+            "reason": "layer-params:flights",
+            "at": 1793995983168
+          },
+          {
+            "reason": "layer-params:military",
+            "at": 1793995983169
+          },
+          {
+            "reason": "layer-params:satellites",
+            "at": 1793995983169
+          },
+          {
+            "reason": "layer-params:flights",
+            "at": 1793995983284
+          },
+          {
+            "reason": "layer-params:military",
+            "at": 1793995983284
+          },
+          {
+            "reason": "layer-params:satellites",
+            "at": 1793995983285
+          }
+        ]
+      }
+    },
+    {
+      "name": "measured fixture control p95 remains below 250 ms",
+      "pass": true,
+      "detail": {
+        "locationMs": 52.80000001192093,
+        "projectMs": 51.89999997615814
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ],
+  "apiAttempts": [
+    "/api/local-receivers/aircraft",
+    "/api/openai/hud-summary/status",
+    "/api/setup/status",
+    "/api/realtime/debug-log",
+    "/api/overpass/status",
+    "/api/overpass",
+    "/api/terrain/heights",
+    "/api/overpass",
+    "/api/terrain/heights",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass",
+    "/api/overpass"
+  ],
+  "measurements": {
+    "samples": [
+      {
+        "iteration": 0,
+        "documents": 8,
+        "nodes": 7979,
+        "jsEventListeners": 898,
+        "heapUsedBytes": 34726808,
+        "owners": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "sharpen",
+                "at": 1793995970481
+              },
+              {
+                "reason": "bloom",
+                "at": 1793995970481
+              },
+              {
+                "reason": "bloom",
+                "at": 1793995970481
+              },
+              {
+                "reason": "sharpen",
+                "at": 1793995970481
+              },
+              {
+                "reason": "sharpen",
+                "at": 1793995970481
+              },
+              {
+                "reason": "detection-visibility",
+                "at": 1793995970482
+              },
+              {
+                "reason": "map-stack",
+                "at": 1793995970485
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995975477
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995975480
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995975483
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995975891
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995975892
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995975892
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995975986
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995975986
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995975986
+              }
+            ]
+          },
+          "resources": 74,
+          "canvasCount": 8,
+          "projectCount": 2
+        }
+      },
+      {
+        "iteration": 10,
+        "documents": 8,
+        "nodes": 7979,
+        "jsEventListeners": 898,
+        "heapUsedBytes": 35619268,
+        "owners": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995977668
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995977784
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995977784
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995977785
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995977901
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995977902
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995977902
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995978018
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995978019
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995978019
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995978134
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995978134
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995978135
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995978250
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995978251
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995978251
+              }
+            ]
+          },
+          "resources": 84,
+          "canvasCount": 8,
+          "projectCount": 2
+        }
+      },
+      {
+        "iteration": 20,
+        "documents": 8,
+        "nodes": 7979,
+        "jsEventListeners": 898,
+        "heapUsedBytes": 35827004,
+        "owners": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995978851
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995978965
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995978966
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995978967
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995979084
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995979084
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995979084
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995979200
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995979200
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995979200
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995979317
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995979317
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995979318
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995979433
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995979434
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995979434
+              }
+            ]
+          },
+          "resources": 94,
+          "canvasCount": 8,
+          "projectCount": 2
+        }
+      },
+      {
+        "iteration": 30,
+        "documents": 8,
+        "nodes": 7979,
+        "jsEventListeners": 898,
+        "heapUsedBytes": 36056084,
+        "owners": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995980034
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995980167
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995980167
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995980167
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995980284
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995980285
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995980285
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995980400
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995980400
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995980401
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995980515
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995980516
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995980516
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995980635
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995980635
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995980636
+              }
+            ]
+          },
+          "resources": 104,
+          "canvasCount": 8,
+          "projectCount": 2
+        }
+      },
+      {
+        "iteration": 40,
+        "documents": 8,
+        "nodes": 7983,
+        "jsEventListeners": 898,
+        "heapUsedBytes": 36141292,
+        "owners": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995981251
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995981366
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995981367
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995981367
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995981483
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995981483
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995981484
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995981599
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995981599
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995981600
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995981717
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995981717
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995981718
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995981834
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995981834
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995981835
+              }
+            ]
+          },
+          "resources": 114,
+          "canvasCount": 8,
+          "projectCount": 2
+        }
+      },
+      {
+        "iteration": 50,
+        "documents": 8,
+        "nodes": 7979,
+        "jsEventListeners": 898,
+        "heapUsedBytes": 36315984,
+        "owners": {
+          "entities": 0,
+          "dataSources": 3,
+          "imageryLayers": 1,
+          "primitives": 1,
+          "renderGovernor": {
+            "installed": true,
+            "mode": "idle",
+            "holds": [],
+            "recentRequests": [
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995982651
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995982767
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995982767
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995982768
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995982896
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995982898
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995982899
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995983051
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995983051
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995983052
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995983168
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995983169
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995983169
+              },
+              {
+                "reason": "layer-params:flights",
+                "at": 1793995983284
+              },
+              {
+                "reason": "layer-params:military",
+                "at": 1793995983284
+              },
+              {
+                "reason": "layer-params:satellites",
+                "at": 1793995983285
+              }
+            ]
+          },
+          "resources": 124,
+          "canvasCount": 8,
+          "projectCount": 2
+        }
+      }
+    ],
+    "controls": [
+      {
+        "index": 0,
+        "locationMs": 43.09999996423721,
+        "projectMs": 51.19999998807907
+      },
+      {
+        "index": 1,
+        "locationMs": 33.60000002384186,
+        "projectMs": 49.69999998807907
+      },
+      {
+        "index": 2,
+        "locationMs": 33.89999997615814,
+        "projectMs": 49.90000003576279
+      },
+      {
+        "index": 3,
+        "locationMs": 34.69999998807907,
+        "projectMs": 50.19999998807907
+      },
+      {
+        "index": 4,
+        "locationMs": 34.10000002384186,
+        "projectMs": 49.90000003576279
+      },
+      {
+        "index": 5,
+        "locationMs": 34.80000001192093,
+        "projectMs": 49.5
+      },
+      {
+        "index": 6,
+        "locationMs": 34.5,
+        "projectMs": 49.90000003576279
+      },
+      {
+        "index": 7,
+        "locationMs": 33,
+        "projectMs": 50
+      },
+      {
+        "index": 8,
+        "locationMs": 34.39999997615814,
+        "projectMs": 49.799999952316284
+      },
+      {
+        "index": 9,
+        "locationMs": 33.80000001192093,
+        "projectMs": 50
+      },
+      {
+        "index": 10,
+        "locationMs": 23.80000001192093,
+        "projectMs": 49.799999952316284
+      },
+      {
+        "index": 11,
+        "locationMs": 31.69999998807907,
+        "projectMs": 48.89999997615814
+      },
+      {
+        "index": 12,
+        "locationMs": 33,
+        "projectMs": 51.69999998807907
+      },
+      {
+        "index": 13,
+        "locationMs": 33.90000003576279,
+        "projectMs": 49.80000001192093
+      },
+      {
+        "index": 14,
+        "locationMs": 34.80000001192093,
+        "projectMs": 48.19999998807907
+      },
+      {
+        "index": 15,
+        "locationMs": 35.30000001192093,
+        "projectMs": 50
+      },
+      {
+        "index": 16,
+        "locationMs": 32.10000002384186,
+        "projectMs": 49.5
+      },
+      {
+        "index": 17,
+        "locationMs": 32.69999998807907,
+        "projectMs": 49.59999996423721
+      },
+      {
+        "index": 18,
+        "locationMs": 34.39999997615814,
+        "projectMs": 50
+      },
+      {
+        "index": 19,
+        "locationMs": 33,
+        "projectMs": 50
+      },
+      {
+        "index": 20,
+        "locationMs": 26.80000001192093,
+        "projectMs": 49.5
+      },
+      {
+        "index": 21,
+        "locationMs": 34.59999996423721,
+        "projectMs": 50.30000001192093
+      },
+      {
+        "index": 22,
+        "locationMs": 34,
+        "projectMs": 48.80000001192093
+      },
+      {
+        "index": 23,
+        "locationMs": 43.59999996423721,
+        "projectMs": 47.30000001192093
+      },
+      {
+        "index": 24,
+        "locationMs": 52.80000001192093,
+        "projectMs": 48.40000003576279
+      },
+      {
+        "index": 25,
+        "locationMs": 34,
+        "projectMs": 49.60000002384186
+      },
+      {
+        "index": 26,
+        "locationMs": 32.19999998807907,
+        "projectMs": 49.39999997615814
+      },
+      {
+        "index": 27,
+        "locationMs": 35.30000001192093,
+        "projectMs": 48.69999998807907
+      },
+      {
+        "index": 28,
+        "locationMs": 34.19999998807907,
+        "projectMs": 50
+      },
+      {
+        "index": 29,
+        "locationMs": 31.600000023841858,
+        "projectMs": 48.69999998807907
+      },
+      {
+        "index": 30,
+        "locationMs": 33.69999998807907,
+        "projectMs": 50.19999998807907
+      },
+      {
+        "index": 31,
+        "locationMs": 34.80000001192093,
+        "projectMs": 49.10000002384186
+      },
+      {
+        "index": 32,
+        "locationMs": 34.90000003576279,
+        "projectMs": 48.59999996423721
+      },
+      {
+        "index": 33,
+        "locationMs": 33.69999998807907,
+        "projectMs": 50.19999998807907
+      },
+      {
+        "index": 34,
+        "locationMs": 33.90000003576279,
+        "projectMs": 48.69999998807907
+      },
+      {
+        "index": 35,
+        "locationMs": 33.40000003576279,
+        "projectMs": 50.60000002384186
+      },
+      {
+        "index": 36,
+        "locationMs": 34,
+        "projectMs": 48.89999997615814
+      },
+      {
+        "index": 37,
+        "locationMs": 35,
+        "projectMs": 49.80000001192093
+      },
+      {
+        "index": 38,
+        "locationMs": 32.19999998807907,
+        "projectMs": 50.39999997615814
+      },
+      {
+        "index": 39,
+        "locationMs": 32.60000002384186,
+        "projectMs": 51.69999998807907
+      },
+      {
+        "index": 40,
+        "locationMs": 38.5,
+        "projectMs": 50.30000001192093
+      },
+      {
+        "index": 41,
+        "locationMs": 34,
+        "projectMs": 48.19999998807907
+      },
+      {
+        "index": 42,
+        "locationMs": 33.90000003576279,
+        "projectMs": 124.90000003576279
+      },
+      {
+        "index": 43,
+        "locationMs": 146.19999998807907,
+        "projectMs": 48.40000003576279
+      },
+      {
+        "index": 44,
+        "locationMs": 33.60000002384186,
+        "projectMs": 50.80000001192093
+      },
+      {
+        "index": 45,
+        "locationMs": 34.10000002384186,
+        "projectMs": 54.59999996423721
+      },
+      {
+        "index": 46,
+        "locationMs": 71.60000002384186,
+        "projectMs": 48.60000002384186
+      },
+      {
+        "index": 47,
+        "locationMs": 34.39999997615814,
+        "projectMs": 51.89999997615814
+      },
+      {
+        "index": 48,
+        "locationMs": 32.10000002384186,
+        "projectMs": 49.19999998807907
+      },
+      {
+        "index": 49,
+        "locationMs": 34.30000001192093,
+        "projectMs": 48.10000002384186
+      }
+    ],
+    "p95": {
+      "locationMs": 52.80000001192093,
+      "projectMs": 51.89999997615814
+    },
+    "delta": {
+      "nodes": 0,
+      "jsEventListeners": 0,
+      "documents": 0,
+      "heapUsedBytes": 1589176
+    }
+  }
+}

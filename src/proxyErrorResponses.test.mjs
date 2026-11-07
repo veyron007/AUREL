@@ -13,11 +13,14 @@ const source = ['local.js', 'common/http.js', 'aircraft/enrichment.js', 'terrain
 const detail = 'fixture-secret-token /internal/example <html>';
 
 // Execute the production middleware with isolated upstreams and cache storage.
-// Top-level function closing braces start in column zero in this module.
+// Top-level function bodies end with a standalone brace in column zero.
+// A multiline destructured parameter can also start a line with `}`.
 function extract(name) {
   const start = source.search(new RegExp(`(?:export )?(?:async )?function ${name}\\(`));
   assert.ok(start >= 0, `${name} must exist`);
-  const end = source.indexOf('\n}', start);
+  const closingBrace = source.slice(start).search(/\n}(?=\r?\n|$)/);
+  assert.ok(closingBrace >= 0, `${name} must have a closing body brace`);
+  const end = start + closingBrace;
   return source.slice(start, end + 2).replace(/^export /, '');
 }
 

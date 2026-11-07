@@ -66,6 +66,29 @@ export function validTerrainResult(result) {
   return Boolean(result) && Number.isFinite(result.ellipsoid);
 }
 
+/** Analytical reads must not assign a datum to old renderer-only cache rows. */
+export function terrainProfileCache(cache) {
+  return {
+    get(key) {
+      const entry = cache.get(key);
+      const metadata = entry?.result?.provenance;
+      return Number.isFinite(entry?.result?.elevation) &&
+        Number.isFinite(entry?.result?.lat) &&
+        Number.isFinite(entry?.result?.lon) &&
+        terrainPointKey([entry.result.lon, entry.result.lat]) === key &&
+        typeof metadata?.tileset === 'string' &&
+        metadata.tileset.length <= 100 &&
+        typeof metadata?.version === 'string' &&
+        metadata.version.length <= 40 &&
+        Number.isFinite(Date.parse(metadata?.retrievedAt))
+        ? entry
+        : undefined;
+    },
+    set: (key, value) => cache.set(key, value),
+    delete: (key) => cache.delete(key),
+  };
+}
+
 /**
  * A row the upstream DID return for its position, but with no usable height:
  * Re:Earth sporadically answers with a real `elevation` and a null
@@ -161,7 +184,37 @@ export async function fetchTerrainChunkWithRetry(
         error.retryable = false;
         throw error;
       }
-      return json.results;
+      const version =
+        typeof json.version === 'number' ? String(json.version) : json.version;
+      const provenance =
+        typeof json.tileset === 'string' &&
+        json.tileset.length > 0 &&
+        json.tileset.length <= 100 &&
+        typeof version === 'string' &&
+        version.length > 0 &&
+        version.length <= 40
+          ? {
+              tileset: json.tileset,
+              version,
+              retrievedAt: new Date(now()).toISOString(),
+            }
+          : null;
+      return json.results.map((row, index) => {
+        if (!row || typeof row !== 'object' || Array.isArray(row)) return row;
+        const hasCoordinates = 'lat' in row || 'lon' in row;
+        const matches =
+          Number.isFinite(row.lat) &&
+          Number.isFinite(row.lon) &&
+          points[index] &&
+          terrainPointKey([row.lon, row.lat]) ===
+            terrainPointKey(points[index]);
+        if (hasCoordinates && !matches) return null;
+        // Legacy renderer rows remain usable, but never acquire analytical provenance.
+        const { provenance: ignored, ...height } = row;
+        return provenance && matches
+          ? { ...height, provenance: { ...provenance } }
+          : height;
+      });
     } catch (error) {
       lastError = error;
       const retryable = error?.retryable !== false;

@@ -64,7 +64,7 @@ const quickPrompts = () => [t('Fly to Tokyo'), t('Show live flights')];
 <template>
   <section id="gev-chat-panel" :hidden="!props.view.chat.open" :data-minimized="props.view.chat.minimized ? 'true' : undefined" :aria-label="t('AI chat')">
     <header class="gev-chat-header">
-      <div><strong>{{ t('GEV CHAT') }}</strong><p>{{ t('Ask about the map. Tell it where to go.') }}</p></div>
+      <div><strong>{{ t('AUREL CHAT') }}</strong><p>{{ t('Ask about the map. Tell it where to go.') }}</p></div>
       <div id="gev-chat-header-actions">
         <PanelLayoutButtons :docked="props.view.layout.docked" :minimized="props.view.chat.minimized" @dock="emit('layout-dock')" @minimize="emit('chat-minimize')" />
         <button v-if="props.view.panel" id="gev-voice-settings-button" class="gev-voice-settings-button" type="button" :aria-label="t('Settings')" :title="t('Settings')" aria-controls="gev-voice-panel" :aria-expanded="String(props.view.voicePanel.settingsExpanded)" @click="emit('settings-button')"><span class="material-symbols-outlined gev-voice-settings-icon" aria-hidden="true">settings</span></button>
@@ -114,7 +114,7 @@ const quickPrompts = () => [t('Fly to Tokyo'), t('Show live flights')];
     <form id="gev-chat-form" @submit.prevent="emit('chat-submit')">
       <button id="gev-chat-restore" type="button" :aria-label="t('Expand chat')" :title="t('Expand chat')" @click="emit('chat-restore')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Z"></path></svg></button>
       <button id="gev-chat-attach" type="button" :disabled="props.view.chat.busy" :aria-label="t('Add attachment')" :aria-expanded="String(props.view.chat.attachMenuOpen)" aria-controls="gev-chat-attach-menu" @click="emit('chat-attach-toggle')" @keydown="emit('chat-attach-keydown', $event)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l9-9"></path></svg></button>
-      <textarea id="gev-chat-input" v-owned-draft="{ text: props.view.chat.draft, revision: props.view.chat.draftRevision }" :rows="props.view.chat.rows" maxlength="4000" :aria-label="t('Message GEV')" :placeholder="t('Ask GEV anything about the map…')" @input="emit('chat-input', $event.target.value)" @keydown="emit('chat-keydown', $event)"></textarea>
+      <textarea id="gev-chat-input" v-owned-draft="{ text: props.view.chat.draft, revision: props.view.chat.draftRevision }" :rows="props.view.chat.rows" maxlength="4000" :aria-label="t('Message AUREL')" :placeholder="t('Ask AUREL anything about the map…')" @input="emit('chat-input', $event.target.value)" @keydown="emit('chat-keydown', $event)"></textarea>
       <button id="gev-chat-send" :type="props.view.chat.busy ? 'button' : 'submit'" :disabled="props.view.chat.sendDisabled" :data-busy="String(props.view.chat.busy)" :aria-label="props.view.chat.busy ? t('Stop reply') : t('Send message')" :title="props.view.chat.busy ? t('Stop reply') : t('Send message')" @click="props.view.chat.busy && emit('chat-stop')"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path class="gev-chat-enter-icon" d="M19 5v8H5m5-5-5 5 5 5"></path><rect class="gev-chat-stop-icon" x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor" stroke="none"></rect></svg></button>
     </form>
   </section>

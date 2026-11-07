@@ -18,6 +18,7 @@
 
 import * as Cesium from 'cesium';
 import { roadLabel } from '../../data/routeSteps.js';
+import { createRouteSnapshot, validateRouteSnapshot } from './snapshot.js';
 import {
   t,
   msg,
@@ -900,6 +901,7 @@ export function createDirectionsLayer({ services, source }) {
   let _clickHandler = null;
   let _renderHeld = false;
   let _rowControlsListener = null;
+  const _routeListeners = new Set();
   let _dataManager = null;
   /** Set when arming failed because another tool holds the pointer. */
   let _pointerBlocked = false;
@@ -917,6 +919,7 @@ export function createDirectionsLayer({ services, source }) {
   /** Step the camera is on during FLY, or null. */
   let _flightStep = null;
   let _anchorTimer = null;
+  let _allowGroundFetch = true;
   let _anchorAttempts = 0;
   let _anchorStartedAt = 0;
   /**
@@ -947,6 +950,13 @@ export function createDirectionsLayer({ services, source }) {
   }
 
   function notifyRow() {
+    for (const listener of _routeListeners) {
+      try {
+        listener();
+      } catch {
+        /* A read-only observer cannot interrupt routing. */
+      }
+    }
     try {
       _rowControlsListener?.();
     } catch {
@@ -1080,6 +1090,7 @@ export function createDirectionsLayer({ services, source }) {
       _anchorStartedAt = 0;
       return;
     }
+    if (!_allowGroundFetch) return;
     services.ground.warmGroundFloor(pending);
     const delay = stepAnchorDelayMs(
       _anchorAttempts,
@@ -1090,8 +1101,9 @@ export function createDirectionsLayer({ services, source }) {
     _anchorTimer = setTimeout(anchorStepPoints, delay);
   }
 
-  function drawRoute(route) {
+  function drawRoute(route, { warmGround = true } = {}) {
     clearRouteGraphics();
+    _allowGroundFetch = warmGround;
     if (!_viewer) return;
     services.annotations.ensureFlowFabricRegistered();
     const positions = Cesium.Cartesian3.fromDegreesArray(route.geometry.flat());
@@ -1130,7 +1142,7 @@ export function createDirectionsLayer({ services, source }) {
       });
     }
     services.credits?.showOsmCredit?.(_viewer, 'directions');
-    services.ground.warmGroundFloor(cells);
+    if (_allowGroundFetch) services.ground.warmGroundFloor(cells);
     _anchorAttempts = 0;
     _anchorStartedAt = Date.now();
     anchorStepPoints();
@@ -1674,6 +1686,46 @@ export function createDirectionsLayer({ services, source }) {
       return { mode: _mode };
     },
 
+    /** Detached saved evidence; never exposes mutable provider or Cesium records. */
+    getRouteSnapshot() {
+      return createRouteSnapshot(_route, _a, _b, _lastUpdate);
+    },
+    /** Read-only observers share route changes without replacing the row owner. */
+    subscribeRoute(listener) {
+      if (typeof listener !== 'function') return () => {};
+      _routeListeners.add(listener);
+      return () => _routeListeners.delete(listener);
+    },
+
+    /**
+     * Restore an explicitly chosen local route. The caller enables Directions
+     * first. Validation precedes any change; no routing or ground provider runs.
+     * A subsequent explicit endpoint/mode change uses the normal routing flow.
+     */
+    restoreSavedRoute(snapshot) {
+      const saved = validateRouteSnapshot(snapshot);
+      if (!saved || !_viewer || !_enabled) return false;
+      clearAll();
+      _mode = saved.mode;
+      _a = { ...saved.a };
+      _b = { ...saved.b };
+      _route = {
+        mode: saved.mode,
+        distanceM: saved.distanceM,
+        durationS: saved.durationS,
+        geometry: saved.geometry.map((pair) => [...pair]),
+        steps: saved.steps.map((step) => ({ ...step })),
+        stepsTruncated: saved.stepsTruncated,
+      };
+      _lastUpdate = saved.lastUpdate;
+      _status = 'ready';
+      placeMarker('a', _a);
+      placeMarker('b', _b);
+      drawRoute(_route, { warmGround: false });
+      notifyRow();
+      return true;
+    },
+
     getRowControls() {
       return directionsRowControls(state());
     },
@@ -1728,6 +1780,7 @@ export function createDirectionsLayer({ services, source }) {
       _shellSeams = null;
       _dataManager = null;
       _rowControlsListener = null;
+      _routeListeners.clear();
       if (_stepPoints) {
         services.sprites.unregisterSpriteCollection('directions', _stepPoints);
         viewer.scene.primitives.remove(_stepPoints);

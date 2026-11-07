@@ -157,6 +157,40 @@ test('repeated Esri shot handoffs retain imagery and keep tile fallback live', a
   env.controller.destroy();
 });
 
+test('online imagery failure reaches local overview and releases remote terrain', async () => {
+  const env = publicFixture();
+  const overview = env.registry.sources.find(
+    (source) => source.descriptor.id === 'offline-overview',
+  );
+  overview.terrain = {
+    id: 'offline-ellipsoid',
+    create: () => ({ provider: { id: 'local-ellipsoid' } }),
+  };
+  try {
+    await env.controller.setStack('esri-imagery');
+    env.providers.get('esri-imagery').errorEvent.raise();
+    env.providers.get('esri-imagery').errorEvent.raise();
+    await settle();
+    assert.equal(env.controller.getActiveId(), 'osm');
+    env.providers.get('osm').errorEvent.raise();
+    env.providers.get('osm').errorEvent.raise();
+    await settle();
+    assert.equal(env.controller.getActiveId(), 'offline-overview');
+    assert.equal(env.viewer.terrainProvider.id, 'local-ellipsoid');
+    assert.equal(env.imagery.length, 1);
+    assert.equal(
+      env.imagery[0].provider,
+      env.providers.get('offline-overview'),
+    );
+    // Errors from discarded online imagery cannot steal the new selection.
+    env.providers.get('esri-imagery').errorEvent.raise();
+    await settle();
+    assert.equal(env.controller.getActiveId(), 'offline-overview');
+  } finally {
+    env.controller.destroy();
+  }
+});
+
 test('returning to the live provider supersedes a pending switch without rebuilding imagery', async () => {
   const env = publicFixture();
   await env.controller.setStack('esri-imagery');

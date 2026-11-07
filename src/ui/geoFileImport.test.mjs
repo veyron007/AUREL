@@ -398,6 +398,66 @@ function navigationDouble({ immediate = true, reassert = true } = {}) {
   };
 }
 
+test('autoFly false imports without stamping or moving the camera; explicit row navigation still works', async () => {
+  const nav = navigationDouble();
+  let stamps = 0;
+  nav.beginDeferredLocationNavigation = () => {
+    stamps++;
+    return 1;
+  };
+  const t = setup({ navigation: nav });
+  const [result] = await t.tool.importFiles([file('region.geojson')], {
+    autoFly: false,
+  });
+  assert.equal(result.ok, true);
+  assert.equal(stamps, 0);
+  assert.equal(t.flights.length, 0);
+  assert.equal(t.tool.list().length, 1);
+  assert.equal(t.tool.flyTo(result.id), true);
+  assert.equal(t.flights.length, 1);
+  t.tool.destroy();
+});
+
+test('a passive queued region import does not replace an earlier user import camera intent', async () => {
+  let release;
+  const pending = new Promise((resolve) => {
+    release = resolve;
+  });
+  const t = setup({
+    load: async (file) => {
+      if (file.name === 'chosen.geojson') await pending;
+      return {
+        dataSource: { show: true, name: file.name },
+        name: file.name,
+        format: 'geojson',
+        entityCount: 1,
+      };
+    },
+  });
+  const chosen = t.tool.importFiles([file('chosen.geojson')]);
+  const passive = t.tool.importFiles([file('region.geojson')], {
+    autoFly: false,
+  });
+  release();
+  await Promise.all([chosen, passive]);
+  assert.equal(t.flights.length, 1);
+  assert.equal(t.flights[0].name, 'chosen.geojson');
+  assert.equal(t.tool.list().length, 2);
+  t.tool.destroy();
+});
+
+test('region presentation is passed only for its explicit import batch', async () => {
+  const t = setup();
+  await t.tool.importFiles([file('region.geojson')], {
+    autoFly: false,
+    presentation: 'local-region',
+  });
+  await t.tool.importFiles([file('ordinary.geojson')]);
+  assert.equal(t.loads[0].opts.presentation, 'local-region');
+  assert.equal(t.loads[1].opts.presentation, undefined);
+  t.tool.destroy();
+});
+
 test('a direct camera gesture cancels the fly-to of a file still being read', async () => {
   for (const gesture of ['pointerdown', 'wheel']) {
     let release;

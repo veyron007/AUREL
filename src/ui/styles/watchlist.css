@@ -1,0 +1,323 @@
+/* Local monitoring controls share the existing rail and remain explicitly armed. */
+#left-panel-stack > #watchlist-panel {
+  position: relative;
+  min-height: 0;
+  pointer-events: auto;
+  overflow: hidden;
+  color: var(--workspace-text, #eee9df);
+  background: var(--workspace-surface, #181b1d);
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 14px;
+  box-shadow: var(--workspace-shadow);
+}
+#left-panel-stack > #watchlist-panel:not(.collapsed) {
+  height: var(--left-panel-allocated-height, auto);
+  max-height: var(--left-panel-allocated-height, 100%);
+}
+#watchlist-panel > .watchlist-panel-inner {
+  --inspector-gutter: 18px;
+  box-sizing: border-box;
+  height: 100%;
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block-start: 80px;
+  padding: var(--inspector-gutter);
+  background: var(--workspace-surface, #181b1d);
+}
+#watchlist-panel .panel-glow {
+  display: none;
+}
+#watchlist-panel .ui-panel__head {
+  margin-bottom: 18px;
+}
+/* Cover the full scrollport width, including its padding, while content scrolls. */
+#left-panel-stack > #watchlist-panel:not(.collapsed) .ui-panel__head {
+  position: sticky;
+  top: calc(-1 * var(--inspector-gutter));
+  z-index: 3;
+  box-sizing: border-box;
+  min-height: 68px;
+  margin: calc(-1 * var(--inspector-gutter)) calc(-1 * var(--inspector-gutter))
+    18px;
+  padding: 12px var(--inspector-gutter);
+  background: var(--workspace-surface, #181b1d);
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+#watchlist-panel .ui-panel__title {
+  color: inherit;
+  font: 650 17px/1.35 var(--font-sans);
+  letter-spacing: 0;
+}
+.watchlist-workspace {
+  display: grid;
+  gap: 16px;
+  font: 14px/1.55 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.watchlist-workspace :is(p, h2, h3, h4, dl, dd, ul) {
+  margin: 0;
+}
+.watchlist-workspace :is(h2, h3, h4) {
+  font-family: var(--font-sans);
+  color: inherit;
+}
+.watchlist-intro {
+  display: grid;
+  gap: 7px;
+}
+.watchlist-intro h2 {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.watchlist-eyebrow {
+  color: var(--workspace-accent, #bda679);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+}
+.watchlist-intro p,
+.watchlist-help,
+.watchlist-empty {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 12px;
+  line-height: 1.6;
+}
+.watchlist-workspace form {
+  display: grid;
+  gap: 8px;
+}
+.watchlist-workspace label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.watchlist-workspace :is(input, button, select) {
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 8px;
+  background: var(--workspace-raised, #24282a);
+  color: inherit;
+  font: inherit;
+}
+.watchlist-workspace :is(input, select) {
+  width: 100%;
+  padding: 9px 10px;
+}
+.watchlist-workspace button {
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.watchlist-workspace button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.watchlist-workspace button:hover:not(:disabled) {
+  border-color: var(--workspace-accent, #bda679);
+}
+.watchlist-workspace .watchlist-primary {
+  color: var(--workspace-surface, #181b1d);
+  background: var(--workspace-accent, #bda679);
+  border-color: transparent;
+}
+.watchlist-workspace :is(button, input, select, summary, a):focus-visible {
+  outline: 2px solid var(--workspace-accent, #bda679);
+  outline-offset: 3px;
+}
+.watchlist-workspace summary {
+  min-height: 44px;
+  box-sizing: border-box;
+  align-content: center;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  padding-block: 8px;
+}
+.watchlist-create-settings > summary {
+  color: var(--workspace-accent, #bda679);
+  border-block: 1px solid var(--workspace-border, var(--glass-border));
+}
+.watchlist-create-settings[open] > summary {
+  margin-bottom: 12px;
+}
+.watchlist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.watchlist-notice {
+  padding: 10px 12px;
+  border-inline-start: 2px solid var(--workspace-accent, #bda679);
+  background: var(--workspace-raised, #24282a);
+  font-size: 12px;
+}
+.watchlist-notice--error {
+  border-color: #c27668;
+}
+.watchlist-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--workspace-border, var(--glass-border));
+  border-radius: 10px;
+  background: var(--workspace-raised, #24282a);
+}
+.watchlist-card > header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+}
+.watchlist-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 5px;
+}
+.watchlist-state {
+  color: var(--workspace-accent, #bda679);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.watchlist-state::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.watchlist-source-name {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 11px;
+}
+.watchlist-baseline {
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  border-inline-start: 2px solid var(--workspace-border, var(--glass-border));
+  font-size: 12px;
+}
+.watchlist-baseline span {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 11px;
+}
+.watchlist-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+.watchlist-metrics > div:nth-child(n + 3) {
+  grid-column: 1 / -1;
+}
+.watchlist-metrics dt {
+  font-size: 11px;
+  color: var(--workspace-muted, var(--text-secondary));
+  margin-bottom: 3px;
+}
+.watchlist-metrics dd {
+  font: 12px/1.5 var(--font-mono);
+}
+.watchlist-details {
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  font-size: 11px;
+}
+.watchlist-details[open] > :not(summary) {
+  margin-block: 8px;
+}
+.watchlist-coordinates {
+  font: 10px/1.6 var(--font-mono);
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.watchlist-details ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.watchlist-summaries {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--workspace-border, var(--glass-border));
+  padding-top: 12px;
+}
+.watchlist-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.watchlist-section-heading h4 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.watchlist-section-heading button {
+  padding-inline: 8px;
+  font-size: 11px;
+}
+.watchlist-notification {
+  display: grid;
+  gap: 12px;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--workspace-border, var(--glass-border));
+}
+.watchlist-summary-time {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 10px;
+}
+.watchlist-summary-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.watchlist-summary-counts dt {
+  font-size: 11px;
+  color: var(--workspace-muted, var(--text-secondary));
+}
+.watchlist-summary-counts dd {
+  font: 500 24px/1.4 var(--font-sans);
+  color: var(--workspace-accent, #bda679);
+}
+.watchlist-summary-counts > div:nth-child(2) dd {
+  color: var(--workspace-text, #eee9df);
+}
+.watchlist-observations li {
+  display: grid;
+  gap: 3px;
+  padding-block: 6px;
+}
+.watchlist-observations strong {
+  font-size: 10px;
+  font-weight: 500;
+}
+.watchlist-observations span {
+  color: var(--workspace-muted, var(--text-secondary));
+  font-size: 10px;
+}
+@media (max-width: 520px) {
+  #watchlist-panel > .watchlist-panel-inner {
+    --inspector-gutter: 14px;
+    padding: var(--inspector-gutter);
+  }
+  .watchlist-card {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 720px) and (max-height: 520px) {
+  body[data-workspace-appearance].mobile-shell
+    #watchlist-panel
+    > .watchlist-panel-inner {
+    scroll-padding-block-start: 12px;
+  }
+}

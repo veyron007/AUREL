@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" fill="none">
+  <title>AUREL lens mark</title>
+  <circle cx="500" cy="500" r="358" stroke="#eee9df" stroke-width="25"/>
+  <path d="M176 651a358 358 0 0 1 476-475M824 349a358 358 0 0 1-476 475" stroke="#d7b778" stroke-width="25"/>
+  <ellipse cx="500" cy="500" rx="442" ry="174" transform="rotate(-37 500 500)" stroke="#d7b778" stroke-width="18"/>
+  <g id="globe">
+    <path d="m500 296 156 204-156 204-156-204 156-204Z" fill="#eee9df"/>
+    <path d="m500 398 78 102-78 102-78-102 78-102Z" fill="#141514"/>
+    <circle cx="500" cy="500" r="29" fill="#d7b778"/>
+  </g>
+  <circle cx="854" cy="238" r="29" fill="#eee9df"/>
+</svg>

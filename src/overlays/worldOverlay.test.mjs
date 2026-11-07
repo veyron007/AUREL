@@ -1343,6 +1343,27 @@ test('UI exclusions stay per-rect: overlapping chrome never merges into a boundi
   env.cleanup();
 });
 
+test('persistent search and workspace controls reserve only their visible rectangles', () => {
+  const controls = [
+    { id: 'aurel-search', rect: { left: 100, top: 12, width: 180, height: 44 } },
+    { id: 'aurel-workspace-topbar', rect: { left: 0, top: 0, width: 400, height: 64 } },
+    { id: 'aurel-workspace-nav', rect: { left: 8, top: 80, width: 80, height: 180 } },
+    { id: 'aurel-workspace-tools', rect: { left: 300, top: 80, width: 90, height: 160 } },
+    { id: 'aurel-workspace-sheet-controls', rect: { left: 100, top: 240, width: 180, height: 44 }, hidden: true },
+    { id: 'aurel-workspace', rect: { left: 0, top: 0, width: 400, height: 300 }, inInventory: false },
+  ];
+  const env = installMockEnvironment({ width: 400, height: 300, dpr: 1, occluders: controls });
+  initWorldOverlay(env.viewer);
+  let rectangles = [];
+  registerWorldOverlayPaintLane('detection', (frame) => {
+    rectangles = frame.uiRects.slice(0, frame.uiRectCount).map(({ x, y, w, h }) => ({ x, y, w, h }));
+  }, { id: 'workspace-exclusions', active: true, target: 'detection' });
+  env.postRender.raise();
+  assert.deepEqual(rectangles, controls.slice(0, 4).map(({ rect }) => inflatedRect(rect)),
+    'solid controls are measured separately; hidden sheet and transparent full-map host do not obscure content');
+  env.cleanup();
+});
+
 test('UI exclusions ignore chrome the user cannot see', () => {
   const env = installMockEnvironment({
     width: 400,

@@ -1,0 +1,161 @@
+{
+  "results": [
+    {
+      "name": "persistent search is visible before opening a tray",
+      "pass": true
+    },
+    {
+      "name": "coordinate search completes without external services",
+      "pass": true
+    },
+    {
+      "name": "explore opens one existing inspector",
+      "pass": true,
+      "detail": {
+        "destination": "explore",
+        "open": [
+          "lens-panel"
+        ]
+      }
+    },
+    {
+      "name": "compare opens one existing inspector",
+      "pass": true,
+      "detail": {
+        "destination": "compare",
+        "open": [
+          "data-panel"
+        ]
+      }
+    },
+    {
+      "name": "plan opens one existing inspector",
+      "pass": true,
+      "detail": {
+        "destination": "plan",
+        "open": [
+          "utilities-panel"
+        ]
+      }
+    },
+    {
+      "name": "library opens one existing inspector",
+      "pass": true,
+      "detail": {
+        "destination": "library",
+        "open": [
+          "fieldbook-panel"
+        ]
+      }
+    },
+    {
+      "name": "existing scene capture works from Library",
+      "pass": true
+    },
+    {
+      "name": "appearance preserves visual style and share state",
+      "pass": true
+    },
+    {
+      "name": "appearance restores after reload",
+      "pass": true
+    },
+    {
+      "name": "captured project remains available after reload",
+      "pass": true
+    },
+    {
+      "name": "phone task navigation retains visible keyboard focus",
+      "pass": true
+    },
+    {
+      "name": "phone inspector offers three distinct sizes",
+      "pass": true,
+      "detail": {
+        "collapsed": 17,
+        "half": 362.90625,
+        "full": 406.296875
+      }
+    },
+    {
+      "name": "phone search stays reachable",
+      "pass": true
+    },
+    {
+      "name": "sheet resizing preserves captured scene",
+      "pass": true
+    },
+    {
+      "name": "720px layout has no document horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "short-screen inspector sizing controls are unobscured touch targets",
+      "pass": true
+    },
+    {
+      "name": "keyboard activates Plan",
+      "pass": true
+    },
+    {
+      "name": "focused destination has a visible focus outline",
+      "pass": true
+    },
+    {
+      "name": "search errors are associated with the field",
+      "pass": true
+    },
+    {
+      "name": "legacy open panels remain stored while only one inspector paints",
+      "pass": true,
+      "detail": {
+        "open": true,
+        "preferences": [
+          {
+            "id": "data-panel",
+            "collapsed": false
+          },
+          {
+            "id": "pp-toggles",
+            "collapsed": false
+          }
+        ],
+        "presentation": [
+          {
+            "id": "data-panel",
+            "classes": "ui-panel panel-collapsible active collapsed accordion-collapsed ui-panel--collapsed"
+          },
+          {
+            "id": "pp-toggles",
+            "classes": "panel-collapsible ui-scroll"
+          }
+        ],
+        "visible": 1
+      }
+    },
+    {
+      "name": "Free-only remains active",
+      "pass": true
+    },
+    {
+      "name": "no paid browser host attempted",
+      "pass": true,
+      "detail": [
+        "services.arcgisonline.com",
+        "terrain.reearth.land",
+        "tile.openstreetmap.org"
+      ]
+    },
+    {
+      "name": "no runtime errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "externalHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ]
+}

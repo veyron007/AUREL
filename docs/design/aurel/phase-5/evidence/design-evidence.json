@@ -1,0 +1,59 @@
+{
+  "contract": "../HARDENING.md and ../../PHASE-5.md \u2014 free local workflows, bounded offline data and explicit monitoring/commands.",
+  "targetViewports": [
+    "1440x900",
+    "390x844",
+    "667x375"
+  ],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "73 scoped layout checks include labelled keyboard focus, reduced motion, 44px controls and full hit-tested action reachability. Not a full WCAG or screen-reader certification."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "All eight new panels tested at desktop/phone/landscape. Mobile scrollport clears task navigation and final controls remain reachable."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "Region/watchlist/command controller and rendered tests exercise pending/disabled/cancelled states."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": "Region preview and watch creation start empty without acquisition; screenshots and intercepted startup checks."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "Tampered offline bytes rejected before import; failed saves, expired leases and native receiver regressions covered."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "Unknown building heights remain null; source/coverage limitations shown. Watch source partial/cooldown states covered."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "commands-browser-checks.json covers ten explicit command checks; hardening-stress.json covers repeated real owner switching. Offline functional results are separately recorded in offline-checks.json."
+    },
+    "permission": {
+      "status": "not-applicable",
+      "reason": "No new accounts, paid providers or OS notification permissions. Local watch starts and command runs are explicit."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "1440x900",
+      "artifact": "commands-desktop.png",
+      "observation": "Explicit validated action preview uses the standard single inspector and retained app navigation."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "hardening-region-panel-390.png",
+      "observation": "Phone region admission remains scrollable, with visible keyboard focus and reachable controls."
+    },
+    {
+      "viewport": "667x375",
+      "artifact": "hardening-research-panel-667.png",
+      "observation": "Short-screen inspector uses the existing sheet scroller; source controls remain available."
+    }
+  ]
+}

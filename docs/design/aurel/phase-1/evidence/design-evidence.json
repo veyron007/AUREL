@@ -1,0 +1,65 @@
+{
+  "contract": "../CONTRACT.md — persistent search, four existing-tool destinations, one inspector, local appearance only, readable desktop/phone/short layouts; see PHASE-1.md for scope and limits.",
+  "targetViewports": ["1440x900", "1280x720", "390x844", "667x375"],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "Core search submits with Enter; task buttons activate by keyboard and have visible focus. Mobile task changes retain focus on a visible task button. Short-screen sheet controls pass actual elementFromPoint hit checks and 44px size checks. Error text is associated through aria-describedby and aria-invalid. Reduced-motion media is emulated for narrow/landscape captures. Field/Observatory labels were visually reviewed after contrast corrections. This is a scoped workflow review, not a full WCAG certification."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Desktop/laptop, phone, 720px zoom-equivalent and 667x375 short landscape were rendered. Search stays visible; phone has three distinct inspector sizes; scene content survives resizing; no document horizontal overflow at720px; short screen sizing controls are unobscured. Separate attribution sweep passes26 states with a representative credit line."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "Search owner busy-state fixture leaves stable search layout with Searching status and aria-busy; search-loading.png records the view. Real coordinate lookup completes offline in the acceptance test."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": "Initial workspace with no selected inspector leaves the globe, search and tools usable; observatory-desktop.png. Compare unavailable guidance points to the existing imagery layer rather than claiming results."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "Existing search owner error fixture renders inline alert and associates the field correctly; search-error.png and checks.json. No live provider failure is claimed by this fixture."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "All external requests were blocked. Local Natural Earth overview and its coarse-data attribution remain visible; imagery detail is not fabricated. Free-only remains active and no paid browser host is attempted."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "Coordinate search, four destinations, scene creation/capture, saved project availability after reload and appearance persistence all pass; library-desktop.png and checks.json."
+    },
+    "permission": {
+      "status": "not-applicable",
+      "reason": "This phase adds no permission or authorization workflow. Existing provider setup remains subject to Phase0 Free-only enforcement, independently checked in the browser; no credentials or account resources were changed."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "1440x900",
+      "artifact": "observatory-desktop.png",
+      "observation": "Selected dark workspace with persistent search, clear task rail and unobscured globe; actual bundled overview."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "field-desktop.png",
+      "observation": "Light appearance with existing scene authoring, readable captions after contrast correction, same map and style."
+    },
+    {
+      "viewport": "1280x720",
+      "artifact": "observatory-laptop.png",
+      "observation": "Laptop header/search and navigation fit the reduced desktop area."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "observatory-mobile.png",
+      "observation": "Phone task bar, persistent search and half-height inspector retain the existing saved scene; controls remain mounted."
+    },
+    {
+      "viewport": "667x375",
+      "artifact": "landscape.png",
+      "observation": "Compact single-row search header, bounded scrollable inspector and unobscured44px size controls on short landscape."
+    }
+  ]
+}

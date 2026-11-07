@@ -1,0 +1,55 @@
+{
+  "contract": "../CONTRACT.md \u2014 exact dated comparison and bounded native scientific raster inspection.",
+  "targetViewports": ["1440x900", "390x844"],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "Rendered panels expose labelled actions and alerts; browser checks keyboard comparison divider. Existing focus and mobile sheet behavior retained. Scoped checks, not a full WCAG certification."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Actual desktop and390px phone renders inspected. Research stays visible across resize, scrolls within its sheet and avoids document overflow."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "Rendered panel tests and controllers cover searching/probing/analysis busy states and cancellation."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": "Empty selection and catalogue states retain explicit actions; no acquisition on mount."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "Provider/controller tests reject malformed raster grids, stale requests, quota failures and failed persistence."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "Masked raster cells remain transparent/null; scene cloud percentage and uncertainty remain labelled."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "checks.json records ten browser checks with declared synthetic inputs; separate SCIENCE-ADMISSION records actual probes."
+    },
+    "permission": {
+      "status": "not-applicable",
+      "reason": "No new account or permission requirement. Source requests and export are explicit."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "1440x900",
+      "artifact": "chronicle-desktop.png",
+      "observation": "Actual dated comparison inspector, explicit acquisition inputs and existing divider."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "research-desktop.png",
+      "observation": "Native raster with masked pixels and NDVI scale; shown data are synthetic QA fixtures."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "research-mobile.png",
+      "observation": "Research inspector remains visible after resize and scrollable above task navigation."
+    }
+  ]
+}

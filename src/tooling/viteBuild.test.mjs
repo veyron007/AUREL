@@ -140,25 +140,25 @@ test('build helper does not discover environment values or construct local provi
   }
 });
 
-test('root config retains existing named exports and standalone provider order', () => {
+test('root config retains named exports and admits free-only providers in order', () => {
   for (const [name, value] of Object.entries(providers))
     assert.equal(compatibility[name], value, name);
   const config = standaloneConfig({ mode: 'test' }, { nominatimStorageDir });
   const standaloneProviders = config.plugins
-    .slice(4, -6)
+    .slice(5, -6)
     .map((plugin) => plugin.name);
-  assert.equal(
-    standaloneProviders.filter((name) => name === 'gemini-live-proxy').length,
-    1,
-  );
-  assert.equal(
-    standaloneProviders.indexOf('gemini-live-proxy'),
-    standaloneProviders.indexOf('openai-realtime-proxy') + 1,
-  );
+  assert.equal(config.plugins[4].name, 'standalone-free-only');
+  assert.equal(config.plugins[4].enforce, 'pre');
+  for (const paused of [
+    'gemini-live-proxy',
+    'openai-realtime-proxy',
+    'tomtom-proxy',
+  ])
+    assert.ok(!standaloneProviders.includes(paused), paused);
   assert.deepEqual(
-    standaloneProviders.filter((name) => name !== 'gemini-live-proxy'),
+    standaloneProviders,
     providers
-      .localProviderPlugins({ nominatimStorageDir })
+      .localProviderPlugins({ freeOnly: true, nominatimStorageDir })
       .map((plugin) => plugin.name),
   );
   assert.equal(config.plugins.at(-7).name, 'gev-key-setup');

@@ -9,6 +9,31 @@ const candidate = (product, day) => ({
   day,
 });
 
+test('historical probes retain server retrieval time and refuse wrong acquisition dates, with explicit retry', async () => {
+  let count = 0;
+  const loader = createThumbnailLoader({
+    requestThumbnail: async () =>
+      response({
+        headers: {
+          'Data-Present': 'true',
+          'Acquisition-Time': ++count === 1 ? '2026-10-23' : '2026-10-22',
+          'X-Aurel-Probed-At': '2026-11-07T00:00:00.000Z',
+        },
+      }),
+    createObjectUrl: () => 'blob:history',
+    revokeObjectUrl: () => {},
+  });
+  const row = { ...candidate('S30', '2026-10-22'), historical: true };
+  loader.request(row, BOX);
+  await settle();
+  assert.equal(loader.get(row.key).status, 'error');
+  loader.request(row, BOX);
+  await settle();
+  assert.equal(loader.get(row.key).status, 'present');
+  assert.equal(loader.get(row.key).probedAt, '2026-11-07T00:00:00.000Z');
+  loader.destroy();
+});
+
 /** A fetch whose responses the test releases, in any order. */
 function fakeFetch() {
   const calls = [];

@@ -1,3 +1,4 @@
+import { greatCircleKm } from '../../geoDistance.js';
 import { CCTV_AMBIENT_CARD_MAX } from '../../data/cctvLod.js';
 import { isolate, msg, t } from '../../i18n/index.js';
 import { ACTIVE_FRAME_REFRESH_MS, IDLE_FRAME_REFRESH_MS } from './policy.js';
@@ -59,6 +60,20 @@ export function summaryViewBandLabel(band) {
     default:
       return String(band || '').toUpperCase();
   }
+}
+
+/** Distance from the current viewer position, not the map's look-at point. */
+export function cameraDistanceFromViewerKm(camera, position) {
+  if (
+    !Number.isFinite(position?.latitude) ||
+    !Number.isFinite(position?.longitude)
+  )
+    return null;
+  const distance = greatCircleKm(camera, {
+    lat: (position.latitude * 180) / Math.PI,
+    lon: (position.longitude * 180) / Math.PI,
+  });
+  return Number.isFinite(distance) ? distance : null;
 }
 
 export function createPresentation({
@@ -168,6 +183,10 @@ export function createPresentation({
       name: camera.name,
       city: camera.city,
       provider: camera.provider,
+      distanceFromViewerKm: cameraDistanceFromViewerKm(
+        camera,
+        layerState._viewer?.camera?.positionCartographic,
+      ),
       lat: camera.lat,
       lon: camera.lon,
       headingDeg: camera.headingDeg,

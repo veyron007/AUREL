@@ -1,0 +1,64 @@
+{
+  "contract": "../CONTRACT.md \u2014 geographic Lens and local Fieldbook with honest source metadata, safe saving and preserved legacy tools.",
+  "targetViewports": [
+    "1440x900",
+    "390x844",
+    "667x375"
+  ],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "Lens tab Arrow/Home/End navigation and escaped labels pass rendered component tests. Existing workspace keyboard/focus workflow is retained. New actions use labeled 44px controls; this is scoped acceptance, not full WCAG certification."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Actual desktop, 390px phone and 667x375 landscape were rendered. Library remains visible and scrollable with no document horizontal overflow; source attribution remains visible above the mobile sheet."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "Rendered Fieldbook and Lens tests cover loading/busy presentation; browser waits for initialized owners before interaction."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": "Rendered component tests cover empty Lens and Library with labeled inspect/create actions and no account requirement."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "Rendered component tests cover failure messages with retained note editing and export. Controller/native IndexedDB tests exercise quota, conflict, malformed imports and recovery. These are fixtures, not live storage failures."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "External services blocked for browser acceptance. Source observation time, resolution and uncertainty remain explicitly Unknown."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "checks.json records real coordinate search, save note/place, reload, JSON backup, copy restore and responsive checks."
+    },
+    "permission": {
+      "status": "not-applicable",
+      "reason": "No new account permissions; local file chooser and explicit import/export actions only. Paid capabilities remain blocked."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "1440x900",
+      "artifact": "lens-evidence-desktop.png",
+      "observation": "Actual offline globe with selected coordinates and source metadata; unknown detail remains unknown."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "fieldbook-desktop.png",
+      "observation": "Actual saved local project with explicit Saved state and backup controls."
+    },
+    {
+      "viewport": "390x844",
+      "artifact": "fieldbook-mobile.png",
+      "observation": "Scrollable full-height phone inspector, reachable capture/brief controls and task navigation."
+    },
+    {
+      "viewport": "667x375",
+      "artifact": "fieldbook-landscape.png",
+      "observation": "Short-screen sheet and task controls remain available with no document horizontal overflow."
+    }
+  ]
+}

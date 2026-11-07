@@ -84,9 +84,30 @@ export function presentCctvPanel(state, enabled) {
         : t('CAL · {badge}', { badge: _calBadgeLabel(badge) }),
       calBadge: dirty ? 'edited' : badge || '',
     },
+    scope: activeCamera ? cameraScopeText(activeCamera) : null,
     meta: metaText(state, enabled, activeCamera, catalogCount),
     calibration: presentCctvCalibration(state, enabled),
   };
+}
+
+function cameraScopeText(camera) {
+  const location =
+    Number.isFinite(camera.lat) && Number.isFinite(camera.lon)
+      ? t('{lat}°, {lon}°', {
+          lat: camera.lat.toFixed(4),
+          lon: camera.lon.toFixed(4),
+        })
+      : t('Coordinates unknown');
+  const distance = Number.isFinite(camera.distanceFromViewerKm)
+    ? t('{distance} km from viewer position', {
+        distance: camera.distanceFromViewerKm.toFixed(1),
+      })
+    : t('Distance from viewer unknown');
+  return t('Selected camera: {city} · {location} · {distance}', {
+    city: camera.city || t('Location unknown'),
+    location,
+    distance,
+  });
 }
 
 function metaText(state, enabled, activeCamera, catalogCount) {

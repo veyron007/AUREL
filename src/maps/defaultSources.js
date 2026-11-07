@@ -7,6 +7,9 @@ import {
   createEsriImagery,
   createIonImagery,
   ESRI_ATTRIBUTION_HTML,
+  OVERVIEW_ATTRIBUTION_HTML,
+  createOfflineOverviewImagery,
+  createOfflineOverviewTerrain,
 } from './imagery.js';
 import { createWorldTerrain, createKeylessTerrain } from './terrain.js';
 
@@ -15,10 +18,13 @@ export function createDefaultMapSources({
   googleTileset = null,
   cesiumToken = '',
   googleApiKey = '',
+  freeOnly = false,
 } = {}) {
-  const ionToken = String(cesiumToken || '').trim();
+  const ionToken = freeOnly ? '' : String(cesiumToken || '').trim();
   const hasIon = Boolean(ionToken);
   const hasGoogle = Boolean(String(googleApiKey || '').trim());
+  const allowedTileset = freeOnly ? null : googleTileset;
+  const policyReason = () => t('Paused by Free-only; saved keys are preserved');
   const terrain = {
     id: hasIon ? 'world' : 'keyless',
     create: hasIon
@@ -26,29 +32,43 @@ export function createDefaultMapSources({
       : createKeylessTerrain,
   };
   return {
-    defaultId: googleTileset ? 'photoreal' : 'esri-imagery',
+    defaultId: allowedTileset ? 'photoreal' : 'esri-imagery',
     unknownId: 'photoreal',
-    recoveryId: googleTileset ? 'photoreal' : null,
-    state: { hasCesiumIonToken: hasIon },
+    recoveryId: allowedTileset ? 'photoreal' : null,
+    state: { hasCesiumIonToken: hasIon, freeOnly },
     sources: MAP_STACKS.map((descriptor) => {
       const common = {
         descriptor,
         available: !descriptor.requiresIon || hasIon,
         // Read when shown, so it follows the locale.
-        unavailableReason: descriptor.requiresIon
-          ? () =>
-              t('Needs {envVars} — add it in Provider Settings', {
-                envVars: keySetupRequirementEnvVars('cesium-ion'),
-              })
-          : null,
+        unavailableReason:
+          descriptor.requiresIon && freeOnly
+            ? policyReason
+            : descriptor.requiresIon
+              ? () =>
+                  t('Needs {envVars} — add it in Provider Settings', {
+                    envVars: keySetupRequirementEnvVars('cesium-ion'),
+                  })
+              : null,
       };
       if (descriptor.kind === 'photoreal')
         return {
           ...common,
-          available: Boolean(googleTileset),
-          unavailableReason: () =>
-            photorealUnavailableReason(hasIon || hasGoogle),
-          tileset: googleTileset,
+          available: Boolean(allowedTileset),
+          unavailableReason: freeOnly
+            ? policyReason
+            : () => photorealUnavailableReason(hasIon || hasGoogle),
+          tileset: allowedTileset,
+        };
+      if (descriptor.kind === 'offline-overview')
+        return {
+          ...common,
+          imagery: createOfflineOverviewImagery,
+          terrain: {
+            id: 'offline-ellipsoid',
+            create: createOfflineOverviewTerrain,
+          },
+          credit: OVERVIEW_ATTRIBUTION_HTML,
         };
       const imagery =
         descriptor.kind === 'ion'
@@ -60,6 +80,21 @@ export function createDefaultMapSources({
         ...common,
         imagery,
         terrain,
+        ...(descriptor.id === 'osm'
+          ? {
+              constructionFallback: {
+                id: 'offline-overview',
+                message:
+                  'Online maps unavailable; using the offline Natural Earth overview',
+              },
+              tileFailureFallback: {
+                id: 'offline-overview',
+                threshold: 2,
+                message:
+                  'Online map tiles unavailable; using the offline Natural Earth overview',
+              },
+            }
+          : {}),
         ...(descriptor.id === 'esri-imagery'
           ? {
               credit: ESRI_ATTRIBUTION_HTML,

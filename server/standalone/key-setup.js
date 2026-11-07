@@ -1,3 +1,4 @@
+import { FREE_ONLY_STATUS } from './free-only-status.js';
 import {
   knownKeySetupEnvVars,
   admitKeySetupRequest,
@@ -70,7 +71,10 @@ const DEV_FRESH_EXTERNAL_KEYS_AT_BOOT = new Set(
  * keys exist. Prod builds never register this middleware (apply: 'serve'), so
  * the panel's status fetch fails and the client removes the whole surface.
  */
-function keySetupEndpoint({ sourceRoot = defaultSourceRoot } = {}) {
+function keySetupEndpoint({
+  sourceRoot = defaultSourceRoot,
+  freeOnly = false,
+} = {}) {
   const respond = (res, statusCode, payload) => {
     res.statusCode = statusCode;
     res.setHeader('Content-Type', 'application/json');
@@ -175,7 +179,11 @@ function keySetupEndpoint({ sourceRoot = defaultSourceRoot } = {}) {
           : 'file'
         : null;
     }
-    return { ...status, store: storeName() };
+    return {
+      ...status,
+      ...(freeOnly ? FREE_ONLY_STATUS : {}),
+      store: storeName(),
+    };
   };
   // Atomically replace the store's content: fresh same-dir temp created 0600
   // with the exclusive flag, fsync, rename over the target. Closes the window

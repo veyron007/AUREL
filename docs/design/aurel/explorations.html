@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AUREL — Visual explorations</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #101211; color: #eee9df; font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 1680px; padding: 52px 44px 40px; margin: auto; }
+    .eyebrow, .label, .index, .badge, .spec-label { font: 11px/1.5 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .14em; }
+    .eyebrow { color: #d7b778; margin: 0 0 18px; }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 38px; }
+    h1 { font-size: clamp(30px, 3vw, 48px); font-weight: 400; letter-spacing: -.04em; line-height: 1.15; margin: 0; }
+    header p { color: #b0b2ab; max-width: 390px; margin: 0; }
+    .directions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+    article { min-width: 0; }
+    .heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .heading h2 { margin: 0; font-size: 22px; font-weight: 450; letter-spacing: -.03em; }
+    .index { color: #92998f; display: block; margin-bottom: 4px; }
+    .badge { color: #d7b778; padding: 6px 9px; border: 1px solid #66583c; background: #27251e; border-radius: 4px; font-size: 9px; white-space: nowrap; }
+    .specimen { height: 450px; padding: 20px; border: 1px solid var(--border); border-radius: 14px; color: var(--text); background: var(--base); position: relative; overflow: hidden; }
+    .ivory { --base: #e8e6df; --surface: #f8f6ef; --text: #242b2c; --muted: #5d6666; --accent: #386571; --tint: #d4e1e0; --border: #bcbfb7; --map: #7d8b87; }
+    .mindspace { --base: #141817; --surface: #202522; --text: #eee9df; --muted: #b0b8ad; --accent: #d7b778; --tint: #3b3528; --border: #4c5045; --map: #53665a; }
+    .signal { --base: #0b1b21; --surface: #142b32; --text: #e0eef1; --muted: #9fbac3; --accent: #8edbdb; --tint: #24494e; --border: #38565f; --map: #427788; }
+    .brand { display: flex; align-items: center; gap: 9px; font-size: 19px; letter-spacing: .23em; font-weight: 500; }
+    .lens { width: 28px; height: 28px; flex: 0 0 auto; color: var(--accent); }
+    .tagline { color: var(--muted); font-size: 10px; margin: 5px 0 0 37px; }
+    .spec-label { position: absolute; right: 20px; top: 28px; color: var(--muted); font-size: 8px; letter-spacing: .06em; }
+    .world { position: absolute; width: 360px; height: 360px; right: -140px; top: 82px; opacity: .5; color: var(--map); }
+    .layer-panel { width: 64%; position: relative; margin-top: 40px; padding: 15px 13px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+    .panel-title { color: var(--muted); font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; }
+    .layer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+    .switch { width: 25px; height: 14px; background: var(--border); border-radius: 10px; position: relative; flex-shrink: 0; }
+    .switch::before { content: ''; position: absolute; width: 10px; height: 10px; background: var(--surface); border-radius: 50%; top: 2px; left: 2px; }
+    .switch.on { background: var(--accent); }
+    .switch.on::before { left: 13px; background: var(--base); }
+    .readout { position: absolute; right: 22px; bottom: 107px; text-align: right; font: 10px/1.9 ui-monospace, monospace; color: var(--muted); }
+    .readout b { color: var(--text); font-weight: 500; }
+    .dock { position: absolute; left: 20px; right: 20px; bottom: 20px; display: flex; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 6px; gap: 4px; }
+    .dock span { flex: 1; font-size: 10px; text-align: center; padding: 10px 4px; border-radius: 4px; color: var(--muted); }
+    .dock .active { background: var(--tint); color: var(--accent); }
+    .concept-note { font: 9px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; position: absolute; bottom: 85px; left: 21px; color: var(--muted); }
+    .palette { display: flex; gap: 5px; margin: 18px 0 14px; }
+    .palette i { height: 7px; flex: 1; background: var(--swatch); border-radius: 2px; }
+    .description { color: #b0b2ab; font-size: 13px; margin: 0; min-height: 64px; }
+    .verdict { color: #d7b778; font-size: 11px; margin: 14px 0 0; border-top: 1px solid #30342f; padding-top: 12px; }
+    .verdict.secondary { color: #9da69c; }
+    footer { display: flex; justify-content: space-between; gap: 30px; border-top: 1px solid #33372f; margin-top: 36px; padding-top: 22px; color: #a5ada3; font-size: 12px; }
+    footer strong { color: #eee9df; font-weight: 500; }
+    .reference { max-width: 550px; }
+    .shared { display: none; }
+    @media(max-width: 1000px) { main { padding: 30px 22px; } header { align-items: start; flex-direction: column; gap: 20px; } .directions { grid-template-columns: 1fr; max-width: 620px; } .specimen { height: 430px; } .description { min-height: auto; } article { margin-bottom: 24px; } footer { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <svg class="shared" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="lens" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="currentColor"/><ellipse cx="20" cy="20" rx="19" ry="7" transform="rotate(-37 20 20)" fill="none" stroke="currentColor"/><path d="m20 10 7 10-7 10-7-10Z" fill="currentColor"/></symbol>
+    <symbol id="world" viewBox="0 0 360 360"><circle cx="180" cy="180" r="169" fill="none" stroke="currentColor"/><ellipse cx="180" cy="180" rx="88" ry="169" fill="none" stroke="currentColor"/><ellipse cx="180" cy="180" rx="169" ry="65" fill="none" stroke="currentColor"/><path d="M12 180h336M180 12v336M42 86h276M42 274h276" fill="none" stroke="currentColor"/><path d="m94 72 37 15 27 44-22 33 20 38-28 57-19-17-9-47-35-25-6-45 35-53Zm114 5 54 14 39 46-26 31-24-10-18 27-23-33-37-4-9-29 44-42Zm35 142 41 20 4 32-32 16-28-28 15-40Z" fill="currentColor" opacity=".35"/></symbol>
+  </defs></svg>
+  <main>
+    <p class="eyebrow">AUREL / Identity exploration / 01</p>
+    <header><h1>One lens.<br>Three ways to see.</h1><p>Visual studies for a personal world console. Inspired by the porcelain, brass, burgundy and dark interiors of VisionQuest’s official key art.</p></header>
+    <section class="directions" aria-label="Three visual directions">
+      <article>
+        <div class="heading"><div><span class="index">01 / Porcelain</span><h2>Ivory Synth</h2></div></div>
+        <div class="specimen ivory">
+          <div class="brand"><svg class="lens"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><span class="spec-label">Visual study</span>
+          <svg class="world"><use href="#world"/></svg>
+          <div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div>
+          <div class="readout">VIEW <b>ORBITAL</b><br>COORDINATES <b>—</b><br>FEED <b>PREVIEW</b></div><span class="concept-note">Concept · no live data</span>
+          <div class="dock"><span class="active">⌕ &nbsp; Locate</span><span>◉ &nbsp; Assistant</span><span>◌ &nbsp; Display</span></div>
+        </div>
+        <div class="palette"><i style="--swatch:#e8e6df"></i><i style="--swatch:#f8f6ef"></i><i style="--swatch:#242b2c"></i><i style="--swatch:#386571"></i><i style="--swatch:#a9b7ae"></i></div>
+        <p class="description">White Vision’s porcelain translated into crisp panels, graphite typography and cool precision. Quiet and exceptionally readable in daylight.</p>
+        <p class="verdict secondary">Not selected · bright surfaces compete with nighttime imagery.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">02 / Warm intelligence</span><h2>Mindspace</h2></div><span class="badge">Selected</span></div>
+        <div class="specimen mindspace">
+          <div class="brand"><svg class="lens"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><span class="spec-label">Visual study</span>
+          <svg class="world"><use href="#world"/></svg>
+          <div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div>
+          <div class="readout">VIEW <b>ORBITAL</b><br>COORDINATES <b>—</b><br>FEED <b>PREVIEW</b></div><span class="concept-note">Concept · no live data</span>
+          <div class="dock"><span class="active">⌕ &nbsp; Locate</span><span>◉ &nbsp; Assistant</span><span>◌ &nbsp; Display</span></div>
+        </div>
+        <div class="palette"><i style="--swatch:#141817"></i><i style="--swatch:#d7b778"></i><i style="--swatch:#eee9df"></i><i style="--swatch:#75424b"></i><i style="--swatch:#9ba99b"></i></div>
+        <p class="description">Charcoal instruments, warm ivory text, restrained brass highlights and burgundy depth. The warmth of the Mindspace, with the discipline of an observatory.</p>
+        <p class="verdict">Selected · clearer hierarchy, low glare, distinct from map signals.</p>
+      </article>
+      <article>
+        <div class="heading"><div><span class="index">03 / Cool precision</span><h2>Signal Glass</h2></div></div>
+        <div class="specimen signal">
+          <div class="brand"><svg class="lens"><use href="#lens"/></svg>AUREL</div><p class="tagline">Your world. In perspective.</p><span class="spec-label">Visual study</span>
+          <svg class="world"><use href="#world"/></svg>
+          <div class="layer-panel"><div class="panel-title">Data layers</div><div class="layer-row">Aircraft<span class="switch on"></span></div><div class="layer-row">Satellites<span class="switch"></span></div><div class="layer-row">Weather<span class="switch"></span></div></div>
+          <div class="readout">VIEW <b>ORBITAL</b><br>COORDINATES <b>—</b><br>FEED <b>PREVIEW</b></div><span class="concept-note">Concept · no live data</span>
+          <div class="dock"><span class="active">⌕ &nbsp; Locate</span><span>◉ &nbsp; Assistant</span><span>◌ &nbsp; Display</span></div>
+        </div>
+        <div class="palette"><i style="--swatch:#0b1b21"></i><i style="--swatch:#142b32"></i><i style="--swatch:#8edbdb"></i><i style="--swatch:#e0eef1"></i><i style="--swatch:#9fbac3"></i></div>
+        <p class="description">Glacial silver over deep teal, informed by synthetic light and glass. An evolution of the original cockpit’s cool instrumentation.</p>
+        <p class="verdict secondary">Not selected · too close to the original cyan-led visual language.</p>
+      </article>
+    </section>
+    <footer><div><strong>The decision: a quieter frame for a complex world.</strong><br>Brass denotes interface emphasis. Feed colors, map imagery and status meaning retain their own identities.</div><div class="reference">Conceptual comparison only. Identical static specimens isolate the palette decision; these are not live controls or live telemetry. No Marvel artwork is included.</div></footer>
+  </main>
+</body>
+</html>

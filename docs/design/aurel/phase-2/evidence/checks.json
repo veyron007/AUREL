@@ -1,0 +1,58 @@
+{
+  "checks": [
+    {
+      "name": "coordinate search opens a geographic Lens dossier",
+      "pass": true
+    },
+    {
+      "name": "unknown imagery detail is stated honestly",
+      "pass": true
+    },
+    {
+      "name": "Lens saves place and note in the real local library",
+      "pass": true
+    },
+    {
+      "name": "backup preview excludes settings and credentials",
+      "pass": true
+    },
+    {
+      "name": "downloaded backup contains place, note and source evidence only",
+      "pass": true
+    },
+    {
+      "name": "saved project and note survive browser reload",
+      "pass": true
+    },
+    {
+      "name": "backup import presents a preview before changing a project",
+      "pass": true
+    },
+    {
+      "name": "restore creates a second project without overwriting the first",
+      "pass": true
+    },
+    {
+      "name": "phone Library panel remains visible and scrollable",
+      "pass": true
+    },
+    {
+      "name": "short landscape has no horizontal document overflow",
+      "pass": true
+    },
+    {
+      "name": "no browser runtime errors",
+      "pass": true
+    },
+    {
+      "name": "no billable provider host requested",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "blockedExternalHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ]
+}

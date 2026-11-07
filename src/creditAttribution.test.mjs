@@ -227,6 +227,62 @@ const GUARDED_PROPS = new Set([
   'height', 'min-height', 'max-height', 'position', 'transform', 'translate', 'scale', 'zoom',
 ]);
 
+// The AUREL workspace owns a separate responsive composition. Its eight exact
+// box rules are pinned below rather than silently admitted to the legacy
+// dock/rail model, which assumes a different credit and panel layout.
+const WORKSPACE_BOX_RULES = new Map([
+  [
+    'body[data-workspace-appearance]:not(.mobile-shell) :is(#left-panel-stack, #right-context-rail)|',
+    [
+      'top=var(--workspace-top)',
+      'bottom=150px',
+      'inset-inline-end=20px',
+      'transform=none',
+    ],
+  ],
+  [
+    'body[data-workspace-appearance]:not(.mobile-shell) #command-dock|',
+    ['bottom=38px', 'min-height=48px'],
+  ],
+  [
+    'body[data-workspace-appearance]:not(.ui-clean-view):not(.recording-mode):not(.mobile-shell) #cesium-credits|',
+    ['bottom=8px!important'],
+  ],
+  [
+    'body[data-workspace-appearance].mobile-shell[data-mobile-sheet] :is(#left-panel-stack, #right-context-rail)|(max-width: 720px)',
+    ['max-height=var(--workspace-sheet-height)'],
+  ],
+  [
+    'body[data-workspace-appearance].mobile-shell:not(.recording-mode):not(.cockpit-mode):not(.ui-clean-view) #cesium-credits|(max-width: 720px)',
+    ['bottom=calc(var(--mobile-tab-space) + 160px)!important'],
+  ],
+  [
+    'body[data-workspace-appearance].mobile-shell[data-mobile-sheet]:not(.recording-mode):not(.cockpit-mode):not(.ui-clean-view) #cesium-credits|(max-width: 720px)',
+    [
+      'bottom=calc( var(--mobile-tab-space) + var(--workspace-sheet-height) + 64px )!important',
+    ],
+  ],
+  [
+    'body[data-workspace-appearance]:not(.mobile-shell) :is(#left-panel-stack, #right-context-rail)|(max-height: 520px) and (min-width: 721px)',
+    ['bottom=90px'],
+  ],
+  [
+    'body[data-workspace-appearance] #command-dock|(max-height: 520px) and (min-width: 721px)',
+    ['bottom=18px'],
+  ],
+]);
+
+function workspaceBoxSignature({ rule, part }) {
+  const media = rule.media.join(' && ');
+  const declarations = rule.decls
+    .filter((decl) => GUARDED_PROPS.has(decl.prop))
+    .map(
+      (decl) =>
+        `${decl.prop}=${decl.value.replace(/\s+/g, ' ')}${decl.important ? '!important' : ''}`,
+    );
+  return { key: `${part}|${media}`, declarations };
+}
+
 // Custom properties allowed inside a modelled offset. Each is a pinned-tray
 // stack height, proven non-negative below, so evaluating them at 0 is a
 // conservative floor rather than a guess.
@@ -384,11 +440,50 @@ test('the specificity calculator itself is pinned', () => {
   }
 });
 
+test('workspace attribution geometry is an explicit, bounded extension', () => {
+  const entries = ownBoxEntries().filter(
+    ({ rule, part }) =>
+      part.includes('[data-workspace-appearance]') &&
+      rule.decls.some((decl) => GUARDED_PROPS.has(decl.prop)),
+  );
+  const seen = new Set();
+  for (const entry of entries) {
+    const { key, declarations } = workspaceBoxSignature(entry);
+    assert.ok(
+      WORKSPACE_BOX_RULES.has(key),
+      `unmodelled workspace geometry: ${key}`,
+    );
+    assert.deepEqual(
+      declarations,
+      WORKSPACE_BOX_RULES.get(key),
+      `workspace geometry changed: ${key}; recheck credits in the browser`,
+    );
+    assert.ok(!seen.has(key), `duplicate workspace box rule: ${key}`);
+    seen.add(key);
+  }
+  assert.deepEqual(
+    [...seen].sort(),
+    [...WORKSPACE_BOX_RULES.keys()].sort(),
+    'a pinned workspace box rule was removed or the selector/media changed',
+  );
+  // Desktop: the rail ends 150px above the viewport bottom (90px in a
+  // landscape window), clear of a credit line at 8px plus its measured 28px.
+  assert.ok(150 - (8 + CREDIT_HEIGHT_PX) >= MIN_CLEARANCE_PX);
+  assert.ok(90 - (8 + CREDIT_HEIGHT_PX) >= MIN_CLEARANCE_PX);
+  // On phones the credit bottom is the sheet's bottom plus its full height
+  // plus 64px. The 28px line clears the sheet and its measured 57px controls.
+  assert.ok(64 - CREDIT_HEIGHT_PX >= MIN_CLEARANCE_PX);
+  assert.ok(64 - 57 > 0);
+});
+
 test('the model refuses every cascade construct it cannot resolve', () => {
   const complaints = [];
   for (const { rule, part } of ownBoxEntries()) {
     const guarded = rule.decls.filter((decl) => GUARDED_PROPS.has(decl.prop));
     if (!guarded.length) continue;
+    // Independently pinned above. Every future workspace box selector or
+    // declaration fails that exact inventory, including media changes.
+    if (part.includes('[data-workspace-appearance]')) continue;
     if (!RECOGNIZED.has(part)) {
       complaints.push(`unrecognized selector positions a modelled element: "${part}" (${guarded.map((d) => d.prop).join(', ')})`);
       continue;

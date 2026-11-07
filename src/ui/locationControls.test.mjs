@@ -264,3 +264,31 @@ test('controls that replace others can start with the field open', () => {
   assert.equal(f.controls.presentation().searchExpanded, true);
   assert.equal(f.elements.search.focused, undefined);
 });
+
+test('the visible search action and Enter share the existing lookup and stop on disposal', () => {
+  const f = fixture();
+  f.elements.search.value = '30.3258, 78.0438';
+  f.controls.submitSearch();
+  f.elements.search.fire('keydown', { key: 'Enter' });
+  assert.deepEqual(f.calls, [
+    ['search', '30.3258, 78.0438'],
+    ['search', '30.3258, 78.0438'],
+  ]);
+  f.controls.destroy();
+  f.controls.submitSearch();
+  f.elements.search.fire('keydown', { key: 'Enter' });
+  assert.equal(f.calls.length, 2);
+});
+
+test('staging a local search opens a bounded query without navigating', () => {
+  const f = fixture();
+  assert.equal(f.controls.stageSearch('  Dehradun  '), true);
+  assert.equal(f.elements.search.value, 'Dehradun');
+  assert.equal(f.view().searchExpanded, true);
+  assert.equal(f.elements.search.focused, true);
+  assert.deepEqual(f.calls, [['edit']]);
+  assert.equal(f.controls.stageSearch('x'.repeat(201)), false);
+  assert.equal(f.elements.search.value, 'Dehradun');
+  f.controls.destroy();
+  assert.equal(f.controls.stageSearch('Delhi'), false);
+});

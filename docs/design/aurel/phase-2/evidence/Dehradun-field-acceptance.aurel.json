@@ -1,0 +1,63 @@
+{
+  "kind": "aurel-fieldbook",
+  "version": 1,
+  "id": "e7d6eadb-2a29-4675-802f-58181cbd13a7",
+  "title": "Dehradun field acceptance",
+  "createdAt": "2026-11-06T18:49:24.363Z",
+  "updatedAt": "2026-11-06T18:49:26.708Z",
+  "revision": 3,
+  "archivedAt": null,
+  "places": [
+    {
+      "aliases": [],
+      "extent": [
+        78.02880000000005,
+        30.3108,
+        78.05880000000002,
+        30.3408
+      ],
+      "createdAt": "2026-11-06T18:49:24.375Z",
+      "name": "30.3258° N, 78.0438° E",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          78.0438,
+          30.3258
+        ]
+      },
+      "id": "f152f58a-2b27-45d8-8aa6-008e98e7a934"
+    }
+  ],
+  "notes": [
+    {
+      "createdAt": "2026-11-06T18:49:25.504Z",
+      "updatedAt": "2026-11-06T18:49:25.504Z",
+      "subjectId": "f152f58a-2b27-45d8-8aa6-008e98e7a934",
+      "text": "Visit Dehradun with a saved offline note.",
+      "id": "966dce31-fe9f-447c-8645-03c537fbf82e"
+    }
+  ],
+  "evidence": [
+    {
+      "applicableTime": null,
+      "retrievedAt": null,
+      "extent": null,
+      "resolutionM": null,
+      "uncertainty": null,
+      "coverage": "unknown",
+      "feedState": "unknown",
+      "attribution": null,
+      "license": null,
+      "link": null,
+      "subjectId": "f152f58a-2b27-45d8-8aa6-008e98e7a934",
+      "sourceId": "offline-overview",
+      "sourceLabel": "Natural Earth · offline overview",
+      "kind": "imagery",
+      "id": "0b6315c3-2f03-4345-9746-b73dbcd359b3"
+    }
+  ],
+  "routes": [],
+  "drawings": [],
+  "attachments": [],
+  "sceneDocuments": []
+}

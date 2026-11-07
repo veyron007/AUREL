@@ -589,3 +589,27 @@ test('a retired Operator layout falls back to Tactical in the live HUD', () => {
     env.restore();
   }
 });
+
+test('normal HUD never presents camera zoom as image resolution or collection time', () => {
+  const env = installHudEnvironment();
+  let hud;
+  try {
+    hud = new IntelHUD(env.viewer, { publish: env.publish });
+    for (const height of [50, 600, 12000]) {
+      env.viewer.camera.positionCartographic.height = height;
+      hud._updateCameraData();
+      assert.equal(hud._view.gsd, 'Imagery resolution unknown');
+      assert.equal(hud._view.classification, 'Geographic view');
+      assert.equal(hud._view.orbital, 'Orbit unknown');
+      assert.equal(hud._view.rec, 'VIEW');
+      assert.equal(hud._view.recShown, false);
+      assert.match(hud._view.coll, /^UTC: \d{2}:\d{2}:\d{2}Z$/);
+    }
+    hud._currentStyle = 'thermal';
+    hud._updateCameraData();
+    assert.match(hud._view.gsd, /^SIM GSD:/);
+  } finally {
+    hud?.destroy();
+    env.restore();
+  }
+});

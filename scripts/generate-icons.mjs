@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Renders the home-screen and favicon rasters from `public/logo.svg`.
+// Renders the home-screen and favicon rasters from `public/aurel-mark.svg`.
 //
 // Re-run after changing the logo: `node scripts/generate-icons.mjs`. The output
 // is committed, because the install icons have to exist in a plain `vite build`
@@ -13,11 +13,11 @@ const REPO_ROOT = path.resolve(
   fileURLToPath(new URL('.', import.meta.url)),
   '..',
 );
-const LOGO = path.join(REPO_ROOT, 'public', 'logo.svg');
+const LOGO = path.join(REPO_ROOT, 'public', 'aurel-mark.svg');
 const OUT_DIR = path.join(REPO_ROOT, 'public', 'icons');
 
-/** `--bg-dark` from src/ui/styles/foundation.css, so the tile matches the app. */
-const BACKGROUND = '#0a0a0f';
+/** AUREL background from src/ui/styles/aurel.css. */
+const BACKGROUND = '#101314';
 
 /**
  * Fraction of the canvas the mark is allowed to occupy.
@@ -39,9 +39,7 @@ const TARGETS = [
 /** Fit the logo inside `size * inset` and centre it on an opaque square. */
 async function render(svg, { size, inset }) {
   const box = Math.round(size * inset);
-  // The logo's viewBox is wider than it is tall, so `contain` bounds it by
-  // width and leaves the vertical padding uneven — centring is done by the
-  // composite below rather than by the resize.
+  // Contain the mark without distortion and centre it on the install tile.
   const mark = await sharp(svg, { density: 384 })
     .resize(box, box, {
       fit: 'contain',

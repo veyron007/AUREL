@@ -16,11 +16,11 @@ const googleApiKey = () => globalThis.window?.__GOOGLE_MAPS_API_KEY__ || null;
  * Mapillary, Google Street View, KartaView and Panoramax, once the Mapillary
  * source is supplied; else none.
  */
-function defaultProviders(sources) {
+function defaultProviders(sources, freeOnly) {
   if (sources.mapillary == null) return [];
   return [
     createMapillaryProvider({ source: sources.mapillary }),
-    createGoogleProvider({ getApiKey: googleApiKey }),
+    ...(!freeOnly ? [createGoogleProvider({ getApiKey: googleApiKey })] : []),
     createKartaViewProvider(),
     createPanoramaxProvider(),
   ];
@@ -33,7 +33,8 @@ function defaultProviders(sources) {
  */
 export function createApplicationStreetLevel({
   sources = {},
-  providers = defaultProviders(sources),
+  freeOnly = import.meta.env?.GEV_FREE_ONLY === true,
+  providers = defaultProviders(sources, freeOnly),
 }) {
   return createStreetLevelLayer({
     providers,

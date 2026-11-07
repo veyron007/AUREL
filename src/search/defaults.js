@@ -20,6 +20,7 @@ import { createAlpsGeocoder } from './alpsGeocoder.js';
  */
 export function createDefaultPlaceSearch({
   resolveApiKey,
+  freeOnly = import.meta.env?.GEV_FREE_ONLY === true,
   fetchImpl = (...args) => fetch(...args),
   signal,
   endpoints = {},
@@ -27,6 +28,7 @@ export function createDefaultPlaceSearch({
   presets = null,
   geocoding = null,
 } = {}) {
+  const admittedApiKey = freeOnly ? () => undefined : resolveApiKey;
   if (geocoding && geocoding.provider !== 'nominatim')
     throw new TypeError('Unsupported geocoding provider');
   const nominatimConfigured = endpoints.nominatim
@@ -56,7 +58,7 @@ export function createDefaultPlaceSearch({
             // Photon or Nominatim then produces.
             createGoogleGeocoder({
               request(query, { bias, signal }) {
-                if (!resolveApiKey?.()) return null;
+                if (!admittedApiKey?.()) return null;
                 const params = new URLSearchParams({ address: query });
                 if (bias) params.set('bounds', bias);
                 return fetchImpl(
@@ -101,8 +103,10 @@ export function createDefaultPlaceSearch({
   });
   const operations = createHttpGeospatialProvider({
     fetchImpl,
-    resolveApiKey,
-    endpoints,
+    resolveApiKey: admittedApiKey,
+    endpoints: freeOnly
+      ? { ...endpoints, reverse: null, textSearch: null, nearby: null }
+      : endpoints,
   });
   return {
     ...forward,

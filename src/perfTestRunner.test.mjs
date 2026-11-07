@@ -34,6 +34,7 @@ test('timing assertions are skipped with an actionable message unless explicitly
 test('test:perf discovers every benchmark and enables timing budgets in a serial process', (t) => {
   const root = mkdtempSync(path.join(tmpdir(), 'gev-perf-runner-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(path.join(root, 'scripts'), { recursive: true });
   const expected = [
     'server/providers/example/provider.perf.test.mjs',
     'src/layers/anotherLayer/model.perf.test.mjs',

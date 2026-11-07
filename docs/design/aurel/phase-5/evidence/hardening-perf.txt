@@ -1,0 +1,18 @@
+
+> gods-eye-view@0.3.0 test:perf
+> node scripts/run-perf-tests.mjs
+
+✔ 500 / 2,000 / 5,000 icon model updates stay within their named timing budgets (87.605708ms)
+ℹ N=500; initial=0.474ms; incremental10% mean=0.558ms, max=1.673ms; budget=4ms; unchanged writes=0
+ℹ N=2000; initial=2.423ms; incremental10% mean=0.580ms, max=1.446ms; budget=8ms; unchanged writes=0
+ℹ N=5000; initial=4.870ms; incremental10% mean=2.500ms, max=8.315ms; budget=20ms; unchanged writes=0
+✔ dense continental production moveEnd pipeline yields every 4ms, including cold tiles and real Cesium billboard updates (600.697208ms)
+ℹ 6,144 cells + 500 observations, 4980 glow splats + 70 real icons; moveEnd enqueue max=0.305ms; cold max CPU slice=1.855ms; all max CPU slice=1.987ms; warm total CPU median=3.992ms; warm slice p95=0.965ms; raw wall slice max=7.845ms; observed GC pauses=7; repeated Cartesian builds=0; CPU startup calibration=259ms, checksum=-1962589614 (cold fixture created afterward); warm phase mean ms={"density":"2.783","bucket":"0.560","rank":"0.086","billboard-update":"0.143","overlay-publish":"0.176"}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2212.1155

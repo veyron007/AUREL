@@ -6,7 +6,57 @@ import {
   fetchCmrPages,
   parseCmrUmm,
   searchHls,
+  searchWindow,
 } from './catalog.js';
+
+test('explicit historical windows stay bounded and catalogue rows never claim proven pixels', async () => {
+  const calls = [];
+  const result = await searchWindow(
+    {
+      box: BOX,
+      fromDay: '2026-09-18',
+      toDay: '2026-09-19',
+      products: ['S30', 'VIIRS'],
+    },
+    {
+      now: Date.parse('2026-11-07'),
+      fetchImpl: async (url) => {
+        calls.push(url);
+        return response({ json: { hits: 1, items: [ummItem()] } });
+      },
+    },
+  );
+  assert.equal(calls.length, 1);
+  assert.match(calls[0], /2026-09-18T00:00:00Z,2026-09-19T23:59:59.999Z/);
+  assert.equal(result.candidates.length, 3);
+  assert.ok(
+    result.candidates.every(
+      (c) => c.historical && c.availability === 'unknown',
+    ),
+  );
+  const partial = await searchWindow(
+    { box: BOX, fromDay: '2026-09-18', toDay: '2026-09-18', products: ['S30'] },
+    {
+      now: Date.parse('2026-11-07'),
+      fetchImpl: async () => {
+        throw Object.assign(new Error('private details'), {
+          code: 'history-blocked',
+        });
+      },
+    },
+  );
+  assert.equal(partial.errors.length, 1);
+  assert.doesNotMatch(partial.errors[0].message, /private/);
+  const abort = new AbortController();
+  abort.abort();
+  await assert.rejects(
+    searchWindow(
+      { box: BOX, fromDay: '2026-09-18', toDay: '2026-09-18' },
+      { signal: abort.signal, now: Date.parse('2026-11-07') },
+    ),
+    { name: 'AbortError' },
+  );
+});
 import { BOX, response } from './testDoubles.mjs';
 
 function ummItem({

@@ -18,6 +18,49 @@ import { parseTerrainPoints } from './data/terrainHeightsProxy.js';
 import { terrainHeightsProxy } from '../server/providers/terrain.js';
 import { admitSameSite } from '../server/providers/common/same-site.js';
 
+test('explicit profile reads refresh old cache metadata without changing ordinary renderer reads', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'aurel-profile-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const cachePath = path.join(directory, 'terrain.json');
+  await writeFile(
+    cachePath,
+    JSON.stringify({
+      version: 2,
+      points: {
+        '78.03000,30.31000': { at: Date.now(), result: { ellipsoid: 600 } },
+      },
+    }),
+  );
+  let calls = 0;
+  stubFetch(t, async () => {
+    calls += 1;
+    return Response.json({
+      tileset: 'mapterhorn-egm08',
+      version: '5',
+      results: [
+        { lat: 30.31, lon: 78.03, elevation: 651, ellipsoid: 608, geoid: -43 },
+      ],
+    });
+  });
+  const handler = install(terrainHeightsProxy({ cachePath })).get(
+    '/api/terrain/heights',
+  );
+  const ordinary = await request(handler, { url: '/?points=78.03,30.31' });
+  assert.equal(ordinary.body.results[0].ellipsoid, 600);
+  assert.equal(calls, 0);
+  const analytical = await request(handler, {
+    url: '/?provenance=1&points=78.03,30.31',
+  });
+  assert.equal(analytical.body.results[0].elevation, 651);
+  assert.equal(
+    analytical.body.results[0].provenance.tileset,
+    'mapterhorn-egm08',
+  );
+  assert.equal(calls, 1);
+  await request(handler, { url: '/?provenance=1&points=78.03,30.31' });
+  assert.equal(calls, 1);
+});
+
 function install(plugin) {
   const routes = new Map();
   plugin.configureServer({

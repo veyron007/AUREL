@@ -1,0 +1,47 @@
+{
+  "checks": [
+    {
+      "name": "preview does not geocode or navigate",
+      "pass": true
+    },
+    {
+      "name": "ambiguous search explicitly waits for user choice",
+      "pass": true
+    },
+    {
+      "name": "Run stages query without submitting search",
+      "pass": true
+    },
+    {
+      "name": "search completion does not claim a selected result",
+      "pass": true
+    },
+    {
+      "name": "prohibited provider produces no runnable preview",
+      "pass": true
+    },
+    {
+      "name": "workspace command opens the existing Planner",
+      "pass": true
+    },
+    {
+      "name": "workflow card only stages a command",
+      "pass": true
+    },
+    {
+      "name": "mobile document has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "no language model endpoint requested",
+      "pass": true
+    },
+    {
+      "name": "no unhandled browser errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "searches": [],
+  "modelRequests": []
+}

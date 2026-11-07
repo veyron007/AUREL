@@ -23,12 +23,30 @@ const stable = (value) =>
         )
       : value;
 
+function withoutOfflineMap(tools) {
+  const copy = structuredClone(tools);
+  const stack = copy.find((tool) => tool.name === 'set_map_stack').parameters
+    .properties.stack;
+  assert.deepEqual(stack.enum, [
+    'photoreal',
+    'bing-aerial',
+    'bing-labels',
+    'esri-imagery',
+    'osm',
+    'offline-overview',
+  ]);
+  stack.enum = stack.enum.filter((id) => id !== 'offline-overview');
+  return copy;
+}
+
 test('the complete Realtime tool payload pins the manifest-generated layer release', () => {
   const digest = createHash('sha256')
     .update(
       JSON.stringify(
         stable(
-          GEV_REALTIME_TOOLS.filter((tool) => tool.name !== 'set_cyber_sonar'),
+          withoutOfflineMap(GEV_REALTIME_TOOLS).filter(
+            (tool) => tool.name !== 'set_cyber_sonar',
+          ),
         ),
       ),
     )
@@ -146,7 +164,7 @@ test('metadata cannot add tools, fields, types or enum values', () => {
 });
 
 test('all legacy action arguments are byte-identical after removing the deliberate additions', () => {
-  const legacy = structuredClone(GEV_ACTION_SCHEMAS).filter(
+  const legacy = withoutOfflineMap(GEV_ACTION_SCHEMAS).filter(
     (tool) =>
       ![
         'next_satellite_pass',

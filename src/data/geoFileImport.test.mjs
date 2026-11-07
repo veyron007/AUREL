@@ -28,6 +28,149 @@ import {
 } from './geoFileImport.js';
 import { createImportImageBudget, importImageSize } from './geoImportImages.js';
 
+test('explicit local region presentation distinguishes categories and keeps every grounded feature without invented heights', async () => {
+  const previous = Cesium.PinBuilder.prototype.fromColor,
+    sizes = [];
+  Cesium.PinBuilder.prototype.fromColor = (_color, size) => {
+    sizes.push(size);
+    return {
+      toDataURL: () => 'data:image/png;base64,local',
+      tagName: 'CANVAS',
+    };
+  };
+  const polygon = {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [78.04, 30.32],
+        [78.041, 30.32],
+        [78.041, 30.321],
+        [78.04, 30.32],
+      ],
+    ],
+  };
+  const geojson = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {
+          name: 'Building',
+          kind: 'building',
+          heightM: null,
+          fill: '#ff0000',
+          'stroke-width': 99,
+          'marker-symbol': 'external-symbol',
+          description: '<script>unsafe</script>',
+        },
+        geometry: polygon,
+      },
+      {
+        type: 'Feature',
+        properties: { name: 'Water', kind: 'water' },
+        geometry: polygon,
+      },
+      {
+        type: 'Feature',
+        properties: { name: 'Road', kind: 'road' },
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [78.04, 30.32],
+            [78.041, 30.321],
+          ],
+        },
+      },
+      {
+        type: 'Feature',
+        properties: { name: 'Place', kind: 'place' },
+        geometry: { type: 'Point', coordinates: [78.04, 30.32] },
+      },
+    ],
+  };
+  const original = JSON.stringify(geojson);
+  let loaded;
+  try {
+    loaded = await loadGeoFile(new File([original], 'region.geojson'), {
+      presentation: 'local-region',
+      viewer: {
+        scene: {
+          frameState: { mode: Cesium.SceneMode.SCENE3D },
+          primitives: new Cesium.PrimitiveCollection(),
+          globe: { getHeight: () => 0 },
+        },
+      },
+    });
+    const entities =
+      loaded.dataSource.importedEntities || loaded.dataSource.entities.values;
+    assert.equal(loaded.entityCount, 4);
+    assert.equal(entities.length, 4);
+    assert.equal(loaded.ownStyles, true);
+    assert.deepEqual(sizes, [10]);
+    const building = entities.find((e) => e.name === 'Building'),
+      water = entities.find((e) => e.name === 'Water'),
+      road = entities.find((e) => e.name === 'Road');
+    assert.notDeepEqual(
+      building.polygon.material.color.getValue(),
+      water.polygon.material.color.getValue(),
+    );
+    assert.notDeepEqual(
+      road.polyline.material.color.getValue(),
+      building.polygon.material.color.getValue(),
+    );
+    assert.equal(road.polyline.width.getValue(), 1.5);
+    assert.ok(
+      Cesium.Color.equals(
+        building.polygon.material.color.getValue(),
+        Cesium.Color.fromCssColorString('#487b86').withAlpha(0.32),
+      ),
+    );
+    assert.equal(building.description, undefined);
+    assert.equal(building.polygon.extrudedHeight, undefined);
+    assert.equal(building.properties, undefined);
+    assert.equal(JSON.stringify(geojson), original);
+  } finally {
+    loaded?.revoke();
+    Cesium.PinBuilder.prototype.fromColor = previous;
+  }
+});
+
+test('region category metadata does not change ordinary GeoJSON import presentation', async () => {
+  const coordinates = [
+    [
+      [78, 30],
+      [78.01, 30],
+      [78.01, 30.01],
+      [78, 30],
+    ],
+  ];
+  const loaded = await loadGeoFile(
+    new File(
+      [
+        JSON.stringify({
+          type: 'Feature',
+          properties: { kind: 'water', fill: '#ff0000' },
+          geometry: { type: 'Polygon', coordinates },
+        }),
+      ],
+      'ordinary.geojson',
+    ),
+    { color: '#ffb547', viewer: { scene: {} } },
+  );
+  try {
+    const polygon = loaded.dataSource.entities.values[0].polygon;
+    assert.ok(
+      Cesium.Color.equals(
+        polygon.material.color.getValue(),
+        Cesium.Color.fromCssColorString('#ffb547').withAlpha(0.25),
+      ),
+    );
+    assert.equal(loaded.ownStyles, false);
+  } finally {
+    loaded.revoke();
+  }
+});
+
 test('real loader grounds XYZ GeoJSON and strips loader-sensitive metadata before allocation', async () => {
   const previous = Cesium.PinBuilder.prototype.fromColor;
   Cesium.PinBuilder.prototype.fromColor = () => ({

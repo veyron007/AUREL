@@ -5,6 +5,7 @@ import { AircraftDisplay } from './aircraftDisplay.js';
 import { LayerBindings } from './layerBindings.js';
 import { PanelChrome } from './panelChrome.js';
 import { initMobileShell } from './mobileShell.js';
+import { workspaceSheetForPanel } from './stores/workspace.js';
 import { VisualSettings } from './visualSettings.js';
 import { NavigationController } from './navigationController.js';
 import { ShareRestoration } from './shareRestoration.js';
@@ -581,6 +582,9 @@ export class StyleManager extends ShellFacade {
       stacks: { left: this._leftPanelStack, right: this._rightPanelStack },
       setPanelCollapsed: (...args) =>
         this._panelChrome.setPanelCollapsed(...args),
+      openMobileSheet: (panelId) => {
+        this._mobileShell?.setSheet(workspaceSheetForPanel(panelId));
+      },
     });
     this._panelNavigation.init();
     this._initLocaleSelector();
@@ -795,6 +799,12 @@ export class StyleManager extends ShellFacade {
    */
   _initMobileShell() {
     this._mobileShell = initMobileShell({
+      readActivePanel: () => {
+        const panelId = document.body.dataset.workspaceInspector;
+        return panelId
+          ? { panelId, sheet: workspaceSheetForPanel(panelId) }
+          : null;
+      },
       setPanelCollapsed: (panelId, collapsed, options) =>
         this._panelChrome.setPanelCollapsed(panelId, collapsed, options),
       readPanel: (panel) => this._panelChrome._shownPanel(panel),

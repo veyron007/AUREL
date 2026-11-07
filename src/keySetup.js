@@ -34,6 +34,7 @@ import { t, msg, tn, onLocaleChange } from './i18n/index.js';
  * @returns {string}
  */
 export function keySetupChipLabel(status) {
+  if (status?.freeOnly) return t('FREE-ONLY · PROVIDERS');
   const missing = Math.max(0, (status?.total || 0) - (status?.setCount || 0));
   return missing > 0
     ? tn(
@@ -311,9 +312,14 @@ export async function initKeySetup({
     state.chip = {
       label,
       title: t('Project keys: {status}', { status: label }),
-      hidden: status.setCount >= status.total,
+      hidden: !status.freeOnly && status.setCount >= status.total,
     };
-    state.rows = (status.keys || []).map(presentRow);
+    state.freeOnly = status.freeOnly === true;
+    state.rows = (status.keys || []).map((key) => ({
+      ...presentRow(key),
+      blocked:
+        state.freeOnly && (status.blockedProviders || []).includes(key.id),
+    }));
     state.auth = { ...state.auth, mode: readStoredCloudVoiceAuthMode() };
     publish();
   };
@@ -411,7 +417,11 @@ export async function initKeySetup({
       for (const envVar of Object.keys(fields)) delete fields[envVar];
       state.generation += 1;
       render(payload.status);
-      if (googleWasUnset && payload.saved?.includes('GOOGLE_MAPS_API_KEY')) {
+      if (
+        !status?.freeOnly &&
+        googleWasUnset &&
+        payload.saved?.includes('GOOGLE_MAPS_API_KEY')
+      ) {
         const strip = () => {
           try {
             const next = stripKeylessBasemapFromHash(

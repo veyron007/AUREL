@@ -292,9 +292,33 @@ function overLimitError({ over, features }) {
   );
 }
 
+// Only this explicit presentation admits category-derived styles, never file-supplied CSS.
+const REGION_STYLES = Object.freeze({
+  road: { stroke: '#ead9ad', 'stroke-width': 1.5, 'stroke-opacity': 0.9 },
+  building: {
+    stroke: '#9bc6ce',
+    fill: '#487b86',
+    'stroke-width': 1,
+    'fill-opacity': 0.32,
+  },
+  water: {
+    stroke: '#57b7e5',
+    fill: '#347eb4',
+    'stroke-width': 1.5,
+    'fill-opacity': 0.55,
+  },
+  place: {
+    'marker-color': '#e3c27d',
+    stroke: '#e3c27d',
+    fill: '#b99d65',
+    'stroke-width': 1,
+    'fill-opacity': 0.2,
+  },
+});
+
 // The import uses WGS84 ground footprints and a short name only. Remove
 // loader-sensitive metadata before Cesium allocates properties or entity IDs.
-function prepareGeoJson(geojson) {
+function prepareGeoJson(geojson, presentation) {
   const stack = [geojson];
   while (stack.length) {
     const node = stack.pop();
@@ -305,7 +329,12 @@ function prepareGeoJson(geojson) {
       for (const feature of node.features) stack.push(feature);
     } else if (node.type === 'Feature') {
       const name = importFeatureName(node.properties?.name);
-      node.properties = name ? { name } : {};
+      const kind = node.properties?.kind;
+      const style =
+        presentation === 'local-region' && Object.hasOwn(REGION_STYLES, kind)
+          ? REGION_STYLES[kind]
+          : {};
+      node.properties = { ...(name ? { name } : {}), ...style };
       stack.push(node.geometry);
     } else if (node.type === 'GeometryCollection') {
       for (const geometry of node.geometries) stack.push(geometry);
@@ -1359,13 +1388,14 @@ async function boundedImport(promise, signal) {
  * Load a ground footprint, retaining explicit KML altitude modes. Call mount after
  * adding the source; revoke owns pin and blob cleanup.
  * @param {File|Blob & {name?: string}} file
- * @param {{viewer: Cesium.Viewer, color?: string}} options `color` is a CSS color.
+ * @param {{viewer: Cesium.Viewer, color?: string, presentation?: 'local-region'}} options
+ *   `color` is a CSS color; explicit region presentation uses fixed category styles.
  * @returns {Promise<{dataSource: Cesium.DataSource, name: string,
  *   format: string, entityCount: number, removed: number, mount: Function, revoke: Function}>}
  */
 export async function loadGeoFile(
   file,
-  { viewer, color = '#39d0ff', signal } = {},
+  { viewer, color = '#39d0ff', signal, presentation } = {},
 ) {
   signal = signal
     ? AbortSignal.any([signal, AbortSignal.timeout(60_000)])
@@ -1407,7 +1437,7 @@ export async function loadGeoFile(
       if (size.over) throw overLimitError(size);
       if (!size.positions)
         throw new GeoImportError(msg('That file has nothing to draw.'));
-      prepareGeoJson(geojson);
+      prepareGeoJson(geojson, presentation);
       bytes = null;
       dataSource = await boundedImport(
         Cesium.GeoJsonDataSource.load(geojson, {
@@ -1416,6 +1446,7 @@ export async function loadGeoFile(
           fill: stroke.withAlpha(0.25),
           strokeWidth: 3,
           markerColor: stroke,
+          ...(presentation === 'local-region' ? { markerSize: 10 } : {}),
           // No HTML description table is built from the file's properties.
           describe: () => undefined,
         }),
@@ -1512,6 +1543,7 @@ export async function loadGeoFile(
     dataSource,
     name,
     format,
+    ownStyles: presentation === 'local-region' && format === 'geojson',
     entityCount,
     removed,
     revoke,

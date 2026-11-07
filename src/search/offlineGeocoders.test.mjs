@@ -239,3 +239,22 @@ test('unsupported geo URIs reach the next search provider unchanged', async () =
   }
   assert.deepEqual(received, queries);
 });
+
+test('Free-only ignores a stale credential for search and place operations', async () => {
+  const requested = [];
+  const search = createDefaultPlaceSearch({
+    freeOnly: true,
+    resolveApiKey: () => 'stale-browser-key',
+    endpoints: { photon: null },
+    fetchImpl: async (url) => {
+      requested.push(String(url));
+      assert.ok(!String(url).includes('/api/google/'));
+      return new Response(JSON.stringify({ configured: false }));
+    },
+  });
+  await search.geocode('Unmapped fixture neighborhood');
+  await search.reverseGeocode(30, 78);
+  await search.textSearch('cafes', { latitude: 30, longitude: 78 });
+  await search.nearby({ latitude: 30, longitude: 78 });
+  assert.ok(requested.every((url) => !url.includes('/api/google/')));
+});

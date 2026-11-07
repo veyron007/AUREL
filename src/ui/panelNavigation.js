@@ -1,6 +1,7 @@
 import PanelRailView from './PanelRailView.vue';
 import { PANEL_RAIL_HOST_CLASS, PANEL_RAIL_ITEMS } from './panelRailCatalog.js';
 import { usePanelStore } from './stores/panels.js';
+import { useWorkspaceStore } from './stores/workspace.js';
 
 /**
  * Own the desktop panel rails: publish each side's panels to the panel store
@@ -14,8 +15,10 @@ export class PanelNavigation {
    * @param {{left: HTMLElement|null, right: HTMLElement|null}} options.stacks Side panel stacks.
    * @param {Function} options.setPanelCollapsed PanelChrome's disclosure operation.
    */
-  constructor({ ui, stacks, setPanelCollapsed }) {
+  constructor({ ui, stacks, setPanelCollapsed, openMobileSheet = () => {} }) {
     this._ui = ui;
+    this._openMobileSheet = openMobileSheet;
+    this._workspace = useWorkspaceStore(ui.pinia);
     this._stacks = stacks;
     this._setPanelCollapsed = setPanelCollapsed;
     this._store = usePanelStore(ui.pinia);
@@ -27,6 +30,10 @@ export class PanelNavigation {
 
   init() {
     if (this._destroyed) return;
+    this._workspaceOwner = this._workspace.connect({
+      openPanel: (id) => this.openPanel(id),
+      openTray: (id) => this.openTray(id),
+    });
     for (const side of ['left', 'right']) {
       const stack = this._stacks[side];
       if (!stack) continue;
@@ -87,6 +94,24 @@ export class PanelNavigation {
         : [];
       this._store.setSide(side, panels);
     }
+    // Share restoration can legitimately restore an open panel on each side.
+    // Present one inspector without rewriting either saved disclosure choice.
+    const visible = [
+      ...this._store.sides.left,
+      ...this._store.sides.right,
+    ].find((panel) => panel.available && panel.open)?.id;
+    for (const stack of Object.values(this._stacks)) {
+      for (const panel of stack?.children ?? []) {
+        if (panel.matches('[data-panel-id]'))
+          panel.dataset.workspaceSuppressed = String(
+            Boolean(
+              visible &&
+              panel.id !== visible &&
+              !panel.classList.contains('collapsed'),
+            ),
+          );
+      }
+    }
   }
 
   /**
@@ -104,6 +129,49 @@ export class PanelNavigation {
     });
   }
 
+  /** Open an existing tool in the workspace's single inspector. */
+  openPanel(panelId) {
+    if (this._destroyed) return;
+    const offered = [...this._store.sides.left, ...this._store.sides.right];
+    const requested = offered.find(
+      (panel) => panel.id === panelId && panel.available,
+    );
+    // Comparison's layer may not have been enabled yet. Keep its entry useful
+    // by presenting the data catalog where the existing imagery toggle lives.
+    const id = requested
+      ? panelId
+      : panelId === 'recent-imagery-panel'
+        ? 'data-panel'
+        : null;
+    if (!id) return;
+    const activator = document.activeElement;
+    this._openMobileSheet(id);
+    for (const panel of offered) {
+      if (
+        panel.id !== id &&
+        !document.getElementById(panel.id)?.classList.contains('collapsed')
+      )
+        this._setPanelCollapsed(panel.id, true, { explicit: true });
+    }
+    this._setPanelCollapsed(id, false, { explicit: true });
+    // The old mobile sheet focuses its first borrowed panel. That panel may
+    // just have been collapsed above; keep keyboard focus on the workspace
+    // action the person invoked instead of leaving it in hidden content.
+    if (
+      document.body?.classList.contains('mobile-shell') &&
+      activator?.closest?.('#aurel-workspace')
+    )
+      activator.focus({ preventScroll: true });
+  }
+
+  /** Presets and the saved city/landmark tray keep their existing owners. */
+  openTray(id) {
+    if (this._destroyed || !['control-panel', 'location-bar'].includes(id))
+      return;
+    this._openMobileSheet(id);
+    this._setPanelCollapsed(id, false, { explicit: true });
+  }
+
   _isPanelRecord(record) {
     const stacks = Object.values(this._stacks);
     return record.type === 'childList'
@@ -117,8 +185,13 @@ export class PanelNavigation {
   destroy() {
     if (this._destroyed) return;
     this._destroyed = true;
+    this._workspace.detach(this._workspaceOwner);
     this._observer?.disconnect();
     this._observer = null;
+    for (const stack of Object.values(this._stacks)) {
+      for (const panel of stack?.children ?? [])
+        delete panel.dataset.workspaceSuppressed;
+    }
     for (const unmount of this._unmounts) unmount();
     this._unmounts = [];
     for (const host of this._hosts) host.remove();

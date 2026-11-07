@@ -90,6 +90,7 @@ export function createThumbnailLoader({
     let status = 'error';
     let objectUrl = null;
     let acquisitionTime = null;
+    let probedAt = null;
     let cancelled = false;
     try {
       const response = await requestThumbnail(entry.candidate, entry.box, {
@@ -103,9 +104,20 @@ export function createThumbnailLoader({
           response.headers?.get?.('Data-Present') ?? '',
         ).toLowerCase();
         acquisitionTime = response.headers?.get?.('Acquisition-Time') || null;
+        const stamp = response.headers?.get?.('X-Aurel-Probed-At');
+        probedAt =
+          stamp && Number.isFinite(Date.parse(stamp))
+            ? new Date(stamp).toISOString()
+            : null;
         if (present === 'false') {
           status = 'empty';
         } else if (present === 'true') {
+          if (
+            entry.candidate.historical &&
+            acquisitionTime &&
+            acquisitionTime.slice(0, 10) !== entry.candidate.day
+          )
+            throw new Error('Acquisition date differs from requested imagery');
           const blob = await response.blob();
           if (controller.signal.aborted) cancelled = true;
           else {
@@ -133,6 +145,7 @@ export function createThumbnailLoader({
     if (status !== 'error' || entry.status !== 'present') {
       entry.status = status;
       entry.acquisitionTime = acquisitionTime;
+      entry.probedAt = entry.candidate.historical ? probedAt : null;
     }
     entry.objectUrl = objectUrl;
     touch(entry);
@@ -167,6 +180,12 @@ export function createThumbnailLoader({
       if (existing) {
         touch(existing);
         if (existing.loading) return;
+        if (candidate.historical && existing.status === 'error') {
+          existing.status = 'unknown';
+          existing.priority = priority;
+          enqueue(existing);
+          return;
+        }
         if (existing.status === 'unknown') {
           existing.priority = priority;
         } else if (existing.status === 'present' && !existing.objectUrl) {
@@ -183,6 +202,7 @@ export function createThumbnailLoader({
         status: 'unknown',
         objectUrl: null,
         acquisitionTime: null,
+        probedAt: null,
         loading: false,
         controller: null,
         touched: 0,
@@ -247,6 +267,7 @@ export function createThumbnailLoader({
         objectUrl: entry.objectUrl,
         acquisitionTime: entry.acquisitionTime,
         loading: entry.loading,
+        ...(entry.probedAt ? { probedAt: entry.probedAt } : {}),
       };
     },
 

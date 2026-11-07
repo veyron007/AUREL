@@ -8,6 +8,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as Cesium from 'cesium';
+import { LocationSearch } from './ui/locationSearch.js';
+import { LensController } from './ui/lensController.js';
 import {
   CANCELLED_SEARCH,
   placeFramingViewport,
@@ -41,6 +43,40 @@ function stubViewer() {
     },
   };
 }
+
+test('real search publications establish a Lens dossier for city, swath and coordinate destinations', async () => {
+  const cases = [
+    { query: 'Dehradun', lat: 30.3258, lng: 78.0438, types: ['locality'], viewport: boxOf(30.2, 77.9, 30.5, 78.2), mode: 'city-overview' },
+    { query: 'Himalayas', lat: 30, lng: 80, types: ['natural_feature'], viewport: boxOf(25, 70, 38, 95), mode: 'natural-region-swath' },
+    { query: '30.3258, 78.0438', lat: 30.3258, lng: 78.0438, types: ['coordinate'], viewport: null, mode: 'precise-place' },
+  ];
+  for (const sample of cases) {
+    const viewer = stubViewer();
+    const place = { ...sample, label: sample.query, exact: true };
+    let view;
+    const search = new LocationSearch({
+      begin: () => 1, isCurrent: () => true, beforeFly: () => true,
+      search: (query, options) => searchAndFlyTo(viewer, query, {
+        ...options, placeSearch: { geocode: async () => ({ place }) },
+        features: { getFocusFootprints: async () => [] },
+      }),
+    });
+    const lens = new LensController({
+      publish: (next) => { view = next; },
+      subscribeLocationSearch: (listener) => search.subscribe(listener),
+    });
+    lens.init();
+    await search.run(sample.query);
+    assert.equal(search.getState().destination.navigationMode, sample.mode);
+    assert.equal(view.selection?.name, sample.query);
+    assert.deepEqual(view.selection.geometry.coordinates, [sample.lng, sample.lat]);
+    assert.deepEqual(view.selection.extent, sample.viewport
+      ? [sample.viewport.southwest.lng, sample.viewport.southwest.lat, sample.viewport.northeast.lng, sample.viewport.northeast.lat]
+      : null);
+    assert.equal(viewer.flights.length, 1);
+    lens.destroy(); search.destroy();
+  }
+});
 
 const AUSTIN_RESULT = {
   formatted_address: 'Austin, TX, USA',

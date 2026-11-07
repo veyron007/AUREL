@@ -46,6 +46,7 @@ export class LocationControls {
       onCity,
       onPoi,
       onSearch,
+      onSearchEdit,
       onReset,
       publish,
       doc,
@@ -93,7 +94,7 @@ export class LocationControls {
         onPoi(cityId, index);
     });
     this.bind(elements.search, 'keydown', (event) => {
-      if (event.key === 'Enter') void onSearch(elements.search.value);
+      if (event.key === 'Enter') void this.submitSearch();
     });
     // Typing corrects a failed query; closing the field (which empties it) drops its error.
     this.bind(elements.search, 'input', () => onSearchEdit?.());
@@ -226,6 +227,24 @@ export class LocationControls {
     this.searchExpanded = !this.searchExpanded;
     this.present();
     if (this.searchExpanded) this.elements.search?.focus();
+  }
+  /** Stage a local command for deliberate submission through the existing search. */
+  stageSearch(query) {
+    if (this.destroyed || typeof query !== 'string') return false;
+    const value = query.trim();
+    if (!value || value.length > 200 || !this.elements.search) return false;
+    this.elements.search.value = value;
+    this.searchExpanded = true;
+    this.searchError = null;
+    this.onSearchEdit?.();
+    this.present();
+    this.elements.search.focus();
+    return true;
+  }
+  /** The visible search action uses the same lookup as keyboard submission. */
+  submitSearch() {
+    if (!this.destroyed)
+      return this.onSearch(this.elements.search?.value ?? '');
   }
   /** Mark the search field while a lookup runs. */
   setSearching(active) {

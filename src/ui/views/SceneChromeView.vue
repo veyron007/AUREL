@@ -18,6 +18,7 @@ import ScreenAnnotations from './panels/ScreenAnnotations.vue';
 import AwarenessDirection from './panels/AwarenessDirection.vue';
 import UiButton from '../kit/UiButton.vue';
 import GlobeActions from './panels/GlobeActions.vue';
+import WorkspaceView from './WorkspaceView.vue';
 
 // The ACTIVE STYLE corner shows the style VisualSettings publishes.
 const { style } = storeToRefs(useDisplayStore());
@@ -68,11 +69,13 @@ const vToastText = {
     <div id="world-overlay-status" v-overlay-status="targets" role="status" aria-live="polite" aria-atomic="true"></div>
   </div>
 
+  <WorkspaceView />
+
   <!-- Title -->
   <div id="title-bar">
     <div class="title-glow"></div>
-    <h1><span class="title-logo brand-logo" data-logo-gaze data-logo-src="/logo.svg" aria-hidden="true"><img src="/logo.svg" alt="" /></span> <span translate="no">GOD'S EYE <span class="title-accent">VIEW</span></span></h1>
-    <p class="subtitle scene-text-holdout">{{ t('NO PLACE LEFT BEHIND') }}</p>
+    <h1><span class="title-logo brand-logo" data-logo-gaze data-logo-src="/aurel-mark.svg" aria-hidden="true"><img src="/aurel-mark.svg" alt="" /></span> <span class="aurel-wordmark" translate="no">AUREL</span></h1>
+    <p class="subtitle scene-text-holdout">{{ t('Your world. In perspective.') }}</p>
     <div v-if="fps" class="frame-rate-readout scene-text-holdout" :hidden="!fps.visible" :title="t('Rendered globe frames per second · toggle with `')">{{ fps.text }}</div>
   </div>
 

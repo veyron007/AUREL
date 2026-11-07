@@ -8,6 +8,7 @@ import {
   terrainPointKey,
   terrainRetryAfterMs,
   validTerrainResult,
+  terrainProfileCache,
 } from '../../src/data/terrainHeightsProxy.js';
 import { makeRateLimiter, clientKey } from './common/rate-limit.js';
 import { admitSameSiteKeyless } from './common/same-site.js';
@@ -317,7 +318,10 @@ export function terrainHeightsProxy(options = {}) {
         await loadDiskOnce();
         const outcome = await resolveTerrainHeightRequest({
           points,
-          cache: mem,
+          cache:
+            parsedUrl.searchParams.get('provenance') === '1'
+              ? terrainProfileCache(mem)
+              : mem,
           fetchMissing: fetchMissingSingleFlight,
           ttlMs: TTL_MS,
         });

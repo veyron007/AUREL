@@ -38,6 +38,14 @@ const PINNABLE_PANEL_IDS = new Set(
 );
 /** Standard map-view panels cleared out of the way on a fresh Cockpit entry. */
 const COCKPIT_ENTRY_COLLAPSE_PANEL_IDS = Object.freeze([
+  'lens-panel',
+  'fieldbook-panel',
+  'planner-panel',
+  'chronicle-panel',
+  'research-panel',
+  'watchlist-panel',
+  'region-panel',
+  'local-commands-panel',
   'data-panel',
   'cctv-panel',
   'weather-panel',
@@ -443,7 +451,14 @@ export class PanelChrome {
       // Phone sheets show several rail panels at once.
       !document.body?.classList?.contains('mobile-shell')
     ) {
-      for (const peer of sideStack.children) {
+      // AUREL presents one contextual inspector. Keep legacy embedding and
+      // phone sheet borrowing unchanged when the workspace is not mounted.
+      const peers = document.body?.dataset?.workspaceAppearance
+        ? [this._leftPanelStack, this._rightPanelStack]
+            .filter(Boolean)
+            .flatMap((stack) => [...stack.children])
+        : [...sideStack.children];
+      for (const peer of peers) {
         if (
           peer !== panelEl &&
           peer.matches('[data-panel-id]') &&

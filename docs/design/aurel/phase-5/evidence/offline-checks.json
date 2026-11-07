@@ -1,0 +1,132 @@
+{
+  "data": "Real Geofabrik-derived Dehradun pack. FIRMS baseline response is synthetic empty-success solely for lifecycle QA. All external HTTP and other provider routes blocked; isolated browser profile.",
+  "manifest": {
+    "extent": [
+      78.022,
+      30.312,
+      78.05,
+      30.34
+    ],
+    "counts": {
+      "features": 8647,
+      "positions": 54769,
+      "names": 318,
+      "roads": 1460,
+      "buildings": 6984,
+      "water": 18,
+      "places": 185,
+      "suppliedHeights": 1
+    },
+    "assets": [
+      {
+        "id": "geometry",
+        "path": "geometry.geojson",
+        "format": "geojson",
+        "byteLength": 3330635,
+        "sha256": "f560ebad10d613512fc73df4dd3531fa4c348b16dfdbacb2229044f8272653ae"
+      },
+      {
+        "id": "names",
+        "path": "names.json",
+        "format": "name-index",
+        "byteLength": 38235,
+        "sha256": "833975862628f8e1360c768e61961dba0427a4cd978f6b82bec7bd4dcd57853a"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "startup makes no region asset or watch source request",
+      "pass": true
+    },
+    {
+      "name": "preview fetches only the manifest and does not import geography",
+      "pass": true
+    },
+    {
+      "name": "preview discloses real extent date license and footprints",
+      "pass": true
+    },
+    {
+      "name": "tampered data is rejected before import without removing existing files",
+      "pass": true
+    },
+    {
+      "name": "explicit enable loads real verified geometry through the existing importer",
+      "pass": true
+    },
+    {
+      "name": "the globe owns the full bounded real feature collection",
+      "pass": true
+    },
+    {
+      "name": "offline name alias search finds the real Clock Tower without a request",
+      "pass": true
+    },
+    {
+      "name": "local result navigates the existing camera to its approximate location",
+      "pass": true
+    },
+    {
+      "name": "phone region panel remains visible and has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "creating a watch does not start acquisition",
+      "pass": true
+    },
+    {
+      "name": "explicit start performs one bounded check and establishes a quiet baseline",
+      "pass": true
+    },
+    {
+      "name": "explicit stop leaves monitoring stopped without extra requests",
+      "pass": true
+    },
+    {
+      "name": "phone watchlist remains usable without horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "region removal preserves unrelated imports and disables its search",
+      "pass": true
+    },
+    {
+      "name": "reload restores saved definitions but does not restart monitoring or region loading",
+      "pass": true
+    },
+    {
+      "name": "restart respects the persisted 30 minute minimum check interval",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "requests": [
+    "/api/local-receivers/aircraft",
+    "/api/openai/hud-summary/status",
+    "/api/setup/status",
+    "/api/realtime/debug-log",
+    "/api/terrain/heights",
+    "/regions/dehradun-core/manifest.json",
+    "/regions/dehradun-core/geometry.geojson",
+    "/regions/dehradun-core/names.json",
+    "/regions/dehradun-core/geometry.geojson",
+    "/regions/dehradun-core/names.json",
+    "local-import-duration-ms:2815",
+    "/api/firms/area",
+    "/api/local-receivers/aircraft",
+    "/api/openai/hud-summary/status",
+    "/api/setup/status",
+    "/api/realtime/debug-log"
+  ],
+  "blockedHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ],
+  "firmsChecks": 1
+}

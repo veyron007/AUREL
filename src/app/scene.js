@@ -20,9 +20,10 @@ import { onLocaleChange, t } from '../i18n/index.js';
 /** Construct the application globe using the caller's local configuration. */
 export async function createApplicationScene({
   requestServices,
-  googleApiKey,
-  googleTokens = null,
-  cesiumToken,
+  googleApiKey: suppliedGoogleApiKey,
+  googleTokens: suppliedGoogleTokens = null,
+  cesiumToken: suppliedCesiumToken,
+  freeOnly = import.meta.env?.GEV_FREE_ONLY === true,
   credits,
   MapController = MapStackController,
   mapOptions = {},
@@ -30,6 +31,10 @@ export async function createApplicationScene({
   signal,
   defer,
 }) {
+  const googleApiKey = freeOnly ? undefined : suppliedGoogleApiKey;
+  const googleTokens = freeOnly ? null : suppliedGoogleTokens;
+  const cesiumToken = freeOnly ? undefined : suppliedCesiumToken;
+  if (freeOnly) delete window.__GOOGLE_MAPS_API_KEY__;
   const operations = createApplicationOperations({
     requests: requestServices,
     signal,
@@ -109,6 +114,7 @@ export async function createApplicationScene({
   const mapStackController = new MapController(viewer, {
     requestRender: governorRequestRender,
     ...mapOptions,
+    freeOnly,
     googleTileset: tileset,
     cesiumToken,
     initialStack: tileset ? 'photoreal' : 'esri-imagery',

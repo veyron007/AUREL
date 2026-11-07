@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WILDLIFE_BADGE_GLYPHS } from './layers/wildlifeSightings/sprites.js';
@@ -98,15 +99,20 @@ function referencedGlyphs() {
   return found;
 }
 
-/** The `icon_names` list index.html asks Google for. */
-function subsettedGlyphs(html = readFileSync(INDEX_HTML, 'utf8')) {
-  const match =
-    /Material\+Symbols\+Outlined[^"]*[?&]icon_names=([a-z0-9_,]+)/.exec(html);
-  assert.ok(
-    match,
-    'index.html must request Material Symbols with an icon_names subset',
+/** The glyph inventory and digest of the locally bundled font. */
+function subsettedGlyphs() {
+  const manifest = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, 'public/fonts/manifest.json'), 'utf8'),
   );
-  return new Set(match[1].split(','));
+  const font = readFileSync(
+    path.join(REPO_ROOT, 'public/fonts', manifest.icons.file),
+  );
+  assert.equal(
+    createHash('sha256').update(font).digest('hex'),
+    manifest.icons.sha256,
+  );
+  assert.equal(font.subarray(0, 4).toString(), 'wOF2');
+  return new Set(manifest.icons.glyphs);
 }
 
 test('every glyph the sources render is in the icon_names subset', () => {
@@ -118,8 +124,8 @@ test('every glyph the sources render is in the icon_names subset', () => {
   assert.deepEqual(
     missing,
     [],
-    'Glyphs named by the sources but absent from the index.html icon_names list. ' +
-      'Add them there — an unlisted glyph renders as its own name on screen: ' +
+    'Glyphs named by sources but absent from the bundled font manifest. ' +
+      'Regenerate the local subset — an unlisted glyph renders as text: ' +
       missing.join(', '),
   );
 });
@@ -133,4 +139,68 @@ test('the unused Material Icons Round family is not loaded', () => {
     /Material\+Icons\+Round/,
     'index.html loads an icon font nothing renders',
   );
+});
+
+test('bundled text font files match the reviewed provenance manifest', () => {
+  const manifest = JSON.parse(
+    readFileSync(path.join(REPO_ROOT, 'public/fonts/manifest.json'), 'utf8'),
+  );
+  assert.ok(manifest.fonts.length >= 4);
+  for (const entry of manifest.fonts) {
+    assert.equal(path.basename(entry.file), entry.file);
+    const bytes = readFileSync(
+      path.join(REPO_ROOT, 'public/fonts', entry.file),
+    );
+    assert.equal(bytes.length, entry.bytes, entry.file);
+    assert.equal(
+      createHash('sha256').update(bytes).digest('hex'),
+      entry.sha256,
+      entry.file,
+    );
+  }
+});
+
+test('typography is available locally without Google Fonts requests', () => {
+  const html = readFileSync(INDEX_HTML, 'utf8');
+  assert.doesNotMatch(html, /https:\/\/fonts\.(?:googleapis|gstatic)\.com/);
+  assert.match(html, /href="\/fonts\/fonts.css"/);
+  const css = readFileSync(
+    path.join(REPO_ROOT, 'public/fonts/fonts.css'),
+    'utf8',
+  );
+  assert.doesNotMatch(css, /https?:\/\//);
+  for (const family of [
+    'Manrope',
+    'Inter',
+    'JetBrains Mono',
+    'Noto Sans Arabic',
+    'Material Symbols Outlined',
+  ]) {
+    assert.ok(css.includes(`font-family: '${family}'`), family);
+  }
+  const files = [...css.matchAll(/url\(['"]?([^)'"\s]+)['"]?\)/g)];
+  assert.ok(files.length >= 5);
+  for (const [, file] of files) {
+    assert.equal(
+      path.basename(file),
+      file,
+      'font URLs stay beside the local stylesheet',
+    );
+    const bytes = readFileSync(path.join(REPO_ROOT, 'public/fonts', file));
+    assert.equal(bytes.subarray(0, 4).toString(), 'wOF2', file);
+  }
+  for (const license of [
+    'manrope-OFL.txt',
+    'inter-OFL.txt',
+    'jetbrainsmono-OFL.txt',
+    'notosansarabic-OFL.txt',
+    'material-symbols-LICENSE.txt',
+  ]) {
+    assert.ok(
+      readFileSync(
+        path.join(REPO_ROOT, 'public/fonts/licenses', license),
+        'utf8',
+      ).length > 1000,
+    );
+  }
 });

@@ -115,6 +115,8 @@ function fixture({
   expanded = [],
   onTabOpened = () => {},
   afterPublish,
+  readActivePanel,
+  extraPanels = [],
 } = {}) {
   const document = new EventTarget();
   document.ids = new Map();
@@ -139,7 +141,7 @@ function fixture({
     rails[id].id = id;
     document.body.append(rails[id]);
   }
-  for (const id of PANEL_IDS) {
+  for (const id of [...PANEL_IDS, ...extraPanels]) {
     const panel = element('section', document);
     panel.id = id;
     if (!expanded.includes(id)) panel.classList.add('collapsed');
@@ -210,6 +212,7 @@ function fixture({
     onTabOpened,
     publish,
     afterPublish,
+    readActivePanel,
     matchMedia: () => media,
     MutationObserverImpl: FakeMutationObserver,
     ResizeObserverImpl: null,
@@ -976,4 +979,19 @@ test('a slow downward pull is claimed before Android native scroll takes ownersh
   touchEvent(document, 'touchend', panel, { y: 175 });
   assert.equal(shell.getSheet(), null);
   shell.destroy();
+});
+
+test('resizing a workspace inspector to phone preserves the current tool in its sheet', () => {
+  const phone = fixture({
+    mobile: false,
+    extraPanels: ['research-panel'],
+    expanded: ['research-panel'],
+    readActivePanel: () => ({ panelId: 'research-panel', sheet: 'layers' }),
+  });
+  phone.resize(true);
+  assert.equal(phone.shell.getSheet(), 'layers');
+  assert.equal(phone.collapsed('research-panel'), false);
+  phone.resize(false);
+  assert.equal(phone.shell.getSheet(), null);
+  phone.shell.destroy();
 });

@@ -122,10 +122,13 @@ test('every Google route selects the intended key and keeps it out of responses'
   }
 });
 
-test('browser defines contain the browser key and exclude the server key', () => {
+test('free-only browser defines omit both saved Google keys without changing them', () => {
   withKeys({ server: 'server-secret', browser: 'browser-public' }, () => {
     const defines = config({ mode: 'test' }).define;
-    assert.equal(defines['import.meta.env.GOOGLE_MAPS_API_KEY'], '"browser-public"');
+    assert.equal(defines['import.meta.env.GOOGLE_MAPS_API_KEY'], undefined);
+    assert.equal(process.env.GOOGLE_MAPS_API_KEY, 'browser-public');
+    assert.equal(process.env.GOOGLE_MAPS_SERVER_API_KEY, 'server-secret');
+    assert.equal(defines['import.meta.env.GEV_FREE_ONLY'], 'true');
     assert.ok(!JSON.stringify(defines).includes('server-secret'));
     assert.ok(!Object.keys(defines).some((key) => key.includes('SERVER_API_KEY')));
   });

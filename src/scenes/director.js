@@ -2119,6 +2119,25 @@ export class SceneDirector {
     };
   }
 
+  /**
+   * Detached authored JSON for local project associations. As with JSON export,
+   * referenced data packs remain references; this does not bundle their bytes.
+   */
+  getProjectSnapshot() {
+    if (this._destroyed) return null;
+    return parseSceneDocument(stringifySceneDocument(this._project));
+  }
+
+  /** Explicitly replace authoring state through the normal validated import. */
+  async restoreProjectSnapshot(snapshot, { signal } = {}) {
+    if (this._destroyed || signal?.aborted) return false;
+    const project = parseSceneDocument(stringifySceneDocument(snapshot));
+    return this.importProjectFile(
+      { name: 'Fieldbook scene.json' },
+      { prepared: { project, assets: new Map() }, signal },
+    );
+  }
+
   /** Export the entire project as a timestamped JSON file download. */
   exportProject() {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');

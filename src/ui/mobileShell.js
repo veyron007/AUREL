@@ -126,6 +126,7 @@ export function initMobileShell({
   requestFrame = globalThis.requestAnimationFrame?.bind(globalThis),
   onSheetsClosed = () => {},
   onTabOpened = () => {},
+  readActivePanel = () => null,
   publish = () => {},
   afterPublish = (callback) => callback(),
 } = {}) {
@@ -315,6 +316,16 @@ export function initMobileShell({
         );
       for (const node of [...rails, dock].filter(Boolean))
         resize?.observe(node);
+      const active = readActivePanel();
+      if (
+        active?.panelId &&
+        Object.hasOwn(MOBILE_SHEET_PANELS, active.sheet) &&
+        element(active.panelId)
+      ) {
+        setSheet(active.sheet);
+        if (currentSheetOf(body) === active.sheet)
+          setPanelCollapsed(active.panelId, false, BORROW_OPTIONS);
+      }
       publishChrome();
       measureSheet();
     } else {

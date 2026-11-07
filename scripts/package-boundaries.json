@@ -155,7 +155,30 @@
       "src/ui/stores/recording.js",
       "src/ui/styleParameters.js",
       "src/ui/i18n.js",
-      "src/ui/surfaceKeyboard.js"
+      "src/ui/surfaceKeyboard.js",
+      "src/ui/views/WorkspaceView.vue",
+      "src/ui/stores/workspace.js",
+      "src/ui/stores/panels.js",
+      "src/ui/panelRailCatalog.js",
+      "src/ui/views/panels/FieldbookPanel.vue",
+      "src/ui/views/panels/LensPanel.vue",
+      "src/ui/stores/fieldbook.js",
+      "src/ui/stores/lens.js",
+      "src/ui/stores/planner.js",
+      "src/ui/views/panels/FieldbookAnalysis.vue",
+      "src/ui/views/panels/PlannerPanel.vue",
+      "src/ui/stores/chronicle.js",
+      "src/ui/stores/research.js",
+      "src/ui/views/panels/ChroniclePanel.vue",
+      "src/ui/views/panels/FieldbookComparison.vue",
+      "src/ui/views/panels/ResearchPanel.vue",
+      "src/ui/localCommandPresentation.js",
+      "src/ui/stores/localCommands.js",
+      "src/ui/stores/regions.js",
+      "src/ui/stores/watchlists.js",
+      "src/ui/views/panels/LocalCommandsPanel.vue",
+      "src/ui/views/panels/RegionPanel.vue",
+      "src/ui/views/panels/WatchlistPanel.vue"
     ],
     "external": ["vue", "pinia", "vue-i18n"]
   },
@@ -559,6 +582,7 @@
       "scripts/pinokio-environment.mjs",
       "server/providers/common/source-root.js",
       "server/standalone/key-setup.js",
+      "server/standalone/free-only-status.js",
       "src/keySetupCore.mjs",
       "src/localRequestGate.mjs",
       "server/standalone/key-setup-hardening.mjs"
@@ -1178,7 +1202,8 @@
       "src/ui/views/panels/WildlifeSightingCard.vue",
       "src/ui/wildlifeSightingPlacement.js",
       "src/overlays/worldOverlayChrome.js",
-      "src/layers/wildlifeSightings/photoText.js"
+      "src/layers/wildlifeSightings/photoText.js",
+      "src/ui/stores/workspace.js"
     ],
     "external": ["cesium", "vue", "pinia", "vue-i18n"]
   },
@@ -1209,7 +1234,12 @@
       "src/ui/styles/first-run.css",
       "src/ui/styles/provider-settings.css",
       "src/ui/styles/weather.css",
-      "src/ui/styles/recent-imagery.css"
+      "src/ui/styles/recent-imagery.css",
+      "src/ui/styles/chronicle.css",
+      "src/ui/styles/research.css",
+      "src/ui/styles/region.css",
+      "src/ui/styles/watchlist.css",
+      "src/ui/styles/local-commands.css"
     ],
     "external": []
   },
@@ -1558,7 +1588,9 @@
       "src/i18n/locales/zh-CN.json",
       "src/i18n/locales/zh-Hant.json",
       "src/ui/unitLabels.js",
-      "src/layers/recentImagery/display.js"
+      "src/layers/recentImagery/display.js",
+      "src/layers/recentImagery/historical.js",
+      "src/sources/requestDeadline.js"
     ],
     "external": ["cesium"]
   },
@@ -2792,7 +2824,6 @@
       "src/styles/thermal.js",
       "src/ui/applicationShell.js",
       "src/ui/mobileShell.js",
-      "src/exclusiveSurfaces.js",
       "src/ui/localePicker.js",
       "src/ui/cyberSonarControls.js",
       "src/ui/locationNavigation.js",
@@ -3240,7 +3271,6 @@
       "src/ui/stores/cockpit.js",
       "src/ui/stores/locale.js",
       "src/ui/stores/providerSettings.js",
-      "src/ui/stores/sceneSharing.js",
       "src/ui/stores/voice.js",
       "src/ui/stores/location.js",
       "src/ui/stores/display.js",
@@ -3318,7 +3348,67 @@
       "src/ui/wildlifeSightingPlacement.js",
       "src/overlays/worldOverlayChrome.js",
       "src/layers/wildlifeSightings/photoText.js",
-      "src/layers/wildlifeSightings/performance.js"
+      "src/layers/wildlifeSightings/performance.js",
+      "src/ui/stores/workspace.js",
+      "src/app/personalTools.js",
+      "src/ui/personalWorkspace.js",
+      "src/ui/fieldbookController.js",
+      "src/ui/fieldbookPresentation.js",
+      "src/ui/lensController.js",
+      "src/ui/lensPresentation.js",
+      "src/ui/views/panels/FieldbookPanel.vue",
+      "src/ui/views/panels/LensPanel.vue",
+      "src/ui/stores/fieldbook.js",
+      "src/ui/stores/lens.js",
+      "src/fieldbook/brief.js",
+      "src/fieldbook/fields.js",
+      "src/fieldbook/repository.js",
+      "src/fieldbook/capture.js",
+      "src/fieldbook/operations.js",
+      "src/fieldbook/document.js",
+      "src/layers/directions/snapshot.js",
+      "src/ui/fieldbookDraftStorage.js",
+      "src/app/plannerTools.js",
+      "src/fieldbook/analysis.js",
+      "src/fieldbook/analysisSources.js",
+      "src/planner/daylight.js",
+      "src/planner/profile.js",
+      "src/planner/routeSampling.js",
+      "src/sources/fieldContext.js",
+      "src/sources/fieldContextModel.js",
+      "src/sources/firmsArea.js",
+      "src/ui/plannerController.js",
+      "src/ui/stores/planner.js",
+      "src/app/chronicleTools.js",
+      "src/app/researchTools.js",
+      "src/fieldbook/comparisonOperations.js",
+      "src/fieldbook/comparisonSchema.js",
+      "src/layers/recentImagery/historical.js",
+      "src/research/request.js",
+      "src/research/result.js",
+      "src/sources/sentinelResearch.js",
+      "src/ui/chronicleController.js",
+      "src/ui/fieldbookComparisonActions.js",
+      "src/ui/researchController.js",
+      "src/ui/stores/chronicle.js",
+      "src/ui/stores/research.js",
+      "src/app/localCommandTools.js",
+      "src/app/regionTools.js",
+      "src/app/watchlistTools.js",
+      "src/localAssistant/commands.js",
+      "src/regions/pack.js",
+      "src/tools/schema.js",
+      "src/ui/localCommandController.js",
+      "src/ui/regionsController.js",
+      "src/ui/stores/localCommands.js",
+      "src/ui/stores/regions.js",
+      "src/ui/stores/watchlists.js",
+      "src/ui/watchlistController.js",
+      "src/watchlists/model.js",
+      "src/watchlists/repository.js",
+      "src/watchlists/source.js",
+      "src/app/sessionControls.js",
+      "src/ui/localCommandPresentation.js"
     ],
     "external": [
       "hls.js",
@@ -3332,7 +3422,8 @@
       "@jtarrio/webrtlsdr",
       "vue",
       "pinia",
-      "vue-i18n"
+      "vue-i18n",
+      "proj4"
     ]
   },
   "application-catalog": {
@@ -3967,7 +4058,9 @@
       "src/layers/wildlifeSightings/sprites.js",
       "src/overlays/worldOverlayChrome.js",
       "src/layers/wildlifeSightings/photoText.js",
-      "src/layers/wildlifeSightings/performance.js"
+      "src/layers/wildlifeSightings/performance.js",
+      "src/layers/directions/snapshot.js",
+      "src/layers/recentImagery/historical.js"
     ],
     "external": [
       "hls.js",
@@ -4284,7 +4377,11 @@
     "modules": [
       "src/layers/recentImagery/source.js",
       "src/layers/recentImagery/catalog.js",
-      "src/layers/recentImagery/model.js"
+      "src/layers/recentImagery/model.js",
+      "src/i18n/marker.js",
+      "src/layers/recentImagery/historical.js",
+      "src/sources/httpBody.js",
+      "src/sources/requestDeadline.js"
     ],
     "external": []
   },
@@ -4310,7 +4407,8 @@
       "src/i18n/locales/uk.json",
       "src/i18n/locales/zh-CN.json",
       "src/i18n/locales/zh-Hant.json",
-      "src/ui/unitLabels.js"
+      "src/ui/unitLabels.js",
+      "src/layers/directions/snapshot.js"
     ],
     "external": ["cesium"]
   },
@@ -5081,7 +5179,8 @@
       "src/layers/alpr/records.js",
       "src/layers/alpr/tileRecords.js",
       "src/sources/infrastructureData.js",
-      "src/sources/eventPacks.js"
+      "src/sources/eventPacks.js",
+      "src/layers/recentImagery/historical.js"
     ],
     "external": ["@mapbox/vector-tile", "pbf"]
   },

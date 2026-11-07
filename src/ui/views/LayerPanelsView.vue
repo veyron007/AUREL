@@ -14,6 +14,14 @@ import StreetLevelPanel from './panels/StreetLevelPanel.vue';
 import DrawControls from './panels/DrawControls.vue';
 import GeoImport from './panels/GeoImport.vue';
 import UiSelect from '../kit/UiSelect.js';
+import LensPanel from './panels/LensPanel.vue';
+import FieldbookPanel from './panels/FieldbookPanel.vue';
+import PlannerPanel from './panels/PlannerPanel.vue';
+import ChroniclePanel from './panels/ChroniclePanel.vue';
+import ResearchPanel from './panels/ResearchPanel.vue';
+import WatchlistPanel from './panels/WatchlistPanel.vue';
+import RegionPanel from './panels/RegionPanel.vue';
+import LocalCommandsPanel from './panels/LocalCommandsPanel.vue';
 
 // Scene sharing (src/scenes/sharing.js) offers its authoring bar and presents
 // its dialog through this store; without this view, neither is drawn.
@@ -40,6 +48,14 @@ async function importChosen(event) {
 
 <template>
   <div id="left-panel-stack" class="ui-scroll">
+  <LensPanel />
+  <FieldbookPanel />
+  <PlannerPanel />
+  <ChroniclePanel />
+  <ResearchPanel />
+  <WatchlistPanel />
+  <RegionPanel />
+  <LocalCommandsPanel />
   <!-- Data Layer Toggle Panel -->
   <RailPanel id="data-panel" start-collapsed class="active" :title="t('DATA LAYERS')">
     <div id="data-toggles" class="data-toggle-list ui-scroll"></div>

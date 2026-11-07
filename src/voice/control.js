@@ -4,7 +4,7 @@ import { useVoiceStore } from '../ui/stores/voice.js';
 import { applicationPinia } from '../ui/vueRuntime.js';
 
 // The assistant's name on its card. i18n-ignore: product name
-export const ASSISTANT_NAME = 'GEV';
+export const ASSISTANT_NAME = 'AUREL';
 
 /** Bars in the dock waveform. */
 export const VOICE_VISUALIZER_BARS = 15;
