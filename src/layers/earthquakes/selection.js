@@ -25,26 +25,40 @@ export function createEarthquakeSelection({
 }) {
   let handler = null;
   let viewer = null;
-  let registered = new Set();
+  let registeredIds = new Set();
+
+  /**
+   * The shared context store lives on `window`; without it (tests, workers)
+   * selection is unavailable and the layer still renders.
+   */
+  const safely = (operation) => {
+    try {
+      return operation();
+    } catch {
+      return null;
+    }
+  };
 
   const owns = (id) =>
     typeof id === 'string' && id.startsWith(EARTHQUAKE_ENTITY_PREFIX);
 
   function install(nextViewer) {
-    if (handler || !nextViewer?.scene) return;
+    // Headless hosts (tests) have no canvas: rendering continues unselectable.
+    if (handler || !nextViewer?.scene?.canvas) return;
+    handler = safely(() => screenSpaceEventHandlerFactory(nextViewer));
+    if (!handler) return;
     viewer = nextViewer;
     picking.registerPickOwner?.(LAYER_ID, owns);
-    handler = screenSpaceEventHandlerFactory(viewer);
     handler.setInputAction((click) => {
       if (!isPointerFree()) return;
       const picked = viewer?.scene?.pick(click.position);
       const pickedId = picked ? picking.resolvePickId(picked) : null;
-      if (owns(pickedId) && registered.has(pickedId)) {
-        context.selectEntityContext(picked.id);
+      if (owns(pickedId) && registeredIds.has(pickedId)) {
+        safely(() => context.selectEntityContext(picked.id));
         return;
       }
       if (pickedId && picking.isOwnedByOtherLayer(LAYER_ID, pickedId)) return;
-      context.clearSelectedEntityContextForLayer(LAYER_ID);
+      safely(() => context.clearSelectedEntityContextForLayer(LAYER_ID));
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
 
@@ -65,35 +79,39 @@ export function createEarthquakeSelection({
     for (const { entity, row } of entries) {
       const id = `${EARTHQUAKE_ENTITY_PREFIX}${row.stableId}`;
       const magnitude = Number.isFinite(row.mag) ? row.mag.toFixed(1) : '?';
-      context.registerEntityContext(entity, {
-        id,
-        layerId: LAYER_ID,
-        layerName: 'Earthquakes (24h)',
-        source: 'USGS',
-        sourceId: LAYER_ID,
-        sourceLabel: 'USGS',
-        dataSource,
-        // i18n-ignore: English entity label; the voice card translates it (shownEntityLabel)
-        label: row.place ? `M${magnitude} · ${row.place}` : `M${magnitude}`,
-        latitude: row.lat,
-        longitude: row.lon,
-        properties: {
-          usgsId: row.usgsId,
-          mag: row.mag,
-          timeMs: row.time,
-          depthKm: row.depthKm,
-          place: row.place,
-        },
-      });
-      next.add(id);
+      const registered = safely(() =>
+        context.registerEntityContext(entity, {
+          id,
+          layerId: LAYER_ID,
+          layerName: 'Earthquakes (24h)',
+          source: 'USGS',
+          sourceId: LAYER_ID,
+          sourceLabel: 'USGS',
+          dataSource,
+          // i18n-ignore: English entity label; the voice card translates it (shownEntityLabel)
+          label: row.place ? `M${magnitude} · ${row.place}` : `M${magnitude}`,
+          latitude: row.lat,
+          longitude: row.lon,
+          properties: {
+            usgsId: row.usgsId,
+            mag: row.mag,
+            timeMs: row.time,
+            depthKm: row.depthKm,
+            place: row.place,
+          },
+        }),
+      );
+      if (registered) next.add(id);
     }
-    registered = next;
-    context.removeEntityContextsForLayer(LAYER_ID, { retainIds: next });
+    registeredIds = next;
+    safely(() =>
+      context.removeEntityContextsForLayer(LAYER_ID, { retainIds: next }),
+    );
   }
 
   function clear() {
-    registered = new Set();
-    context.removeEntityContextsForLayer(LAYER_ID);
+    registeredIds = new Set();
+    safely(() => context.removeEntityContextsForLayer(LAYER_ID));
   }
 
   return { install, uninstall, register, clear };

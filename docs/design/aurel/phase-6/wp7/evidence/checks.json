@@ -12,7 +12,7 @@
     {
       "name": "quake card shows EMSC deltas in magnitude, time and position with units",
       "pass": true,
-      "detail": "Second Source\n\nSources agree within tolerance\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nUSGS\nPrimary\nMagnitude\n4.4 M\nObserved · USGS · 2026-10-10 14:37:31 UTC\nDepth\n20.96 km\nObserved · USGS · 2026-10-10 14:37:31 UTC\nEMSC\nMatched\n\nIndependent\n\nMagnitude\n4.2 m\nObserved · EMSC · 2026-10-10 14:37:30 UTC\nMagnitude difference\n-0.2 magnitude units\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nTime offset\n-1.2 s\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nPosition residual\n10.2 km\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nDepth difference\n-10 km\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nSolution authored by NDI\nGFZ GEOFON\nNo record\nShared inputs\n\nIndependent sources here: 2\n\nSeismic agencies compute separate solutions, often from overlapping public station networks.\nSearched ±180 s and 150 km. Agreement means within 15 s, 30 km and 0.4 magnitude units.\n\nCatalogues: USGS; EMSC-CSEM SeismicPortal (CC BY 4.0); GEOFON data centre, GFZ Helmholtz Centre for Geosciences.\n\nChecked (UTC): 2026-11-07 07:54:08 UTC\n\nCheck again"
+      "detail": "Second Source\n\nSources agree within tolerance\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nUSGS\nPrimary\nMagnitude\n4.4 M\nObserved · USGS · 2026-10-10 14:37:31 UTC\nDepth\n20.96 km\nObserved · USGS · 2026-10-10 14:37:31 UTC\nEMSC\nMatched\n\nIndependent\n\nMagnitude\n4.2 m\nObserved · EMSC · 2026-10-10 14:37:30 UTC\nMagnitude difference\n-0.2 magnitude units\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nTime offset\n-1.2 s\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nPosition residual\n10.2 km\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nDepth difference\n-10 km\nDerived · EMSC − USGS · 2026-10-10 14:37:31 UTC\nSolution authored by NDI\nGFZ GEOFON\nNo record\nShared inputs\n\nIndependent sources here: 2\n\nSeismic agencies compute separate solutions, often from overlapping public station networks.\nSearched ±180 s and 150 km. Agreement means within 15 s, 30 km and 0.4 magnitude units.\n\nCatalogues: USGS; EMSC-CSEM SeismicPortal (CC BY 4.0); GEOFON data centre, GFZ Helmholtz Centre for Geosciences.\n\nChecked (UTC): 2026-11-07 09:14:07 UTC\n\nCheck again"
     },
     {
       "name": "every residual names class, source pair and applicable time",
@@ -45,7 +45,7 @@
     {
       "name": "fire card reads two sensors for VIIRS NOAA-20 and MODIS",
       "pass": true,
-      "detail": "Second Source\n\nTwo sensors detect this fire\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nVIIRS NOAA-20\nPrimary\nFire radiative power\n14.2 MW\nObserved · VIIRS NOAA-20 · 2026-11-07 05:53:00 UTC\nMODIS Aqua\nMatched\n\nIndependent\n\nPosition residual\n500 m\nDerived · MODIS Aqua − VIIRS NOAA-20 · 2026-11-07 05:53:00 UTC\nTime offset\n+20 min\nDerived · MODIS Aqua − VIIRS NOAA-20 · 2026-11-07 05:53:00 UTC\nFire radiative power\n31.5 MW\nObserved · MODIS Aqua · 2026-11-07 06:13:00 UTC\nShared inputs\n\nIndependent sources here: 2\n\nSearched ±60 min and 2 km for the other instrument family.\nAll FIRMS detections arrive through one distributor; each satellite observes separately.\n\nFires: NASA FIRMS (VIIRS and MODIS).\n\nChecked (UTC): 2026-11-07 07:54:18 UTC\n\nCheck again"
+      "detail": "Second Source\n\nTwo sensors detect this fire\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nVIIRS NOAA-20\nPrimary\nFire radiative power\n14.2 MW\nObserved · VIIRS NOAA-20 · 2026-11-07 07:13:00 UTC\nMODIS Aqua\nMatched\n\nIndependent\n\nPosition residual\n500 m\nDerived · MODIS Aqua − VIIRS NOAA-20 · 2026-11-07 07:13:00 UTC\nTime offset\n+20 min\nDerived · MODIS Aqua − VIIRS NOAA-20 · 2026-11-07 07:13:00 UTC\nFire radiative power\n31.5 MW\nObserved · MODIS Aqua · 2026-11-07 07:33:00 UTC\nShared inputs\n\nIndependent sources here: 2\n\nSearched ±60 min and 2 km for the other instrument family.\nAll FIRMS detections arrive through one distributor; each satellite observes separately.\n\nFires: NASA FIRMS (VIIRS and MODIS).\n\nChecked (UTC): 2026-11-07 09:14:14 UTC\n\nCheck again"
     },
     {
       "name": "aircraft card compares adsb.fi with adsb.lol",
@@ -54,7 +54,7 @@
     {
       "name": "aircraft card says aggregators may share volunteer receivers",
       "pass": true,
-      "detail": "Second Source\n\nSources agree within tolerance\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nadsb.lol\nPrimary\nAltitude\n6,675 ft\nObserved · adsb.lol · 2026-11-07 04:13:19 UTC\nGround speed\n234.8 kt\nObserved · adsb.lol · 2026-11-07 04:13:19 UTC\nadsb.fi\nMatched\n\nIndependent, but may share feeders\n\nTime offset\n-4.1 s\nDerived · adsb.fi − adsb.lol · 2026-11-07 04:13:19 UTC\nPosition residual\n20 m\nDerived · adsb.fi − adsb.lol · 2026-11-07 04:13:19 UTC\nAltitude difference\n+150 ft\nDerived · adsb.fi − adsb.lol · 2026-11-07 04:13:19 UTC\nMoved along its reported track to the same instant before comparing.\nShared inputs\n\nIndependent sources here: between 1 and 2, depending on unpublished feeder overlap.\n\nadsb.lol and adsb.fi may share volunteer receivers; the overlap is not published.\nICAO address 8014f9\nAgreement means within 1 km after time alignment, 60 s and 500 ft.\n\nAircraft: adsb.lol; adsb.fi open data for personal, non-commercial use. adsb.fi\n\nChecked (UTC): 2026-11-07 07:54:21 UTC\n\nCheck again"
+      "detail": "Second Source\n\nSources agree within tolerance\n\nDisagreement between sources is normal: agencies and receivers use different stations, methods and update times.\n\nAgreement is not proof: sources can share inputs or errors, so a match does not make a value true.\n\nadsb.lol\nPrimary\nAltitude\n6,675 ft\nObserved · adsb.lol · 2026-11-07 04:13:19 UTC\nGround speed\n234.8 kt\nObserved · adsb.lol · 2026-11-07 04:13:19 UTC\nadsb.fi\nMatched\n\nIndependent, but may share feeders\n\nTime offset\n-4.1 s\nDerived · adsb.fi − adsb.lol · 2026-11-07 04:13:19 UTC\nPosition residual\n20 m\nDerived · adsb.fi − adsb.lol · 2026-11-07 04:13:19 UTC\nAltitude difference\n+150 ft\nDerived · adsb.fi − adsb.lol · 2026-11-07 04:13:19 UTC\nMoved along its reported track to the same instant before comparing.\nShared inputs\n\nIndependent sources here: between 1 and 2, depending on unpublished feeder overlap.\n\nadsb.lol and adsb.fi may share volunteer receivers; the overlap is not published.\nICAO address 8014f9\nAgreement means within 1 km after time alignment, 60 s and 500 ft.\n\nAircraft: adsb.lol; adsb.fi open data for personal, non-commercial use. adsb.fi\n\nChecked (UTC): 2026-11-07 09:14:16 UTC\n\nCheck again"
     },
     {
       "name": "aircraft card attributes adsb.fi with a link",
@@ -78,7 +78,8 @@
       "pass": true,
       "detail": [
         "services.arcgisonline.com",
-        "terrain.reearth.land"
+        "terrain.reearth.land",
+        "tile.openstreetmap.org"
       ]
     },
     {
@@ -86,7 +87,8 @@
       "pass": true,
       "detail": [
         "services.arcgisonline.com",
-        "terrain.reearth.land"
+        "terrain.reearth.land",
+        "tile.openstreetmap.org"
       ]
     },
     {
@@ -98,7 +100,8 @@
   "errors": [],
   "externalHosts": [
     "services.arcgisonline.com",
-    "terrain.reearth.land"
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
   ],
   "routeCalls": [
     "quake ?lat=30.8109&lon=78.4864&time=1791643051202",

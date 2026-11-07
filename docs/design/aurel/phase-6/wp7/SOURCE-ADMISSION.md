@@ -5,14 +5,14 @@ Policy review date: **2026-11-07**. Recorded through the
 a single bounded request made by hand from this machine; the fixtures in
 `server/providers/second-source/fixtures/` are those answers, unedited.
 
-| Source | Decision | Licence | Key | Published limit | Ledger (self-imposed) |
-| --- | --- | --- | --- | --- | --- |
-| EMSC SeismicPortal fdsnws event | **Admitted** | CC BY 4.0 | No | None published | 1 s spacing, 20/min, 500/day |
-| GFZ GEOFON fdsnws event | **Admitted, view-only** | Not stated for the event service | No | None published | 1 s spacing, 20/min, 500/day |
-| adsb.fi open data (`/api/v2/hex/`) | **Admitted, personal non-commercial** | Not stated (see §3) | No | 1 request/s per IP | 1.1 s spacing, 20/min, 1,000/day |
-| adsb.lol single aircraft (`/v2/hex/`) | **Admitted** (aggregator already used by the flights layer) | ODbL (existing admission) | No | Existing provider limits | 1.1 s spacing, 20/min, 1,000/day |
-| FIRMS MODIS beside VIIRS NOAA-20 | **No new request** | NASA open data | Existing `FIRMS_MAP_KEY` | 5,000 transactions / 10 min | Existing FIRMS cache; nothing added |
-| India NCS (seismo.gov.in) | **Not admitted** | Unverified | — | — | Not queried |
+| Source                                | Decision                                                    | Licence                          | Key                      | Published limit             | Ledger (self-imposed)               |
+| ------------------------------------- | ----------------------------------------------------------- | -------------------------------- | ------------------------ | --------------------------- | ----------------------------------- |
+| EMSC SeismicPortal fdsnws event       | **Admitted**                                                | CC BY 4.0                        | No                       | None published              | 1 s spacing, 20/min, 500/day        |
+| GFZ GEOFON fdsnws event               | **Admitted, view-only**                                     | Not stated for the event service | No                       | None published              | 1 s spacing, 20/min, 500/day        |
+| adsb.fi open data (`/api/v2/hex/`)    | **Admitted, personal non-commercial**                       | Not stated (see §3)              | No                       | 1 request/s per IP          | 1.1 s spacing, 20/min, 1,000/day    |
+| adsb.lol single aircraft (`/v2/hex/`) | **Admitted** (aggregator already used by the flights layer) | ODbL (existing admission)        | No                       | Existing provider limits    | 1.1 s spacing, 20/min, 1,000/day    |
+| FIRMS MODIS beside VIIRS NOAA-20      | **No new request**                                          | NASA open data                   | Existing `FIRMS_MAP_KEY` | 5,000 transactions / 10 min | Existing FIRMS cache; nothing added |
+| India NCS (seismo.gov.in)             | **Not admitted**                                            | Unverified                       | —                        | —                           | Not queried                         |
 
 The plan's table listed adsb.fi as ODbL. The adsb.fi open-data README names no
 licence at all, so that claim is **unverified** and the app does not repeat it;
@@ -41,7 +41,7 @@ authored `NDI` (India NCS) as relayed by EMSC. The USGS M4.4 of 2026-10-10
 Global example: the Honshu M6.1 of 2026-11-06 (`us7000twg9`), authored `EMSC`
 (fixture `emsc-honshu-2026-11-06.json`).
 
-*NCS rows through EMSC.* Rows authored `NDI` are India NCS solutions that EMSC
+_NCS rows through EMSC._ Rows authored `NDI` are India NCS solutions that EMSC
 republishes under its own CC BY 4.0 terms. The app shows them as EMSC with
 "Solution authored by NDI" and never queries NCS. Whether EMSC's licence is
 meant to cover relayed NCS solutions is an open question for the owner; until
