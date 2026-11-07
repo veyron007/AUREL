@@ -13,10 +13,7 @@ import {
   stationLayerReading,
 } from './indiaLayerSource.js';
 import { createAirQualityStationsSource } from '../sources/airQualityStations.js';
-import {
-  breathPayload,
-  hourRows,
-} from '../testSupport/airQualityFixtures.mjs';
+import { breathPayload, hourRows } from '../testSupport/airQualityFixtures.mjs';
 
 const NOW = Date.parse('2026-11-07T06:20:00Z');
 const DOON_VIEW = { west: 77.5, south: 30, east: 78.5, north: 30.6 };

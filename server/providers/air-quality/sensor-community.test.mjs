@@ -62,9 +62,12 @@ test('readings older than an hour are stale', async () => {
 
 test('upstream failure, 429 cooldown and malformed payloads are typed', async () => {
   const down = adapter(() => new Response('x', { status: 500 }));
-  assert.equal((await down.instance.nearby(FIXTURE_POINT)).state, 'unavailable');
-  const limited = adapter(() =>
-    new Response('x', { status: 429, headers: { 'retry-after': '90' } }),
+  assert.equal(
+    (await down.instance.nearby(FIXTURE_POINT)).state,
+    'unavailable',
+  );
+  const limited = adapter(
+    () => new Response('x', { status: 429, headers: { 'retry-after': '90' } }),
   );
   assert.equal(
     (await limited.instance.nearby(FIXTURE_POINT)).state,

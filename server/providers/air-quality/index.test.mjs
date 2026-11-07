@@ -55,14 +55,18 @@ test('near returns separate station and citizen tiers', async (t) => {
 test('detail adds hourly series for the nearest reporting station', async (t) => {
   const { get } = await serve(t);
   const body = await (
-    await get('/api/air-quality/near?lat=30.3165&lon=78.0322&detail=1&citizen=0')
+    await get(
+      '/api/air-quality/near?lat=30.3165&lon=78.0322&detail=1&citizen=0',
+    )
   ).json();
   assert.equal(body.stations.detail.stationId, 'openaq:9001');
   assert.equal(body.stations.detail.state, 'ok');
   assert.equal(body.stations.detail.series.pm25.length, 24);
   assert.equal(body.citizen.state, 'disabled');
   const chosen = await (
-    await get('/api/air-quality/near?lat=30.3165&lon=78.0322&station=openaq:9002')
+    await get(
+      '/api/air-quality/near?lat=30.3165&lon=78.0322&station=openaq:9002',
+    )
   ).json();
   assert.equal(chosen.stations.detail.stationId, 'openaq:9002');
 });

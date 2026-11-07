@@ -1,0 +1,84 @@
+{
+  "fixture": "Synthetic station, citizen and CAMS payloads (src/testSupport/airQualityFixtures.mjs). No live provider or credential use.",
+  "origin": "http://localhost:4173",
+  "checks": [
+    {
+      "name": "mount performs no air-quality requests",
+      "pass": true
+    },
+    {
+      "name": "selecting a place does not request air until asked",
+      "pass": true
+    },
+    {
+      "name": "one station request and one CAMS request per check",
+      "pass": true
+    },
+    {
+      "name": "station rows carry pollutant, unit, measurement time and observed class",
+      "pass": true
+    },
+    {
+      "name": "NAQI states its 24 h basis and is labelled derived",
+      "pass": true
+    },
+    {
+      "name": "US AQI is shown separately",
+      "pass": true
+    },
+    {
+      "name": "citizen sensors are labelled uncalibrated",
+      "pass": true
+    },
+    {
+      "name": "CAMS stays a separate modelled card",
+      "pass": true
+    },
+    {
+      "name": "four separate tiers render",
+      "pass": true
+    },
+    {
+      "name": "a station watch appears in Watch areas",
+      "pass": true
+    },
+    {
+      "name": "saving a watch starts no monitoring and no provider request",
+      "pass": true
+    },
+    {
+      "name": "a new selection clears the previous readings",
+      "pass": true
+    },
+    {
+      "name": "no station reads \"no monitor\", never clean",
+      "pass": true
+    },
+    {
+      "name": "phone Breath card is visible with no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "no request reached OpenAQ, data.gov.in or sensor.community",
+      "pass": true
+    },
+    {
+      "name": "no browser runtime errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "requested": [
+    "near:ok",
+    "context",
+    "near:no-monitor",
+    "context",
+    "near:ok",
+    "context"
+  ],
+  "blockedExternalHosts": [
+    "services.arcgisonline.com",
+    "terrain.reearth.land",
+    "tile.openstreetmap.org"
+  ]
+}

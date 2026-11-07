@@ -1502,5 +1502,19 @@
   "docs/design/aurel/PHASE-5.md",
   "docs/design/aurel/phase-5/HARDENING.md",
   "scripts/qa-aurel-hardening.mjs",
-  "scripts/qa-aurel-commands.mjs"
+  "scripts/qa-aurel-commands.mjs",
+  "src/airQuality/naqi.test.mjs",
+  "src/airQuality/stations.test.mjs",
+  "src/airQuality/watch.test.mjs",
+  "server/providers/air-quality/openaq.test.mjs",
+  "server/providers/air-quality/sensor-community.test.mjs",
+  "server/providers/air-quality/index.test.mjs",
+  "src/ui/breathController.test.mjs",
+  "src/ui/watchlistStation.test.mjs",
+  "src/testSupport/airQualityFixtures.mjs",
+  "src/ui/styles/breath.css",
+  "scripts/qa-aurel-breath.mjs",
+  "docs/design/aurel/phase-6/wp2/SOURCE-ADMISSION.md",
+  "docs/design/aurel/phase-6/wp2/README.md",
+  "docs/design/aurel/phase-6/wp2/GATE.md"
 ]

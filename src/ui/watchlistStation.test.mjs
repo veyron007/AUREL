@@ -1,10 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { WatchlistController } from './watchlistController.js';
-import {
-  emptyWatchRuntime,
-  validateWatchRecord,
-} from '../watchlists/model.js';
+import { emptyWatchRuntime, validateWatchRecord } from '../watchlists/model.js';
 import { hourRows } from '../testSupport/airQualityFixtures.mjs';
 
 const HOUR = 3_600_000;
@@ -57,7 +54,12 @@ function memoryRepository() {
 
 function seriesFor(value, clock) {
   if (value === 'needs-key')
-    return { state: 'needs-key', reason: 'no-key', retrievedAt: null, hours: [] };
+    return {
+      state: 'needs-key',
+      reason: 'no-key',
+      retrievedAt: null,
+      hours: [],
+    };
   return {
     state: 'ok',
     retrievedAt: new Date(clock).toISOString(),

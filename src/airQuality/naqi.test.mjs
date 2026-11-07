@@ -309,10 +309,7 @@ test('a Severe sub-index makes the NAQI open-ended', () => {
 test('US AQI from Indian µg/m³ series converts gases and uses 1 h NO2', () => {
   const result = computeUsAqi({
     pm25: hoursOf(35.9, 24),
-    no2: [
-      ...hoursOf(300, 1),
-      ...hoursOf(10, 5, 'µg/m³', END - HOUR),
-    ],
+    no2: [...hoursOf(300, 1), ...hoursOf(10, 5, 'µg/m³', END - HOUR)],
   });
   assert.equal(result.state, 'ok');
   assert.equal(result.index, 112);
