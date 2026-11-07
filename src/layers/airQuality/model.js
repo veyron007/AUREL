@@ -12,8 +12,8 @@
  * network can be added without retrofitting a shared numeric meaning that does
  * not exist.
  *
- * Only ECCC's AQHI is implemented here; `AIR_QUALITY_PROVIDERS` is the seam a
- * later provider registers against.
+ * ECCC's AQHI is implemented here; `AIR_QUALITY_PROVIDERS` is the seam other
+ * providers register against (India: src/airQuality/indiaLayerSource.js).
  */
 // A portable export (package.json): no i18n here. The labels stay English data;
 // the Weather card (index.js) shows them translated.
@@ -122,6 +122,17 @@ export const AIR_QUALITY_PROVIDERS = Object.freeze({
       Object.freeze({ id: 'high', max: 10 }),
       Object.freeze({ id: 'very-high', max: Infinity }),
     ]),
+  }),
+  // India reference monitors via OpenAQ (src/airQuality/indiaLayerSource.js).
+  // A latest hourly concentration is not an index, so there are no bands;
+  // NAQI and US AQI are computed from 24 h means on the Lens Breath card.
+  'openaq-in': Object.freeze({
+    id: 'openaq-in',
+    scale: 'µg/m³',
+    label: msg('Air quality'),
+    network: 'OpenAQ · CPCB/UKPCB monitors',
+    coverage: msg('India · monitors near the view centre, via OpenAQ'),
+    bands: Object.freeze([]),
   }),
 });
 

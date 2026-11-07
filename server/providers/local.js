@@ -5,6 +5,7 @@ import { tomtomProxy } from './traffic.js';
 import { firmsProxy } from './firms.js';
 import { firmsAreaProxy } from './firms-area.js';
 import { fieldContextProxy } from './field-context.js';
+import { airQualityProxy } from './air-quality/index.js';
 import { imageryHistoryProxy } from './imagery-history.js';
 import { researchProxy } from './research/index.js';
 import { terrainHeightsProxy } from './terrain.js';
@@ -63,6 +64,7 @@ function localProviderPlugins({
     firmsAreaProxy(),
     firmsProxy(),
     fieldContextProxy(),
+    airQualityProxy(),
     imageryHistoryProxy(),
     researchProxy(),
     rocketLaunchesProxy(freeOnly ? { resolveToken: () => '' } : {}),

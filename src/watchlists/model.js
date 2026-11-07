@@ -4,6 +4,11 @@ import {
   validateFirmsAreaBounds,
   FIRMS_AREA_SOURCES,
 } from '../sources/firmsArea.js';
+import {
+  validateCrossingNote,
+  validateStationCondition,
+  validateStationState,
+} from '../airQuality/watch.js';
 export const WATCH_LIMITS = Object.freeze({
   definitions: 8,
   active: 4,
@@ -69,8 +74,9 @@ export function watchBounds(place) {
     fail();
   return bounds;
 }
+/** `condition` is optional: absent means the FIRMS area watch. */
 export function createWatchDefinition(
-  { place, title = place?.name, intervalMinutes = 30 },
+  { place, title = place?.name, intervalMinutes = 30, condition },
   { id = globalThis.crypto.randomUUID(), now = Date.now() } = {},
 ) {
   const bounds = watchBounds(place),
@@ -89,20 +95,27 @@ export function createWatchDefinition(
     createdAt: stamp,
     updatedAt: stamp,
     revision: 0,
+    ...(condition === undefined ? {} : { condition }),
   });
 }
+const DEFINITION_KEYS = [
+  'version',
+  'id',
+  'title',
+  'place',
+  'bounds',
+  'intervalMs',
+  'createdAt',
+  'updatedAt',
+  'revision',
+];
 export function validateWatchDefinition(value) {
-  fields(value, [
-    'version',
-    'id',
-    'title',
-    'place',
-    'bounds',
-    'intervalMs',
-    'createdAt',
-    'updatedAt',
-    'revision',
-  ]);
+  const conditional = Boolean(value) && Object.hasOwn(value, 'condition');
+  fields(
+    value,
+    conditional ? [...DEFINITION_KEYS, 'condition'] : DEFINITION_KEYS,
+  );
+  if (conditional) validateStationCondition(value.condition);
   if (value.version !== 1) fail();
   text(value.id);
   text(value.title, 160);
@@ -174,7 +187,10 @@ function sourceRows(rows) {
   }
 }
 export function validateWatchRuntime(value) {
-  fields(value, Object.keys(emptyWatchRuntime()));
+  const base = Object.keys(emptyWatchRuntime());
+  const station = Boolean(value) && Object.hasOwn(value, 'station');
+  fields(value, station ? [...base, 'station'] : base);
+  if (station) validateStationState(value.station);
   for (const key of [
     'baselineAt',
     'lastAttemptAt',
@@ -223,6 +239,10 @@ export function validateWatchRuntime(value) {
   )
     fail();
   for (const note of value.notifications) {
+    if (note?.kind === 'aq-crossing') {
+      validateCrossingNote(note);
+      continue;
+    }
     fields(note, [
       'id',
       'createdAt',
@@ -263,6 +283,13 @@ export function validateWatchRecord(value) {
   fields(value, ['definition', 'runtime', 'lease']);
   const definition = validateWatchDefinition(value.definition),
     runtime = validateWatchRuntime(value.runtime);
+  // A FIRMS area watch never carries station state or station notes.
+  if (
+    !definition.condition &&
+    (runtime.station ||
+      runtime.notifications.some((note) => note.kind === 'aq-crossing'))
+  )
+    fail();
   if (value.lease !== null) {
     fields(value.lease, ['ownerId', 'token', 'until']);
     text(value.lease.ownerId);

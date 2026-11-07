@@ -7,6 +7,7 @@ import { createPlannerTools } from './plannerTools.js';
 import { createChronicleTools } from './chronicleTools.js';
 import { createResearchTools } from './researchTools.js';
 import { createWatchlistTools } from './watchlistTools.js';
+import { createBreathTools } from './breathTools.js';
 import { createRegionTools } from './regionTools.js';
 import { useWorkspaceStore } from '../ui/stores/workspace.js';
 import { initAnnotations } from '../annotations/index.js';
@@ -186,6 +187,11 @@ export function createApplicationTools({
   defer(() => research.destroy());
   const watchlists = createWatchlistTools({ pinia: applicationPinia() });
   defer(() => watchlists.destroy());
+  const breath = createBreathTools({
+    pinia: applicationPinia(),
+    watchlists: watchlists.controller,
+  });
+  defer(() => breath.destroy());
   const regions = createRegionTools({
     pinia: applicationPinia(),
     geoFileImport,

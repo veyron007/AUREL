@@ -185,7 +185,21 @@ async function create() {
           ><span class="watchlist-state" role="status">{{
             stateLabel(watch.state)
           }}</span></header
-        ><p class="watchlist-source-name"
+        ><p v-if="watch.kind === 'station'" class="watchlist-source-name"
+          >{{
+            t(
+              'OpenAQ station: {pollutant} {hours} h mean enters {category} (from {value} {unit})',
+              {
+                pollutant: watch.condition.pollutant,
+                hours: watch.condition.averagingHours,
+                category: t(watch.condition.categoryLabel),
+                value: watch.condition.threshold,
+                unit: watch.condition.unit,
+              },
+            )
+          }}
+          · {{ t('{value} min', { value: watch.intervalMinutes }) }}</p
+        ><p v-else class="watchlist-source-name"
           >{{ t('NASA FIRMS thermal detections') }} ·
           {{ t('{value} min', { value: watch.intervalMinutes }) }}</p
         >
@@ -270,9 +284,37 @@ async function create() {
               'No new summaries have been recorded. This does not establish that no events occurred.',
             )
           }}</p
-          ><article
+          ><template
             v-for="notification in watch.notifications"
             :key="notification.id"
+            ><article
+              v-if="notification.kind === 'aq-crossing'"
+              class="watchlist-notification"
+              data-crossing
+              ><p class="watchlist-summary-time"
+                >{{ t('Threshold crossing') }} ·
+                {{ stamp(notification.createdAt) }}</p
+              ><p
+                >{{
+                  t(
+                    '{station}: {pollutant} {hours} h mean {value} {unit} entered {category}.',
+                    {
+                      station: notification.stationName,
+                      pollutant: watch.condition?.pollutant ?? notification.pollutant,
+                      hours: notification.averagingHours,
+                      value: notification.mean,
+                      unit: notification.unit,
+                      category: t(watch.condition?.categoryLabel ?? 'Unknown'),
+                    },
+                  )
+                }}</p
+              ><p class="watchlist-help"
+                >{{ t('Observed to (UTC)') }}:
+                {{ stamp(notification.observedTo) }} ·
+                {{ t('{count} of {total} h', { count: notification.hours, total: notification.averagingHours }) }}</p
+              ></article
+            ><article
+            v-else
             class="watchlist-notification"
             ><p class="watchlist-summary-time"
               >{{ t('Check summary') }} · {{ stamp(notification.createdAt) }}</p
@@ -301,6 +343,7 @@ async function create() {
                 )
               }}</p></details
             ></article
+          ></template
           ></section
         >
       </article>

@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 import { t } from '../../../i18n/index.js';
 import RailPanel from '../../rail/RailPanel.vue';
 import UiButton from '../../kit/UiButton.vue';
+import BreathCard from './BreathCard.vue';
 import { useLensStore } from '../../stores/lens.js';
 
 const lens = useLensStore();
@@ -62,6 +63,7 @@ async function moveTab(event) {
             <UiButton @click="lens.act('openWorkspace', 'plan')">{{ t('Plan here') }}</UiButton>
             <UiButton @click="lens.act('openWorkspace', 'compare')">{{ t('Compare imagery') }}</UiButton>
           </div>
+          <BreathCard />
         </section>
         <section v-show="tab === 'evidence'" id="lens-tabpanel-evidence" role="tabpanel" aria-labelledby="lens-tab-evidence" tabindex="0">
           <p class="lens-explanation">{{ t('Observation time, retrieval time and feed update time are different. Unknown values remain unknown.') }}</p>
