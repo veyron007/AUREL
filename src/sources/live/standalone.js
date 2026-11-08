@@ -11,6 +11,7 @@ import {
   readsbIdentities,
 } from './aircraft.js';
 import { normalizeVesselTrack, vesselSnapshot } from './vessels.js';
+import { createVesselDeltaMirror, FULL_SYNC_CURSOR } from './vesselDelta.js';
 
 const defaultFetch = (...args) => globalThis.fetch(...args);
 const header = (response, name) => response.headers?.get?.(name);
@@ -200,46 +201,87 @@ export function createMilitarySource({
   };
 }
 
+const VESSEL_STATUS_REASONS = Object.freeze({
+  'missing-key': 'AISSTREAM_API_KEY not set',
+  'auth-failed': 'API key rejected — check AISSTREAM_API_KEY',
+  unsupported: 'live feed unsupported',
+  error: 'feed down',
+  closed: 'feed disconnected',
+});
+
+/** The `/api/vessels` URL for a row cap and optional area, without `since`. */
+function vesselSnapshotUrl(apiUrl, origin, maxRows, area) {
+  const url = new URL(apiUrl, origin);
+  url.searchParams.set('maxRows', String(maxRows));
+  // An area asks for the vessels around a point; servers that hold every
+  // vessel may ignore it, since callers still keep only what they need.
+  if (
+    Number.isFinite(area?.lat) &&
+    Number.isFinite(area?.lon) &&
+    Number.isFinite(area?.radiusKm)
+  ) {
+    url.searchParams.set('lat', area.lat.toFixed(5));
+    url.searchParams.set('lon', area.lon.toFixed(5));
+    url.searchParams.set('radius_km', area.radiusKm.toFixed(1));
+  }
+  return url;
+}
+
 export function createVesselSource({
   fetchImpl = defaultFetch,
   apiUrl = '/api/vessels',
   origin = () => globalThis.location?.origin || 'http://localhost',
+  delta = true,
 } = {}) {
+  // Rows changed since the last answer instead of every row (vesselDelta.js).
+  const mirror = delta ? createVesselDeltaMirror() : null;
+
+  /** One request; a delta mirror adds `since` and merges the answer. */
+  async function request(url, since, signal) {
+    const target = new URL(url);
+    if (since != null) target.searchParams.set('since', since);
+    const { response, payload } = await readResponse(
+      fetchImpl,
+      target.toString(),
+      { signal, cache: 'no-store' },
+      'Vessels',
+    );
+    if (!response.ok) {
+      const error = httpError(response, 'Vessels');
+      error.message = VESSEL_STATUS_REASONS[payload?.status] || error.message;
+      throw error;
+    }
+    return { response, payload };
+  }
+
+  /** Rows of the full window, asking once more in full when a delta misses. */
+  async function readWindow(url, maxRows, signal) {
+    if (!mirror) return request(url, null, signal);
+    const key = url.search;
+    const first = await request(url, mirror.sinceFor(key), signal);
+    if (!Array.isArray(first.payload?.rows)) return first;
+    const rows = mirror.apply(key, first.payload, maxRows);
+    if (rows) return { ...first, payload: { ...first.payload, rows } };
+    const full = await request(url, FULL_SYNC_CURSOR, signal);
+    if (!Array.isArray(full.payload?.rows)) return full;
+    const fullRows = mirror.apply(key, full.payload, maxRows);
+    return { ...full, payload: { ...full.payload, rows: fullRows } };
+  }
+
   return {
     // i18n-ignore: feed source name, replaced by the provider from each snapshot and reported to AI tools
     label: 'Vessels',
     async getSnapshot({ maxRows = 12000, area } = {}, { signal } = {}) {
-      const url = new URL(apiUrl, origin());
-      url.searchParams.set('maxRows', String(maxRows));
-      // An area asks for the vessels around a point; servers that hold every
-      // vessel may ignore it, since callers still keep only what they need.
-      if (
-        Number.isFinite(area?.lat) &&
-        Number.isFinite(area?.lon) &&
-        Number.isFinite(area?.radiusKm)
-      ) {
-        url.searchParams.set('lat', area.lat.toFixed(5));
-        url.searchParams.set('lon', area.lon.toFixed(5));
-        url.searchParams.set('radius_km', area.radiusKm.toFixed(1));
-      }
-      const { response, payload } = await readResponse(
-        fetchImpl,
-        url.toString(),
-        { signal, cache: 'no-store' },
-        'Vessels',
-      );
-      if (!response.ok) {
-        const error = httpError(response, 'Vessels');
-        const reasons = {
-          'missing-key': 'AISSTREAM_API_KEY not set',
-          'auth-failed': 'API key rejected — check AISSTREAM_API_KEY',
-          unsupported: 'live feed unsupported',
-          error: 'feed down',
-          closed: 'feed disconnected',
-        };
-        error.message = reasons[payload?.status] || error.message;
+      const url = vesselSnapshotUrl(apiUrl, origin(), maxRows, area);
+      let answer;
+      try {
+        answer = await readWindow(url, maxRows, signal);
+      } catch (error) {
+        // An error leaves the mirror unknown: start again from a full window.
+        mirror?.reset();
         throw error;
       }
+      const { response, payload } = answer;
       return {
         ...vesselSnapshot(payload, { source: feedSource(response, 'Vessels') }),
         status: response.status,

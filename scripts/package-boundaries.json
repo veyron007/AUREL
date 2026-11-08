@@ -269,6 +269,7 @@
       "server/providers/aircraft/tracks.js",
       "server/providers/vessels/ais-store.js",
       "server/providers/vessels/ais-snapshot.js",
+      "server/providers/vessels/ais-delta.js",
       "server/providers/vessels/ais-live.js",
       "src/data/adsbLolFallback.js",
       "src/data/aisStreamAdapter.js",
@@ -1431,7 +1432,8 @@
       "src/sources/live/contract.js",
       "src/sources/live/index.js",
       "src/sources/live/standalone.js",
-      "src/sources/live/vessels.js"
+      "src/sources/live/vessels.js",
+      "src/sources/live/vesselDelta.js"
     ],
     "external": []
   },
@@ -2963,6 +2965,7 @@
       "src/sources/live/contract.js",
       "src/sources/live/standalone.js",
       "src/sources/live/vessels.js",
+      "src/sources/live/vesselDelta.js",
       "src/splitFlap.js",
       "src/standalone/catalog.js",
       "src/standalone/layerSources.js",
@@ -5499,6 +5502,7 @@
       "src/data/aircraftEmergency.js",
       "src/sources/live/aircraft.js",
       "src/sources/live/vessels.js",
+      "src/sources/live/vesselDelta.js",
       "src/tools/places.js",
       "src/tools/catalog.js",
       "src/tools/schema.js",

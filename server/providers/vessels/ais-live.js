@@ -9,6 +9,7 @@ import {
   ingestAisStreamEnvelope,
   readAisTrack,
   aisStreamRows,
+  aisStreamSync,
   newestAisPositionAt,
 } from './ais-store.js';
 import { parseVesselArea } from './ais-snapshot.js';
@@ -117,10 +118,17 @@ export function aisLiveProxy() {
         );
         // The client asks for the vessels around its view; a wide view sends
         // no area and gets every vessel, as before.
-        const rows = aisStreamRows(
-          maxRows,
-          parseVesselArea(incoming.searchParams),
-        );
+        const area = parseVesselArea(incoming.searchParams);
+        // `since` opts into cursor mode (ais-delta.js): rows changed since
+        // the cursor plus removals, or the full window when that cannot be
+        // answered exactly. Without it the body is the full row list.
+        const sync = incoming.searchParams.has('since')
+          ? aisStreamSync(maxRows, area, incoming.searchParams.get('since'))
+          : null;
+        const rows = sync ? sync.rows : aisStreamRows(maxRows, area);
+        const newestPositionAt = sync
+          ? sync.newestPositionAt
+          : newestAisPositionAt(rows);
 
         const feed = aisStreamStatusSnapshot();
 
@@ -129,12 +137,13 @@ export function aisLiveProxy() {
         res.setHeader('Cache-Control', 'no-store');
         res.end(
           JSON.stringify({
+            ...sync,
             rows,
             source: 'AISStream',
             status: feed.status,
             error: feed.error,
             refreshing: feed.status !== 'live',
-            newestPositionAt: newestAisPositionAt(rows),
+            newestPositionAt,
             lastMessageAt: feed.lastMessageAt,
             // Honest-failure metadata: how long the feed has been quiet, which
             // recovery attempt we are on, and when the next one lands.
