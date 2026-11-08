@@ -1,4 +1,5 @@
 import { createSurfaceKeyboard } from './ui/surfaceKeyboard.js';
+import { reloadWhenRestarted } from './keySetupReload.js';
 import {
   freeOnlyRowPolicy,
   radioPriorityHint,
@@ -20,6 +21,8 @@ import {
  * it, and a paste field. SAVE posts to /api/setup/keys, which writes the
  * repo-root .env and restarts the dev server — Vite's client then reloads the
  * page itself, and the pasted key is simply *on*. No hand-edited env files.
+ * The served build (scripts/serve-built.mjs) restarts too and the page reloads
+ * through keySetupReload.js once the new server answers.
  *
  * The surface self-destructs where it cannot work: a prod build (no endpoint)
  * or a LAN visitor (loopback-only endpoint) fails the status fetch, and both
@@ -453,6 +456,13 @@ export async function initKeySetup({
         });
       }
       say(t(doneMessageKey, { store: storeLabel() }));
+      // The served build has no Vite client to reload the page for us.
+      if (payload.reload === 'poll')
+        void reloadWhenRestarted({
+          doFetch,
+          bootId: payload.status?.bootId,
+          signal: lifetime.signal,
+        });
     } catch (error) {
       say(
         t('Save failed: {detail}', {

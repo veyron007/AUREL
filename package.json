@@ -49,6 +49,7 @@
     "build": "vite build",
     "build:panel": "node scripts/build-panel.mjs",
     "preview": "vite preview",
+    "serve": "node scripts/serve-built.mjs",
     "test": "node scripts/run-unit-tests.mjs",
     "test:perf": "node scripts/run-perf-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",

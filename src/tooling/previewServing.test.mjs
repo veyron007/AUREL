@@ -10,7 +10,7 @@ import { makeFixtureRoot } from './fixtureRoot.mjs';
 const nominatimStorageDir = await makeFixtureRoot('gev-preview-composition-');
 test.after(() => rm(nominatimStorageDir, { recursive: true, force: true }));
 
-test('data providers have both hooks; credential editing stays development-only', () => {
+test('data providers have both hooks; credential editing stays off a plain preview', () => {
   const plugins = localProviderPlugins({ nominatimStorageDir });
   assert.ok(plugins.some(({ name }) => name === 'fire-perimeters'));
   assert.ok(plugins.some(({ name }) => name === 'gnss-integrity'));
@@ -20,7 +20,8 @@ test('data providers have both hooks; credential editing stays development-only'
   assert.ok(plugins.some(({ name }) => name === 'acartia'));
   for (const plugin of plugins) {
     if (plugin.name === 'gev-key-setup') {
-      assert.equal(plugin.configurePreviewServer, undefined);
+      // Only the served-build launcher admits it to preview (it supplies the
+      // restart); see server/standalone/keySetupServed.test.mjs.
       assert.equal(
         plugin.apply({}, { command: 'serve', isPreview: true }),
         false,

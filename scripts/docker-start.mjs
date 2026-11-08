@@ -8,13 +8,15 @@
  * loopback only, so without this the POWER UP panel refuses the very machine
  * running the container. This launcher reads the gateway out of the kernel
  * routing table and declares exactly that one address trusted, then starts
- * Vite the way scripts/pinokio-start.mjs does.
+ * the app the way scripts/pinokio-start.mjs does: the built app by default
+ * (scripts/serve-built.mjs), or the dev server with GEV_LAUNCH_MODE=dev.
  */
 import { accessSync, constants, readFileSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectInvocation } from './pinokio-install.mjs';
 import { loadViteFromCanonicalRoot } from './pinokio-start.mjs';
+import { startLaunchServer } from './launch-mode.mjs';
 
 const MODULE_PATH = fileURLToPath(import.meta.url);
 const ROOT = realpathSync(path.resolve(path.dirname(MODULE_PATH), '..'));
@@ -127,19 +129,16 @@ async function start() {
   }
 
   const port = Number.parseInt(process.env.PORT, 10) || 4173;
-  const { createServer } = await loadViteFromCanonicalRoot(ROOT);
-  const server = await createServer({
+  const vite = await loadViteFromCanonicalRoot(ROOT);
+  // The container's own namespace. compose publishes this to the host's
+  // 127.0.0.1 only; widening that mapping is the LAN opt-in.
+  const server = await startLaunchServer({
+    vite,
     root: ROOT,
-    server: {
-      // The container's own namespace. compose publishes this to the host's
-      // 127.0.0.1 only; widening that mapping is the LAN opt-in.
-      host: '0.0.0.0',
-      port,
-      strictPort: true,
-    },
+    host: '0.0.0.0',
+    port,
+    tag: 'Docker',
   });
-  await server.listen();
-  server.printUrls();
   console.log(`[Docker] Ready at http://localhost:${port}/`);
 
   for (const signal of ['SIGINT', 'SIGTERM']) {

@@ -710,8 +710,9 @@ test('key setup writes only the supplied application root, retains request guard
     untouched = root(t);
   env(t, 'OPENAI_API_KEY', undefined);
   const plugin = keySetupEndpoint({ sourceRoot: first });
+  // Absent from a plain `vite preview`; only scripts/serve-built.mjs, which
+  // supplies the restart, admits it there (server/standalone/keySetupServed.test.mjs).
   assert.equal(plugin.apply({}, { command: 'serve', isPreview: true }), false);
-  assert.equal(plugin.configurePreviewServer, undefined);
   const routes = install(plugin);
   const handler = routes.get('/api/setup/keys');
   const body = JSON.stringify({

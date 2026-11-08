@@ -61,7 +61,13 @@ function launchWithPolicy(value, routeTable = ROUTES) {
       return next(specifier, context);
     }});
   `;
-  const env = { ...process.env, GEV_ALLOWED_HOSTS: 'globe.example.lan' };
+  // The dev launch mode keeps this to the stubbed createServer; the served
+  // build reads the same sealed policy, set before Vite is imported either way.
+  const env = {
+    ...process.env,
+    GEV_ALLOWED_HOSTS: 'globe.example.lan',
+    GEV_LAUNCH_MODE: 'dev',
+  };
   delete env.GEV_KEY_SETUP_TRUSTED_PEERS;
   if (value !== undefined) env.GEV_KEY_SETUP_TRUSTED_PEERS = value;
   const child = spawnSync(
@@ -123,7 +129,11 @@ test('Compose resolves shell and project dotenv policy before the launcher start
   for (const key of Object.keys(baseEnv)) {
     if (
       key.startsWith('COMPOSE_') ||
-      ['GEV_KEY_SETUP_TRUSTED_PEERS', 'GEV_ALLOWED_HOSTS'].includes(key)
+      [
+        'GEV_KEY_SETUP_TRUSTED_PEERS',
+        'GEV_ALLOWED_HOSTS',
+        'GEV_LAUNCH_MODE',
+      ].includes(key)
     )
       delete baseEnv[key];
   }
@@ -160,6 +170,8 @@ test('Compose resolves shell and project dotenv policy before the launcher start
   assert.deepEqual(config(dotenv), {
     GEV_KEY_SETUP_TRUSTED_PEERS: 'none',
     GEV_ALLOWED_HOSTS: 'globe.example.lan',
+    // Forwarded only when set (GEV_LAUNCH_MODE=dev docker compose up).
+    GEV_LAUNCH_MODE: null,
   });
   assert.equal(
     config(dotenv, { GEV_KEY_SETUP_TRUSTED_PEERS: '10.9.8.7' })

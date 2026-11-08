@@ -205,7 +205,8 @@ test('Pinokio start runner emits an ANSI-independent ready URL', async () => {
   assert.match(source, /applyPinokioEnvironment\(\)/);
   assert.match(source, /loadViteFromCanonicalRoot\(\)/);
   assert.ok(
-    source.indexOf('loadViteFromCanonicalRoot()') < source.indexOf('createServer({'),
+    source.indexOf('loadViteFromCanonicalRoot()') <
+      source.indexOf('startLaunchServer({'),
   );
 });
 

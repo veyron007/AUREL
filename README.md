@@ -138,11 +138,20 @@ git clone https://github.com/bilawalsidhu/gods-eye-view.git
 cd gods-eye-view
 npm ci
 npm run doctor
-npm run dev
+npm run serve
 ```
 
 Open **`http://localhost:4173`**. Choose **Live Contacts**, **Space Missions**,
 **Environmental**, or **Explore Manually** from the first-run panel.
+
+`npm run serve` builds the app the first time (up to a minute) and then
+serves the build with every local data route, so a cold load makes about 350
+requests instead of 1,600. Later starts skip the build until a source file,
+`.env` browser setting or dependency changes. `npm run local:start` runs the
+same mode in the background.
+
+**Editing the code?** Use `npm run dev` instead: it serves the source with live
+reload, at the cost of a much heavier page load.
 
 <details>
 <summary>Startup performance</summary>
@@ -158,7 +167,7 @@ configured keys straight from the Keychain. It starts keyless too.
 
 ### Path 3 — Docker
 
-No Node install needed; the container publishes the same dev server.
+No Node install needed; the container serves the same built app as `npm run serve`.
 
 ```bash
 git clone https://github.com/bilawalsidhu/gods-eye-view.git
@@ -172,7 +181,7 @@ Open **`http://localhost:4173`** as above. Everything the app saves stays in the
 - `.gev-cache/` - downloaded map and satellite data, so later starts are faster
 - `.gev-logs/` - logs
 
-Back up that folder and you've backed up everything; delete `.env` to forget your keys. Source edits still hot-reload. The port is published to `127.0.0.1` only, so the default matches the native one.
+Back up that folder and you've backed up everything; delete `.env` to forget your keys. The first start builds the app into `dist/` in that folder; later starts reuse it until the source changes. To edit code with live reload, start the dev server instead: `GEV_LAUNCH_MODE=dev docker compose up`. The port is published to `127.0.0.1` only, so the default matches the native one.
 
 The local MCP server and ChatGPT OAuth voice are not available under Docker; use an OpenAI API key for voice.
 
