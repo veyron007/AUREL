@@ -61,3 +61,8 @@ Browser checks covered startup, welcome dismissal, landscape mission scrolling, 
 See `evidence/report.json` for screenshots and scoped observations. The report distinguishes unchanged permission workflows from tested UI states. Build and test results are recorded in `evidence/validation.txt`.
 
 Lamplight's verification is recorded separately from the iteration 01 evidence above.
+
+## Plans
+
+- [Data quality plan](DATA-QUALITY-PLAN.md): freshness, precision and live-feed smoothness, prepared 7 November 2026.
+- [Performance plan](PERFORMANCE-PLAN.md): delivery, startup, data pipeline, rendering and interface cost, with a measured baseline, prepared 8 November 2026.
