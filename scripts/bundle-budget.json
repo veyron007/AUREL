@@ -1,6 +1,6 @@
 {
-  "description": "Startup bundle budget in bytes, checked by npm run check:bundle after npm run build. Set 2026-11-08 on AUREL main to measured sizes plus about 3% (entry JS 8,051,095 raw / 2,622,933 gzip; no static imports; entry CSS 594,839 raw / 94,102 gzip). Lower each limit when a work package shrinks the bundle; never raise one to land a change.",
-  "entryJs": { "bytes": 8292352, "gzipBytes": 2701312 },
-  "staticImportsJs": { "bytes": 1024, "gzipBytes": 1024 },
-  "entryCss": { "bytes": 612352, "gzipBytes": 96928 }
+  "description": "Startup bundle budget in bytes, checked by npm run check:bundle after npm run build. Measured sizes plus about 3%. Phase 2 (2026-11-08) lowered entry JS from 8,051,095 raw / 2,622,933 gzip to 4,185,503 / 1,319,171 and entry CSS from 594,839 / 94,102 to 532,281 / 84,739. staticImportsJs now holds the vendor chunk (Vue, Pinia, vue-i18n: 109,909 / 42,157), moved out of the entry, so entry plus static imports fell by 3.76 MB raw. Lower each limit when a work package shrinks the bundle; never raise one to land a change.",
+  "entryJs": { "bytes": 4311069, "gzipBytes": 1358747 },
+  "staticImportsJs": { "bytes": 113207, "gzipBytes": 43422 },
+  "entryCss": { "bytes": 548250, "gzipBytes": 87282 }
 }
