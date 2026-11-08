@@ -4427,5 +4427,11 @@
   "{source} · {age}": "{source} · {age}",
   "Sources": "Fonti",
   "Could not load that language. Try again.": "Impossibile caricare questa lingua. Riprova.",
-  "{name} could not be loaded. Check the connection and try again.": "Impossibile caricare {name}. Controlla la connessione e riprova."
+  "{name} could not be loaded. Check the connection and try again.": "Impossibile caricare {name}. Controlla la connessione e riprova.",
+  "Auto": "Automatica",
+  "Balanced": "Bilanciata",
+  "Battery": "Batteria",
+  "Now: reduced, step {step} of {steps}": "Ora: ridotta, livello {step} di {steps}",
+  "Now: full quality": "Ora: qualità piena",
+  "Display quality": "Qualità di visualizzazione"
 }

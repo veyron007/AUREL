@@ -1,0 +1,121 @@
+/* SPATIAL — blur budget (performance plan WP5.1).
+   Imported after spatial-shell.css and before cyber.css; every rule keeps the
+   :root:not([data-ui-theme='cyber']) guard, so Cyber is untouched.
+
+   1. One blurred backdrop per group. The dock's pane is the dock's only blur:
+      everything inside it samples only the dock (its backdrop root), so a
+      second blur there costs a filter pass and shows nothing new. The globe
+      actions share one masked backdrop instead of one per button.
+   2. While the camera moves (data-camera-moving, set by
+      src/ui/cameraMotionFlag.js), under adaptive quality's solid step
+      (data-quality-panes='solid', src/app/qualityGovernor.js) and under
+      prefers-reduced-transparency, panes drop the blur and fill with the
+      solid pane tone. They fade back over 150 ms. */
+
+@property --spatial-blur-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 20px;
+}
+@property --spatial-blur-saturate {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1.7;
+}
+@property --spatial-glass {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(255, 255, 255, 0.14);
+}
+@property --spatial-floor {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(8, 12, 18, 0.44);
+}
+
+:root:not([data-ui-theme='cyber']) {
+  /* The solid pane: the glass fill and its floor turn into the opaque
+     --spatial-pane-solid tone. Inspector cards and chrome fill with the glass
+     alone (--workspace-surface), so both tokens change. */
+  --spatial-glass-solid: rgba(40, 45, 53, 0.93);
+  --spatial-floor-solid: rgba(22, 26, 33, 0.9);
+  transition:
+    --spatial-glass 150ms ease-out,
+    --spatial-blur-radius 150ms ease-out,
+    --spatial-blur-saturate 150ms ease-out,
+    --spatial-floor 150ms ease-out;
+}
+
+/* Solid panes: no blur at all (an identity blur still costs a pass). */
+:root:not([data-ui-theme='cyber']):is(
+    [data-camera-moving],
+    [data-quality-panes='solid']
+  ) {
+  --spatial-blur: none;
+  --spatial-blur-radius: 0px;
+  --spatial-blur-saturate: 1;
+  --spatial-glass: var(--spatial-glass-solid);
+  --spatial-floor: var(--spatial-floor-solid);
+  transition: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-ui-theme='cyber']) {
+    --spatial-blur: none;
+    --spatial-blur-radius: 0px;
+    --spatial-blur-saturate: 1;
+    --spatial-glass: var(--spatial-glass-solid);
+    --spatial-floor: var(--spatial-floor-solid);
+    transition: none;
+  }
+}
+
+/* 1a. Inside the dock, only the dock blurs. The voice control's raised
+   socket keeps its own layer: its saturated blur of the dock is part of the
+   resting look. */
+:root:not([data-ui-theme='cyber'])
+  #command-dock#command-dock
+  :is(
+    #location-bar,
+    #control-panel,
+    .dock-popover-content,
+    .gev-voice-help-tray,
+    .gev-voice-error-tray,
+    #gev-chat-panel,
+    #gev-voice-panel,
+    #gev-chat-mini-reply
+  ) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* 1b. Globe actions: one backdrop under the row, masked to the round
+   buttons (44px circles, 8px apart), instead of one blur per button.
+   Desktop layout only; the phone shell keeps its own arrangement. */
+@media (min-width: 721px) {
+  :root:not([data-ui-theme='cyber'])
+    body:not(.mobile-shell)
+    #top-center-actions::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    backdrop-filter: var(--spatial-blur);
+    -webkit-backdrop-filter: var(--spatial-blur);
+    mask: radial-gradient(circle at 22px 22px, #000 21.5px, transparent 22px) 0
+      0 / 52px 44px repeat-x;
+    -webkit-mask: radial-gradient(
+        circle at 22px 22px,
+        #000 21.5px,
+        transparent 22px
+      )
+      0 0 / 52px 44px repeat-x;
+  }
+  :root:not([data-ui-theme='cyber'])
+    body:not(.mobile-shell)
+    #top-center-actions
+    > button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

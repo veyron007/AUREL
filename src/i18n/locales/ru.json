@@ -4502,5 +4502,11 @@
   "{source} · {age}": "{source} · {age}",
   "Sources": "Источники",
   "Could not load that language. Try again.": "Не удалось загрузить этот язык. Попробуйте ещё раз.",
-  "{name} could not be loaded. Check the connection and try again.": "Не удалось загрузить {name}. Проверьте подключение и попробуйте ещё раз."
+  "{name} could not be loaded. Check the connection and try again.": "Не удалось загрузить {name}. Проверьте подключение и попробуйте ещё раз.",
+  "Auto": "Авто",
+  "Balanced": "Сбалансированное",
+  "Battery": "Экономия батареи",
+  "Now: reduced, step {step} of {steps}": "Сейчас: снижено, шаг {step} из {steps}",
+  "Now: full quality": "Сейчас: полное качество",
+  "Display quality": "Качество изображения"
 }

@@ -358,7 +358,9 @@ export function applicationViewerOptions(creditContainer) {
     skyBox: new StarrySky(),
     creditContainer,
     msaaSamples: 4,
-    contextOptions: { webgl: { preserveDrawingBuffer: true } },
+    // No preserveDrawingBuffer: it copies the whole frame every frame. Pixel
+    // reads go through captureCesiumFrame (src/voice/cesiumFrameCapture.js),
+    // which reads inside postRender while the buffer is valid (WP4.8).
   };
 }
 

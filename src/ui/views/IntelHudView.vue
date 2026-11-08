@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, watchEffect } from 'vue';
+import { HUD_MINIMAL_FLAG, hudIsMinimal, setBodyFlag } from '../bodyFlags.js';
 import { storeToRefs } from 'pinia';
 import { useHudStore } from '../stores/hud.js';
 import { useCockpitStore } from '../stores/cockpit.js';
@@ -18,6 +19,14 @@ const view = computed(() => hud.value ?? EMPTY);
 const { presence: cockpit } = storeToRefs(useCockpitStore());
 // The entry rides the tracked aircraft (cockpitEntryFace).
 const entry = computed(() => cockpitEntryFace('aircraft'));
+// Stylesheets key the minimal layout's attribution placement on this flag.
+const stopMinimalFlag = watchEffect(() =>
+  setBodyFlag(globalThis.document?.body, HUD_MINIMAL_FLAG, hudIsMinimal(hud.value)),
+);
+onBeforeUnmount(() => {
+  stopMinimalFlag();
+  setBodyFlag(globalThis.document?.body, HUD_MINIMAL_FLAG, false);
+});
 </script>
 
 <template>

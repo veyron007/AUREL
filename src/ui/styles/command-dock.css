@@ -219,9 +219,7 @@ body:not(.ui-clean-view):not(.recording-mode) #cesium-credits {
   bottom: calc(2vh + 7rem);
 }
 
-body:not(.ui-clean-view):not(.recording-mode):has(
-    #intel-hud[data-variant='minimal'].active
-  )
+body:not(.ui-clean-view):not(.recording-mode)[data-hud-minimal]
   #cesium-credits {
   right: 36px;
   left: auto;

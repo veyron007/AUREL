@@ -48,7 +48,14 @@ test('the committed scene file parses and keeps the baseline scenes', () => {
   const scenes = parseScenes(JSON.parse(readFileSync(SCENE_FILE, 'utf8')));
   assert.deepEqual(
     scenes.map((scene) => scene.id),
-    ['empty-dehradun', 'flights-quakes-sats', 'cables-datacenters-fires'],
+    [
+      'empty-dehradun',
+      'flights-quakes-sats',
+      'cables-datacenters-fires',
+      'empty-dehradun-cyber',
+      'annotations-dehradun',
+      'detection-annotations',
+    ],
   );
   assert.ok(scenes.every((scene) => scene.hash.includes('map=esri-imagery')));
 });
@@ -72,6 +79,14 @@ test('scene parsing rejects missing, duplicate and malformed scenes', () => {
   assert.throws(
     () => parseScenes({ scenes: [{ ...scene, hash: '#l=' }] }),
     /\.hash must/,
+  );
+  assert.throws(
+    () => parseScenes({ scenes: [{ ...scene, setup: 'eval' }] }),
+    /\.setup must be one of annotations-10/,
+  );
+  assert.equal(
+    parseScenes({ scenes: [{ ...scene, setup: 'annotations-10' }] })[0].setup,
+    'annotations-10',
   );
 });
 
@@ -97,6 +112,14 @@ test('scene selection keeps the requested order and names unknown ids', () => {
   );
 });
 
+test('CPU slowdown and pixel ratio are bounded numbers', () => {
+  const options = parseProbeArgs(['--cpu-slowdown', '4', '--dpr', '2']);
+  assert.equal(options.cpuSlowdown, 4);
+  assert.equal(options.dpr, 2);
+  assert.throws(() => parseProbeArgs(['--cpu-slowdown', '0']), /1 to 20/);
+  assert.throws(() => parseProbeArgs(['--dpr', 'x']), /1 to 3/);
+});
+
 test('arguments default to three runs of every scene and validate each option', () => {
   assert.deepEqual(
     { ...parseProbeArgs([]) },
@@ -105,6 +128,8 @@ test('arguments default to three runs of every scene and validate each option', 
       runs: DEFAULT_RUNS,
       sceneIds: null,
       throttle: null,
+      cpuSlowdown: 1,
+      dpr: 1,
       allowSoftware: false,
       help: false,
     },

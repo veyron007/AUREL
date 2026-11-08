@@ -1060,8 +1060,32 @@
   padding: 2px;
   border-radius: inherit;
   pointer-events: none;
+  overflow: hidden;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+/* The light orbits by turning a square conic layer centred on the control
+   (a composited transform) rather than animating the gradient's angle,
+   which repainted the ring every frame. The square's side (twice the
+   control's width) covers its diagonal, so every edge pixel keeps the colour
+   of its angle from the centre. */
+#command-dock
+  > #gev-voice-control:is(
+    [data-assistant-mode='voice'],
+    [data-assistant-mode='chat']
+  )
+  > .gev-active-border::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(var(--gev-edge-angle));
   background: conic-gradient(
-    from var(--gev-edge-angle),
+    from 0deg,
     transparent 0deg,
     var(--accent-dim, #36dcff18) 55deg,
     var(--accent-strong, #36dcffb3) 90deg,
@@ -1071,10 +1095,6 @@
     var(--accent-glow, #36dcff70) 270deg,
     transparent 310deg
   );
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
 }
 /* The edge orbits only while voice is live or a chat reply is on its way;
    an idle or minimized chat keeps it still. Touch screens and reduced
@@ -1085,17 +1105,20 @@
       [data-assistant-mode='voice'],
       [data-assistant-mode='chat'][data-chat-busy='true']
     )
-    > .gev-active-border {
+    > .gev-active-border::before {
     animation: gev-border-orbit 4s linear infinite;
   }
 }
 @keyframes gev-border-orbit {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
   to {
-    --gev-edge-angle: 360deg;
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  #command-dock > #gev-voice-control > .gev-active-border {
+  #command-dock > #gev-voice-control > .gev-active-border::before {
     animation: none;
     --gev-edge-angle: 45deg;
   }

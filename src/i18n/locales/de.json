@@ -4352,5 +4352,11 @@
   "{source} · {age}": "{source} · {age}",
   "Sources": "Quellen",
   "Could not load that language. Try again.": "Diese Sprache konnte nicht geladen werden. Versuchen Sie es erneut.",
-  "{name} could not be loaded. Check the connection and try again.": "{name} konnte nicht geladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut."
+  "{name} could not be loaded. Check the connection and try again.": "{name} konnte nicht geladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut.",
+  "Auto": "Automatisch",
+  "Balanced": "Ausgewogen",
+  "Battery": "Akku",
+  "Now: reduced, step {step} of {steps}": "Jetzt: reduziert, Stufe {step} von {steps}",
+  "Now: full quality": "Jetzt: volle Qualität",
+  "Display quality": "Anzeigequalität"
 }

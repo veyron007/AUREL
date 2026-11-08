@@ -450,9 +450,7 @@
 
 /* Keep the complete inline attribution row above the command dock. */
 body:not(.ui-clean-view):not(.recording-mode) #cesium-credits,
-body:not(.ui-clean-view):not(.recording-mode):has(
-    #intel-hud[data-variant='minimal'].active
-  )
+body:not(.ui-clean-view):not(.recording-mode)[data-hud-minimal]
   #cesium-credits {
   right: auto;
   bottom: calc(2vh + 5rem);
@@ -483,9 +481,7 @@ body:not(.ui-clean-view):not(.recording-mode):has(
 
 @media (max-width: 900px) {
   body:not(.ui-clean-view):not(.recording-mode) #cesium-credits,
-  body:not(.ui-clean-view):not(.recording-mode):has(
-      #intel-hud[data-variant='minimal'].active
-    )
+  body:not(.ui-clean-view):not(.recording-mode)[data-hud-minimal]
     #cesium-credits {
     bottom: calc(2vh + 5rem);
     left: 0.75rem;

@@ -4502,5 +4502,11 @@
   "{source} · {age}": "{source} · {age}",
   "Sources": "Джерела",
   "Could not load that language. Try again.": "Не вдалося завантажити цю мову. Спробуйте ще раз.",
-  "{name} could not be loaded. Check the connection and try again.": "Не вдалося завантажити {name}. Перевірте з’єднання та спробуйте ще раз."
+  "{name} could not be loaded. Check the connection and try again.": "Не вдалося завантажити {name}. Перевірте з’єднання та спробуйте ще раз.",
+  "Auto": "Авто",
+  "Balanced": "Збалансована",
+  "Battery": "Економія батареї",
+  "Now: reduced, step {step} of {steps}": "Зараз: знижено, крок {step} з {steps}",
+  "Now: full quality": "Зараз: повна якість",
+  "Display quality": "Якість зображення"
 }

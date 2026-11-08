@@ -3,7 +3,7 @@ import {
   buildViewLegend,
   legendLines,
 } from '../fieldkit/legend.js';
-import { renderFreshCesiumFrame } from '../voice/realtimeViewport.js';
+import { captureCesiumFrame } from '../voice/cesiumFrameCapture.js';
 
 const DEFAULT_MAX_WIDTH = 1280;
 const LINE_HEIGHT = 18;
@@ -52,6 +52,21 @@ function drawLegend(ctx, { top, width, lines }) {
   });
 }
 
+/** Copy the scene canvas into a new canvas with room for the legend. */
+function drawGlobe(source, { maxWidth, legendRows }) {
+  if (!source?.width || !source?.height) return null;
+  const scale = Math.min(1, maxWidth / source.width);
+  const width = Math.max(1, Math.round(source.width * scale));
+  const height = Math.max(1, Math.round(source.height * scale));
+  const canvas = globalThis.document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height + PADDING * 2 + LINE_HEIGHT * (legendRows + 1);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  ctx.drawImage(source, 0, 0, width, height);
+  return { canvas, ctx, width, height };
+}
+
 /**
  * `render_view`'s capture: a fresh globe frame with the legend drawn under
  * it, as base64 PNG, plus the legend rows as data. Null when the tab is
@@ -67,22 +82,19 @@ export function createViewCapture({
   return async ({ maxWidth = DEFAULT_MAX_WIDTH } = {}) => {
     const source = viewer?.scene?.canvas;
     if (!source?.width || !source?.height) return null;
-    if (!(await renderFreshCesiumFrame(viewer))) return null;
-    const capturedAt = new Date(now()).toISOString();
     const legend = buildViewLegend(readLayers(), {
       now: now(),
       baseMap: readBaseMap(),
     });
     const lines = [...legendLines(legend), LEGEND_FOOTNOTE];
-    const scale = Math.min(1, maxWidth / source.width);
-    const width = Math.max(1, Math.round(source.width * scale));
-    const height = Math.max(1, Math.round(source.height * scale));
-    const canvas = globalThis.document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height + PADDING * 2 + LINE_HEIGHT * (lines.length + 1);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.drawImage(source, 0, 0, width, height);
+    // The globe is copied inside postRender, while the drawing buffer still
+    // holds the frame (the viewer runs without preserveDrawingBuffer).
+    const frame = await captureCesiumFrame(viewer, (sceneCanvas) =>
+      drawGlobe(sceneCanvas, { maxWidth, legendRows: lines.length }),
+    );
+    if (!frame) return null;
+    const capturedAt = new Date(now()).toISOString();
+    const { canvas, ctx, width, height } = frame;
     drawLegend(ctx, { top: height, width, lines });
     const dataUrl = canvas.toDataURL('image/png');
     return {

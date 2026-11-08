@@ -143,7 +143,11 @@ to every scene in `scripts/perf-scenes.json` against a running app (for example
 `npx vite preview --port 4181`). It prints one JSON line per scene with the
 medians of three runs, then Markdown tables, including the gaps between the
 startup marks named in `src/app/startupMarks.js`. Options: `--scenes`, `--runs`,
-`--throttle 50mbps` and `--allow-software`.
+`--throttle 50mbps`, `--cpu-slowdown N`, `--dpr N` and `--allow-software`.
+The JSON line also carries `motionP95FrameMs` (95th-percentile interval between
+motion frames) and `motionTaskMsPerFrame` (main-thread task time per motion
+frame), which still separate scenes when both reach the 60 FPS cap. A scene may
+name a `setup` run once the app is ready (`annotations-10` places ten pins).
 
 `npm run check:bundle`, after `npm run build`, fails when the entry chunk, its
 static imports or the entry CSS exceed `scripts/bundle-budget.json`.

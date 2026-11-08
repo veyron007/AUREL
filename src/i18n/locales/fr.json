@@ -4427,5 +4427,11 @@
   "{source} · {age}": "{source} · {age}",
   "Sources": "Sources",
   "Could not load that language. Try again.": "Impossible de charger cette langue. Réessayez.",
-  "{name} could not be loaded. Check the connection and try again.": "Impossible de charger {name}. Vérifiez la connexion et réessayez."
+  "{name} could not be loaded. Check the connection and try again.": "Impossible de charger {name}. Vérifiez la connexion et réessayez.",
+  "Auto": "Automatique",
+  "Balanced": "Équilibrée",
+  "Battery": "Batterie",
+  "Now: reduced, step {step} of {steps}": "Actuellement : réduite, étape {step} sur {steps}",
+  "Now: full quality": "Actuellement : qualité maximale",
+  "Display quality": "Qualité d’affichage"
 }

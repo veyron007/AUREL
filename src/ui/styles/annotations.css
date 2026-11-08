@@ -21,5 +21,6 @@
 .gev-anno.gev-in .gev-anno-callout { animation: gev-pop 320ms ease-out both; }
 .gev-anno.gev-out { opacity: 0 !important; transition: opacity 320ms ease; }
 .gev-pulse { animation: gev-ring-pulse 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-@keyframes gev-ring-pulse { 0%,100% { opacity: 0.9; stroke-width: 2; } 50% { opacity: 0.35; stroke-width: 3.5; } }
+/* opacity and scale only: an animated stroke-width repaints the ring each frame. */
+@keyframes gev-ring-pulse { 0%,100% { opacity: 0.9; transform: scale(1); } 50% { opacity: 0.35; transform: scale(1.06); } }
 @keyframes gev-pop { from { opacity: 0; } to { opacity: 1; } }

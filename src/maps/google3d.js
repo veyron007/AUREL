@@ -1,6 +1,19 @@
 const clean = (value) => String(value || '').trim();
 
 /**
+ * Tile cache of every Google 3D route, sized for an 8 GB machine (WP4.8).
+ * Cesium's Google helper defaults to 1.5 GB plus 1 GB overflow. Requests for
+ * tiles the moving camera will have left by the time they arrive are dropped
+ * (Cesium's default, stated so no route loses it; multiplier stays 60).
+ * Screen-space error is untouched, so tiles at rest look the same.
+ */
+export const GOOGLE_TILESET_MEMORY = Object.freeze({
+  cacheBytes: 512 * 1024 * 1024,
+  maximumCacheOverflowBytes: 256 * 1024 * 1024,
+  cullRequestsWhileMoving: true,
+});
+
+/**
  * Decide which map provider can deliver the best startup experience.
  * @param {{googleApiKey?: string, cesiumToken?: string}} credentials
  * @returns {'google-direct'|'google-ion'|'osm'}
@@ -69,7 +82,7 @@ export function createGoogleDirectTileset(Cesium, key) {
   // Tiles keep drawing their own texture while draped weather loads.
   return Cesium.createGooglePhotorealistic3DTileset(
     { key, onlyUsingWithGoogleGeocoder: true },
-    { asynchronouslyLoadImagery: true },
+    { ...GOOGLE_TILESET_MEMORY, asynchronouslyLoadImagery: true },
   );
 }
 
@@ -96,10 +109,9 @@ export async function createGoogleTokenTileset(Cesium, tokens) {
       return true;
     },
   });
-  // The settings Cesium's Google helper applies to the key route.
+  // The key route's settings, with the tile cache sized for 8 GB machines.
   return Cesium.Cesium3DTileset.fromUrl(resource, {
-    cacheBytes: 1536 * 1024 * 1024,
-    maximumCacheOverflowBytes: 1024 * 1024 * 1024,
+    ...GOOGLE_TILESET_MEMORY,
     enableCollision: true,
     // Tiles keep drawing their own texture while draped weather loads.
     asynchronouslyLoadImagery: true,
@@ -119,10 +131,9 @@ export async function createGoogleIonTileset(
     accessToken,
   });
   signal?.throwIfAborted();
-  // Match the installed SDK's Google helper rendering/cache defaults.
+  // Match the key route: same rendering settings and tile cache size.
   return Cesium.Cesium3DTileset.fromUrl(resource, {
-    cacheBytes: 1536 * 1024 * 1024,
-    maximumCacheOverflowBytes: 1024 * 1024 * 1024,
+    ...GOOGLE_TILESET_MEMORY,
     enableCollision: true,
     // Tiles keep drawing their own texture while draped weather loads.
     asynchronouslyLoadImagery: true,

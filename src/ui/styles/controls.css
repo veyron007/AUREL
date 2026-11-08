@@ -1215,19 +1215,33 @@ body.ui-clean-view #scene-runtime.active {
 
 #detection-toggle.panoptic,
 #detection-toggle.god {
+  position: relative;
   border-color: rgba(0, 255, 80, 0.8);
   background: rgba(0, 255, 80, 0.18);
-  box-shadow: 0 0 16px rgba(0, 255, 80, 0.25);
+  box-shadow: 0 0 12px rgba(0, 255, 80, 0.15);
+}
+
+/* The pulse is the brighter halo fading in and out on its own layer:
+   opacity is composited, an animated box-shadow repaints every frame. */
+#detection-toggle.panoptic::after,
+#detection-toggle.god::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 22px rgba(0, 255, 80, 0.35);
+  opacity: 0;
   animation: detection-pulse 2s ease-in-out infinite;
 }
 
 @keyframes detection-pulse {
   0%,
   100% {
-    box-shadow: 0 0 12px rgba(0, 255, 80, 0.15);
+    opacity: 0;
   }
   50% {
-    box-shadow: 0 0 22px rgba(0, 255, 80, 0.35);
+    opacity: 1;
   }
 }
 

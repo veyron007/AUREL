@@ -4277,5 +4277,11 @@
   "{source} · {age}": "{source} · {age}",
   "Sources": "ソース",
   "Could not load that language. Try again.": "その言語を読み込めませんでした。もう一度お試しください。",
-  "{name} could not be loaded. Check the connection and try again.": "{name}を読み込めませんでした。接続を確認して、もう一度お試しください。"
+  "{name} could not be loaded. Check the connection and try again.": "{name}を読み込めませんでした。接続を確認して、もう一度お試しください。",
+  "Auto": "自動",
+  "Balanced": "バランス",
+  "Battery": "バッテリー",
+  "Now: reduced, step {step} of {steps}": "現在: 低減中（{steps} 段階中 {step}）",
+  "Now: full quality": "現在: 最高品質",
+  "Display quality": "表示品質"
 }

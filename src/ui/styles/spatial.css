@@ -28,7 +28,13 @@
     0 30px 80px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   --spatial-shadow-soft:
     0 12px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.28);
-  --spatial-blur: blur(40px) saturate(1.7);
+  /* Radius and saturation are registered in spatial-budget.css so the glass
+     can fade back in after a camera move. 20px matches the 40px look at
+     these pane sizes and halves the filter's reach. */
+  --spatial-blur-radius: 20px;
+  --spatial-blur-saturate: 1.7;
+  --spatial-blur: blur(var(--spatial-blur-radius))
+    saturate(var(--spatial-blur-saturate));
   --spatial-pane:
     linear-gradient(var(--spatial-glass), var(--spatial-glass)),
     var(--spatial-floor);

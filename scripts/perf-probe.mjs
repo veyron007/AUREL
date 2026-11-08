@@ -81,10 +81,12 @@ function trackNetwork(cdp) {
   return () => ({ ...totals });
 }
 
-async function preparePage(context, throttle) {
+async function preparePage(context, { throttle, cpuSlowdown, dpr }) {
   const page = await context.newPage();
-  await page.setViewport(VIEWPORT);
+  await page.setViewport({ ...VIEWPORT, deviceScaleFactor: dpr });
   const cdp = await page.createCDPSession();
+  if (cpuSlowdown > 1)
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpuSlowdown });
   await cdp.send('Network.enable');
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
   if (throttle) {
@@ -99,7 +101,8 @@ async function preparePage(context, throttle) {
         .forEach((entry) => window.__perfLongTasks.push(entry.duration)),
     ).observe({ type: 'longtask', buffered: true });
   });
-  return { page, network: trackNetwork(cdp) };
+  await cdp.send('Performance.enable');
+  return { page, cdp, network: trackNetwork(cdp) };
 }
 
 async function waitForReady(page) {
@@ -118,9 +121,11 @@ async function sampleFps(page, motion) {
     async (sampleMs, step, rotate) => {
       const view = window.__godsEyeView;
       let frames = 0;
-      const stop = view.viewer.scene.postRender.addEventListener(
-        () => frames++,
-      );
+      const stamps = [];
+      const stop = view.viewer.scene.postRender.addEventListener(() => {
+        frames++;
+        stamps.push(performance.now());
+      });
       const start = performance.now();
       let raf = 0;
       const spin = () => {
@@ -132,12 +137,54 @@ async function sampleFps(page, motion) {
       await new Promise((resolve) => setTimeout(resolve, sampleMs));
       cancelAnimationFrame(raf);
       stop();
-      return frames / ((performance.now() - start) / 1000);
+      const gaps = stamps
+        .slice(1)
+        .map((stamp, index) => stamp - stamps[index])
+        .sort((a, b) => a - b);
+      return {
+        fps: frames / ((performance.now() - start) / 1000),
+        frames,
+        p95FrameMs: gaps.length ? gaps[Math.floor(gaps.length * 0.95)] : null,
+      };
     },
     FPS_SAMPLE_MS,
     ROTATE_STEP_RADIANS,
     motion,
   );
+}
+
+/** Ten hand-placed pins around the scene centre, resolved without a fetch. */
+async function addTenAnnotations(page) {
+  const drawn = await page.evaluate(async () => {
+    const engine = window.__gevAnnotations;
+    if (!engine?.annotate) return 0;
+    const pins = Array.from({ length: 10 }, (_, index) => ({
+      type: 'pin',
+      manual: true,
+      latitude: 30.3258 + 0.03 * Math.sin(index),
+      longitude: 78.0438 + 0.05 * Math.cos(index),
+      label: `Mark ${index + 1}`,
+    }));
+    const result = await engine.annotate(pins, { persist: true });
+    return result?.drawn ?? 0;
+  });
+  if (drawn < 10)
+    throw new Error(`annotations-10 setup drew ${drawn} of 10 annotations`);
+}
+
+const SCENE_SETUP_STEPS = Object.freeze({
+  'annotations-10': addTenAnnotations,
+});
+
+/** Main-thread task time (ms) the page spent while `run` ran. */
+async function taskMsDuring(cdp, run) {
+  const read = async () => {
+    const { metrics } = await cdp.send('Performance.getMetrics');
+    return metrics.find((metric) => metric.name === 'TaskDuration')?.value ?? 0;
+  };
+  const before = await read();
+  const result = await run();
+  return { result, taskMs: ((await read()) - before) * 1000 };
 }
 
 async function readPageMetrics(page, markNames) {
@@ -162,19 +209,29 @@ async function readPageMetrics(page, markNames) {
   }, markNames);
 }
 
-async function probeOnce(browser, url, options) {
+async function probeOnce(browser, url, options, setup) {
   const context = await browser.createBrowserContext();
   try {
-    const { page, network } = await preparePage(context, options.throttle);
+    const { page, cdp, network } = await preparePage(context, options);
     await page.goto(url, {
       waitUntil: 'domcontentloaded',
       timeout: READY_TIMEOUT_MS,
     });
     const readyMs = await waitForReady(page);
+    if (setup) await SCENE_SETUP_STEPS[setup](page);
     await wait(SETTLE_MS);
     const settled = network();
-    const restFps = await sampleFps(page, false);
-    const motionFps = await sampleFps(page, true);
+    const rest = await sampleFps(page, false);
+    const { result: motion, taskMs } = await taskMsDuring(cdp, () =>
+      sampleFps(page, true),
+    );
+    const render = await page.evaluate(() => {
+      const { viewer } = window.__godsEyeView;
+      return {
+        msaaSamples: viewer.scene.msaaSamples,
+        resolutionScale: viewer.resolutionScale,
+      };
+    });
     const { heapBytes, ...metrics } = await readPageMetrics(
       page,
       STARTUP_MARK_ORDER,
@@ -185,8 +242,11 @@ async function probeOnce(browser, url, options) {
       requests: settled.requests,
       transferMB: settled.bytes / BYTES_PER_MB,
       heapMB: heapBytes === null ? null : heapBytes / BYTES_PER_MB,
-      restFps,
-      motionFps,
+      restFps: rest.fps,
+      motionFps: motion.fps,
+      motionP95FrameMs: motion.p95FrameMs,
+      motionTaskMsPerFrame: motion.frames ? taskMs / motion.frames : null,
+      render,
       ...metrics,
     };
   } finally {
@@ -201,7 +261,7 @@ async function probeScene(browser, scene, options) {
     process.stderr.write(
       `[perf-probe] ${scene.id} run ${run}/${options.runs}\n`,
     );
-    runs.push(await probeOnce(browser, url, options));
+    runs.push(await probeOnce(browser, url, options, scene.setup));
   }
   return {
     ...summarizeRuns(scene, runs),

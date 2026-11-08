@@ -12,9 +12,14 @@ import {
 function clock() {
   let pending = null;
   let next = 1;
+  let time = 0;
   return {
+    now: () => time,
+    advance(ms) {
+      time += ms;
+    },
     setTimer(callback, ms) {
-      pending = { id: next++, callback, ms };
+      pending = { id: next++, callback, ms, due: time + ms };
       return pending.id;
     },
     clearTimer(id) {
@@ -26,6 +31,7 @@ function clock() {
     run() {
       const current = pending;
       pending = null;
+      if (current) time = current.due;
       current?.callback();
       return current;
     },
@@ -44,6 +50,7 @@ function fixture({ held = () => false } = {}) {
     checkMs: 1000,
     setTimer: timers.setTimer,
     clearTimer: timers.clearTimer,
+    now: timers.now,
   });
   return { rest, target, events, timers };
 }
@@ -175,4 +182,21 @@ test('an expanded control holds the chrome only while it is rendered', (t) => {
   assert.equal(chromeHeldAwake(document), false);
   toggle.checkVisibility = () => true;
   assert.equal(chromeHeldAwake(document), true);
+});
+
+test('pointer moves while awake store a time instead of re-arming the timer', () => {
+  const { rest, target, events, timers } = fixture();
+  rest.start();
+  events.dispatchEvent(new Event('pointermove'));
+  const first = timers.pending;
+  timers.advance(3000);
+  events.dispatchEvent(new Event('pointermove'));
+  events.dispatchEvent(new Event('pointermove'));
+  assert.equal(timers.pending, first, 'the same timer stays armed');
+  timers.run();
+  assert.ok(!target.classList.contains(CHROME_REST_CLASS), 'input was 2 s ago');
+  assert.equal(timers.pending.ms, 3000, 'it waits out the rest of the spell');
+  timers.run();
+  assert.ok(target.classList.contains(CHROME_REST_CLASS));
+  rest.destroy();
 });

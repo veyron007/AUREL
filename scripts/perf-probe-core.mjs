@@ -6,6 +6,8 @@ export const DEFAULT_BASE_URL = 'http://localhost:4181';
 export const DEFAULT_RUNS = 3;
 export const MAX_RUNS = 25;
 const SCENE_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+/** In-page steps a scene may run once the app is ready (see perf-probe.mjs). */
+export const SCENE_SETUPS = Object.freeze(['annotations-10']);
 const THROTTLE_PATTERN = /^(\d+(?:\.\d+)?)(kbps|mbps)$/i;
 const BITS_PER_UNIT = Object.freeze({ kbps: 1e3, mbps: 1e6 });
 const THROTTLE_LATENCY_MS = 20;
@@ -24,6 +26,8 @@ export const PROBE_METRICS = Object.freeze([
   'worstTaskMs',
   'restFps',
   'motionFps',
+  'motionP95FrameMs',
+  'motionTaskMsPerFrame',
 ]);
 
 const USAGE = `Usage: node scripts/perf-probe.mjs [options]
@@ -31,6 +35,8 @@ const USAGE = `Usage: node scripts/perf-probe.mjs [options]
   --scenes a,b       scene ids from scripts/perf-scenes.json (default: all)
   --runs N           runs per scene, median reported (default ${DEFAULT_RUNS})
   --throttle 50mbps  emulate a download link (kbps or mbps)
+  --cpu-slowdown N   slow the page's CPU N times (1 to 20, default 1)
+  --dpr N            device pixel ratio (1 to 3, default 1)
   --allow-software   accept a software GPU renderer
   --help             show this text`;
 
@@ -78,7 +84,19 @@ const VALUE_OPTIONS = Object.freeze({
   '--runs': ['runs', parseRuns],
   '--scenes': ['sceneIds', parseSceneIds],
   '--throttle': ['throttle', parseThrottle],
+  '--cpu-slowdown': [
+    'cpuSlowdown',
+    (value) => parseBounded(value, 1, 20, '--cpu-slowdown'),
+  ],
+  '--dpr': ['dpr', (value) => parseBounded(value, 1, 3, '--dpr')],
 });
+
+function parseBounded(value, min, max, flag) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < min || number > max)
+    throw new Error(`${flag} must be a number from ${min} to ${max}`);
+  return number;
+}
 
 /** Parse command-line arguments into frozen probe options. */
 export function parseProbeArgs(argv) {
@@ -87,6 +105,8 @@ export function parseProbeArgs(argv) {
     runs: DEFAULT_RUNS,
     sceneIds: null,
     throttle: null,
+    cpuSlowdown: 1,
+    dpr: 1,
     allowSoftware: false,
     help: false,
   };
@@ -135,10 +155,15 @@ function validateScene(scene, index, seen) {
     throw new Error(`${where}.label must be a nonempty string`);
   if (typeof scene.hash !== 'string' || scene.hash.startsWith('#'))
     throw new Error(`${where}.hash must be a string without the leading #`);
+  if (scene.setup !== undefined && !SCENE_SETUPS.includes(scene.setup))
+    throw new Error(
+      `${where}.setup must be one of ${SCENE_SETUPS.join(', ')}, received ${scene.setup}`,
+    );
   return Object.freeze({
     id: scene.id,
     label: scene.label.trim(),
     hash: scene.hash,
+    ...(scene.setup ? { setup: scene.setup } : {}),
   });
 }
 

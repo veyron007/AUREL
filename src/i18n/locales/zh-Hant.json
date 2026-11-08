@@ -4277,5 +4277,11 @@
   "{source} · {age}": "{source} · {age}",
   "Sources": "來源",
   "Could not load that language. Try again.": "無法載入該語言。請再試一次。",
-  "{name} could not be loaded. Check the connection and try again.": "無法載入{name}。請檢查網路連線後再試一次。"
+  "{name} could not be loaded. Check the connection and try again.": "無法載入{name}。請檢查網路連線後再試一次。",
+  "Auto": "自動",
+  "Balanced": "均衡",
+  "Battery": "省電",
+  "Now: reduced, step {step} of {steps}": "目前：已降低，第 {step} 級（共 {steps} 級）",
+  "Now: full quality": "目前：完整畫質",
+  "Display quality": "顯示畫質"
 }

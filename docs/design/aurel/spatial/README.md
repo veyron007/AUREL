@@ -81,6 +81,20 @@ errors on desktop or phone.
 | `desktop-cyber.png`                                | Cyber layout                                    |
 | `phone-explore.png`, `phone-place-card.png`        | 390×844                                         |
 
+## Blur budget (performance plan WP5.1, 8 November 2026)
+
+`src/ui/styles/spatial-budget.css` caps the glass blur at 20px, keeps one
+blurred backdrop per group (the dock; the globe actions share one masked
+backdrop) and swaps the glass for the solid pane tone while the camera moves
+(`data-camera-moving`, `src/ui/cameraMotionFlag.js`), under adaptive
+quality's solid step and under `prefers-reduced-transparency`, fading back
+over 150 ms. `perf/` holds `before-*` (main) and `after-*` shots of the dock,
+top bar, entity card and palette at rest and mid-move, made with
+`scripts/qa-spatial-perf-shots.mjs`, whose `--compare` mode gives the mean
+channel difference. At rest: card 0.27, top bar 0.06, palette 4.25 (two runs
+of main differ by 3.97), dock 5.51 (the 20px blur shows slightly more of the
+limb behind it; the same by eye). Mid-move the panes are deliberately solid.
+
 ## Not verified or not done
 
 - Aircraft and vessel cards were not exercised: no live aircraft or vessel was
