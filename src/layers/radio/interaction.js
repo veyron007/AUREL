@@ -96,6 +96,7 @@ export function createInteraction({
 
   function syncRadioLifecyclePresentation() {
     const visible = radioPresentationAllowed();
+    if (visible) parts.rendering.ensureStationEntities();
     if (layerState._dataSource) layerState._dataSource.show = visible;
     setOverlaySourceVisible(RADIO_OVERLAY_SOURCE_ID, visible);
     if (visible) {
