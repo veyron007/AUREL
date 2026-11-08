@@ -3,9 +3,11 @@
  * ImageBitmap or a canvas). It implements the same interface as Cesium
  * 1.138's SingleTileImageryProvider, whose constructor only takes a URL:
  * one level-zero tile over `rectangle` in a geographic tiling scheme, and
- * `requestImage` resolving to the image itself. Cesium uploads an
- * ImageBitmap as it is (UNPACK_FLIP_Y does not apply to ImageBitmap), so a
- * bitmap with row 0 at the north edge drapes like its own decoded tiles.
+ * `requestImage` resolving to the image itself. The image must be prepared
+ * as Cesium's own tiles are: ImageryProvider.loadImage decodes tiles into
+ * ImageBitmaps with imageOrientation 'flipY', because UNPACK_FLIP_Y does not
+ * apply to an ImageBitmap upload, while a canvas is flipped on upload. See
+ * heatRasterImage in src/data/firmsHeatRaster.js.
  */
 
 /**

@@ -4,6 +4,7 @@ import { createHeatRasterClient } from './heatRasterClient.js';
 import {
   buildHeatRaster,
   buildHeatRasterFromPacked,
+  heatRasterImage,
   packHeatFires,
 } from '../../data/firmsHeatRaster.js';
 
@@ -122,4 +123,34 @@ test('a worker that throws on creation or fails falls back and reports it', asyn
   assert.equal(result.width, 64, 'the pending build is retried in-thread');
   assert.equal(failing.mode, 'main-thread');
   assert.deepEqual(reported, ['CSP refused', 'boom']);
+});
+
+test('the raster bitmap is decoded the way Cesium decodes imagery tiles', async () => {
+  const priorBitmap = globalThis.createImageBitmap;
+  const priorImageData = globalThis.ImageData;
+  let seen = null;
+  globalThis.ImageData = class {
+    constructor(data, width, height) {
+      Object.assign(this, { data, width, height });
+    }
+  };
+  globalThis.createImageBitmap = async (source, options) => {
+    seen = { source, options };
+    return { width: source.width, height: source.height };
+  };
+  try {
+    const raster = buildHeatRaster(fires, OPTIONS);
+    const image = await heatRasterImage(raster);
+    assert.equal(image.width, 64);
+    // Row 0 is north; Cesium flips imagery at decode, not on upload.
+    assert.deepEqual(seen.options, {
+      imageOrientation: 'flipY',
+      premultiplyAlpha: 'none',
+      colorSpaceConversion: 'none',
+    });
+    assert.equal(seen.source.data, raster.rgba);
+  } finally {
+    globalThis.createImageBitmap = priorBitmap;
+    globalThis.ImageData = priorImageData;
+  }
 });

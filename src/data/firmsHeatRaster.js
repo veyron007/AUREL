@@ -265,8 +265,9 @@ function colorHeatGrid(grid, { width, height, sigmaPx, percentile }) {
 
 /**
  * The raster as an image Cesium can drape without a PNG round trip: an
- * ImageBitmap with straight alpha and no colour conversion (the options
- * Cesium's own imagery decode uses), from the worker or the main thread.
+ * ImageBitmap flipped, with straight alpha and no colour conversion (the
+ * options Cesium's ImageryProvider.loadImage decode uses), from the worker
+ * or the main thread.
  * Where createImageBitmap is missing, a canvas holding the pixels is
  * returned instead, made by `createCanvas(width, height)`.
  * @param {{width:number, height:number, rgba: Uint8ClampedArray}} raster
@@ -280,7 +281,14 @@ export async function heatRasterImage(raster, { createCanvas } = {}) {
   )
     return createImageBitmap(
       new ImageData(raster.rgba, raster.width, raster.height),
-      { premultiplyAlpha: 'none', colorSpaceConversion: 'none' },
+      {
+        // Cesium fetches imagery as flipped ImageBitmaps (UNPACK_FLIP_Y does
+        // not apply to an ImageBitmap upload), so a bitmap for an imagery
+        // tile must be flipped at decode too; a canvas is flipped on upload.
+        imageOrientation: 'flipY',
+        premultiplyAlpha: 'none',
+        colorSpaceConversion: 'none',
+      },
     );
   if (typeof createCanvas !== 'function')
     throw new Error('No ImageBitmap support and no canvas to hold the raster');
