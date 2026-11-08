@@ -114,3 +114,33 @@ test('a new fetchedAt rebuilds', async () => {
   assert.equal(calls.render, 2);
   assert.equal(layerState._allFires.length, 2);
 });
+
+test('a 304 still drops detections that aged out of the 24 h window', async (t) => {
+  const DAY_MS = 24 * HOUR_MS;
+  const { ingestion, layerState, calls } = harness([
+    {
+      fetchedAt: Date.now(),
+      stale: false,
+      fires: [record(HOUR_MS, { lat: 1 }), record(DAY_MS - 5 * 60_000)],
+      etag: 'W/"a"',
+    },
+    { notModified: true },
+    { notModified: true },
+  ]);
+  await ingestion.loadHeatmap();
+  assert.equal(layerState._allFires.length, 2);
+  const realNow = Date.now;
+  const later = realNow() + 10 * 60_000;
+  Date.now = () => later;
+  t.after(() => {
+    Date.now = realNow;
+  });
+  await ingestion.loadHeatmap();
+  assert.equal(layerState._allFires.length, 1);
+  assert.equal(layerState._allFiresByFrp.length, 1);
+  assert.equal(layerState._totalCount, 1);
+  assert.equal(calls.render, 2);
+  // Nothing more to drop: the next 304 does no work.
+  await ingestion.loadHeatmap();
+  assert.equal(calls.render, 2);
+});

@@ -48,7 +48,7 @@ export function createIngestion({
       // Unchanged since the last body: nothing to adapt or sort, and nothing
       // to draw unless the layer was re-enabled since the last draw.
       if (payload.notModified) {
-        redrawIfRequested();
+        if (!pruneAgedFires()) redrawIfRequested();
         return;
       }
       if (payload.keyRequired) {
@@ -116,6 +116,32 @@ export function createIngestion({
         layerState._loading = false;
       }
     }
+  }
+
+  /**
+   * Keep the trailing-24 h promise between bodies. A 304 means the proxy has
+   * nothing newer, but detections already on the map still age; drop the ones
+   * that left the window and redraw. Returns whether anything was dropped.
+   * @param {number} [nowMs]
+   * @returns {boolean}
+   */
+  function pruneAgedFires(nowMs = Date.now()) {
+    const cutoff = nowMs - DAY_MS;
+    if (oldestAcquisitionMs(layerState._allFires) >= cutoff) return false;
+    const fresh = (fire) => Number.isFinite(fire.acqMs) && fire.acqMs >= cutoff;
+    layerState._allFires = layerState._allFires.filter(fresh);
+    layerState._allFiresByFrp = layerState._allFiresByFrp.filter(fresh);
+    const previousSelection = layerState._selectedFire;
+    applyFilter();
+    layerState._redrawOnNextPoll = false;
+    const reselected = findMatchingFire(previousSelection);
+    if (!reselected && previousSelection) {
+      layerState._selectedFire = null;
+      clearSelectedEntityContextForLayer(id, { evicted: true });
+    }
+    components.rendering.renderCurrentLod(true);
+    layerState._rowControlsListener?.();
+    return true;
   }
 
   /** The redraw the full ingest would have done, once, after a re-enable. */
