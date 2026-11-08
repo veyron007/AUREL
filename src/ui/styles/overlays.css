@@ -239,6 +239,28 @@
   text-overflow: ellipsis;
 }
 
+/* Typewriter reveal of a new summary (IntelHUD._typeSummary): two characters
+   per step at the pace the old 24 ms timer typed, drawn by the compositor. */
+.hud-summary.typing {
+  animation: hud-summary-type var(--hud-type-ms, 0ms)
+    steps(var(--hud-type-steps, 1), end) both;
+}
+
+@keyframes hud-summary-type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-summary.typing {
+    animation: none;
+  }
+}
+
 .hud-rec {
   font-size: 13px;
   letter-spacing: 2px;

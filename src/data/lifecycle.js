@@ -1,4 +1,5 @@
 import { cancelCameraArrival } from './cameraArrival.js';
+import { createSharedTicker } from './sharedTicker.js';
 
 function cloneLayerParams(value) {
   if (Array.isArray(value)) return value.map(cloneLayerParams);
@@ -535,6 +536,20 @@ export class LayerLifecycle {
     }
   }
 
+  /** The shared status ticker for one cadence, created on first use. */
+  _statusTicker(intervalMs) {
+    this._statusTickers ??= new Map();
+    let ticker = this._statusTickers.get(intervalMs);
+    if (!ticker) {
+      ticker = createSharedTicker({
+        intervalMs,
+        visibility: this._visibilityTarget,
+      });
+      this._statusTickers.set(intervalMs, ticker);
+    }
+    return ticker;
+  }
+
   _stopUpdateLoop(entry) {
     clearInterval(entry.intervalId);
     entry.intervalId = null;
@@ -592,10 +607,19 @@ export class LayerLifecycle {
           onVisibilityChange,
         );
     } else if (updateInterval === 0) {
-      entry.intervalId = setInterval(() => {
+      // Status-only layers share one ticker per cadence, which stops while
+      // the page is hidden (sharedTicker.js).
+      const ticker = this._statusTicker(
+        entry.module.statsRefreshInterval || 1000,
+      );
+      const unsubscribe = ticker.subscribe(() => {
         if (!entry.enabled) return;
         this._publishActivity({ type: 'status' });
-      }, entry.module.statsRefreshInterval || 1000);
+      });
+      // Marks an armed loop for the callers that test `intervalId`; the
+      // stop path unsubscribes through removeVisibilityListener.
+      entry.intervalId = { sharedStatusTicker: true };
+      entry.removeVisibilityListener = unsubscribe;
     }
   }
 

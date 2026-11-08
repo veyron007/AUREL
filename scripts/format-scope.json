@@ -2,6 +2,8 @@
   ".prettierrc.json",
   "package.json",
   "scripts/format-scope.json",
+  "src/data/sharedTicker.js",
+  "src/data/sharedTicker.test.mjs",
   "src/data/snapshotDiff.js",
   "src/data/snapshotDiff.test.mjs",
   "src/layers/earthquakes/diff.test.mjs",

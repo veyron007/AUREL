@@ -31,7 +31,7 @@ const entry = computed(() => cockpitEntryFace('aircraft'));
         <div class="hud-readout"><div class="hud-mode" id="hud-mode">{{ view.mode }}</div></div>
         <div class="hud-summary-wrap">
           <div class="hud-readout"><div class="hud-summary-label">{{ view.summaryLabel }}</div></div>
-          <div class="hud-readout"><div class="hud-summary" id="hud-summary">{{ view.summary }}</div></div>
+          <div class="hud-readout"><div :key="view.summaryTyping?.key ?? 0" :class="['hud-summary', { typing: view.summaryTyping }]" id="hud-summary" :style="view.summaryTyping ? { '--hud-type-steps': view.summaryTyping.steps, '--hud-type-ms': `${view.summaryTyping.ms}ms` } : undefined">{{ view.summary }}</div></div>
         </div>
       </div>
     </div>

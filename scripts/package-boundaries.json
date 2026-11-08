@@ -2383,6 +2383,7 @@
       "./standalone/catalog"
     ],
     "modules": [
+      "src/data/sharedTicker.js",
       "src/layers/cctv/activation.js",
       "src/layers/flights/typeBatch.js",
       "src/data/firmsCsv.js",
@@ -3595,6 +3596,7 @@
   "application-layer-construction": {
     "exports": ["./application/layers"],
     "modules": [
+      "src/data/sharedTicker.js",
       "src/layers/cctv/activation.js",
       "src/layers/flights/typeBatch.js",
       "src/data/firmsCsv.js",
@@ -4332,7 +4334,11 @@
   },
   "layer-lifecycle": {
     "exports": ["./data/lifecycle"],
-    "modules": ["src/data/lifecycle.js", "src/data/cameraArrival.js"],
+    "modules": [
+      "src/data/sharedTicker.js",
+      "src/data/lifecycle.js",
+      "src/data/cameraArrival.js"
+    ],
     "external": []
   },
   "ui-navigation": {

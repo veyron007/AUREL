@@ -53,6 +53,8 @@ function shiftTime(value, offset) {
  * @param {number} [options.intervalMs]
  * @param {number} [options.requestTimeoutMs] Deadline per request.
  * @param {() => number} [options.now]
+ * @param {{hidden: boolean, addEventListener: Function, removeEventListener: Function}} [options.visibility]
+ *   The page whose visibility gates polling (the document by default).
  * @returns {object} Feed session: start, stop, probe, getState, subscribe.
  */
 export function createLocalReceiverFeeds({
@@ -61,8 +63,11 @@ export function createLocalReceiverFeeds({
   intervalMs = LOCAL_RECEIVER_POLL_MS,
   requestTimeoutMs = LOCAL_RECEIVER_REQUEST_TIMEOUT_MS,
   now = Date.now,
+  visibility = globalThis.document,
 } = {}) {
   const listeners = new Set();
+  /** The generation whose next poll waits for the page to be shown again. */
+  let parked = null;
   const retained = new Map();
   /** Abort controllers of requests still in flight. */
   const inFlight = new Set();
@@ -178,8 +183,21 @@ export function createLocalReceiverFeeds({
     return true;
   }
 
+  /** A page shown again resumes a parked poll at once. */
+  function onVisibilityChange() {
+    if (visibility?.hidden || parked === null) return;
+    const current = parked;
+    parked = null;
+    if (current === generation && state.polling) void tick(current);
+  }
+
   async function tick(current) {
     timer = null;
+    // Hidden page: poll nothing until it is shown (onVisibilityChange).
+    if (visibility?.hidden) {
+      parked = current;
+      return;
+    }
     let keepPolling;
     try {
       const body = await request();
@@ -201,6 +219,8 @@ export function createLocalReceiverFeeds({
     start() {
       if (state.polling) return;
       generation += 1;
+      parked = null;
+      visibility?.addEventListener?.('visibilitychange', onVisibilityChange);
       emit({ polling: true });
       void tick(generation);
     },
@@ -208,6 +228,8 @@ export function createLocalReceiverFeeds({
     /** Stop polling; the last feed statuses stay readable. */
     stop() {
       generation += 1;
+      parked = null;
+      visibility?.removeEventListener?.('visibilitychange', onVisibilityChange);
       clearTimeout(timer);
       timer = null;
       abortInFlight();

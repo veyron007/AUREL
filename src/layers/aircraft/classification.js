@@ -1,7 +1,9 @@
 /** Instance-owned military identity and active-layer classification.
  * Both aircraft layers share the same application-supplied registry. */
 export function createMilitaryRegistry({ source, now = Date.now } = {}) {
-  const MIL_POLL_INTERVAL_MS = 60000;
+  /** Identity refresh while the military layer is off (it feeds the set
+   * itself while on). Military hexes change slowly; 5 minutes is plenty. */
+  const MIL_POLL_INTERVAL_MS = 5 * 60_000;
 
   /** @type {Set<string>} Lowercase ICAO24 hexes known to be military. */
   const _milIcaos = new Set();
@@ -123,7 +125,10 @@ export function createMilitaryRegistry({ source, now = Date.now } = {}) {
       _militaryLayerActive
     )
       return;
-    if (_polling || now() - _lastRefreshMs < MIL_POLL_INTERVAL_MS) return;
+    // 0 means never refreshed: the first call always asks.
+    const fresh =
+      _lastRefreshMs > 0 && now() - _lastRefreshMs < MIL_POLL_INTERVAL_MS;
+    if (_polling || fresh) return;
     const owner = lifetime;
     const requestSource = currentSource;
     const signal = AbortSignal.any([owner.signal, AbortSignal.timeout(10000)]);
