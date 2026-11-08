@@ -183,7 +183,7 @@ test('no Orbit Witness string claims a photograph from a pass', () => {
     .map((file) => readFileSync(new URL(file, dir), 'utf8'));
   sources.push(
     readFileSync(
-      new URL('../ui/views/panels/OrbitWitnessPanel.vue', import.meta.url),
+      new URL('../ui/views/panels/OrbitWitnessPanelBody.vue', import.meta.url),
       'utf8',
     ),
     readFileSync(

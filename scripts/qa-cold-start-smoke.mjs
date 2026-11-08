@@ -197,6 +197,61 @@ async function paletteEnablesColdLayer() {
   });
 }
 
+// A panel opened while start-up is still running, before its body's code has
+// loaded, ends with the same text and height as one opened later.
+async function earlyPanelOpens(panelId = 'planner-panel') {
+  const measure = (id) => {
+    const element = document.getElementById(id);
+    return {
+      open: Boolean(element && !element.classList.contains('collapsed')),
+      height: Math.round(element?.getBoundingClientRect().height ?? 0),
+      text: (element?.textContent ?? '').replace(/\s+/g, ' ').trim().length,
+    };
+  };
+  const late = await open('panel-late');
+  await late.evaluate((id) => {
+    window.__godsEyeView.styleManager._panelNavigation.openPanel(id);
+  }, panelId);
+  await wait(1500);
+  const expected = await late.evaluate(measure, panelId);
+  await late.close();
+  const page = await browser.newPage();
+  page.on('pageerror', (error) =>
+    pageErrors.push({ label: 'panel-early', message: error.message }),
+  );
+  await page.setViewport({ width: 1440, height: 900 });
+  await page.goto(`${base}/?welcome=0#v=2&${VIEW}&l=`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 90_000,
+  });
+  await page.waitForFunction(
+    () => window.__godsEyeView?.styleManager?._panelNavigation,
+    { timeout: 90_000, polling: 20 },
+  );
+  const placeholder = await page.evaluate((id) => {
+    window.__godsEyeView.styleManager._panelNavigation.openPanel(id);
+    return Boolean(
+      document.querySelector(`#${id} .deferred-panel-body[aria-busy]`),
+    );
+  }, panelId);
+  await page.waitForFunction(
+    () =>
+      document.querySelector('#loading-screen')?.classList.contains('hidden'),
+    { timeout: 90_000 },
+  );
+  await wait(1500);
+  const restored = await page.evaluate(measure, panelId);
+  await page.close();
+  check(
+    'a panel opened during start-up shows its full body and height',
+    expected.open &&
+      restored.open &&
+      restored.text === expected.text &&
+      restored.height === expected.height,
+    { placeholder, expected, restored },
+  );
+}
+
 async function everyPanelOpens() {
   const page = await open('panels');
   const panels = await page.evaluate(async () => {
@@ -446,6 +501,7 @@ try {
   if (want('voice')) await voiceEnablesColdLayer();
   if (want('palette')) await paletteEnablesColdLayer();
   if (want('panels')) summary.panels = await everyPanelOpens();
+  if (want('panels')) await earlyPanelOpens();
   if (want('locales')) summary.locales = await everyLocaleRenders();
   if (want('looks')) summary.looks = await everyLookApplies();
   if (want('media')) await bhoteKoshiMediaPlays();

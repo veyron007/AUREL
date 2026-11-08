@@ -4283,5 +4283,6 @@
   "Battery": "省電",
   "Now: reduced, step {step} of {steps}": "目前：已降低，第 {step} 級（共 {steps} 級）",
   "Now: full quality": "目前：完整畫質",
-  "Display quality": "顯示畫質"
+  "Display quality": "顯示畫質",
+  "Try again": "重試"
 }

@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { usePlannerStore } from '../../stores/planner.js';
-import PlannerPanel from './PlannerPanel.vue';
+import PlannerPanelBody from './PlannerPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const PlannerPanel = panelWithBody('planner-panel', PlannerPanelBody);
 
 function mount(t, view) {
   document.body.replaceChildren();

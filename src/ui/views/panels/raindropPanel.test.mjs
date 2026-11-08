@@ -5,7 +5,10 @@ import fs from 'node:fs';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { useRaindropStore } from '../../stores/raindrop.js';
-import RaindropPanel from './RaindropPanel.vue';
+import RaindropPanelBody from './RaindropPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const RaindropPanel = panelWithBody('raindrop-panel', RaindropPanelBody);
 
 const ACTIONS = ['pick', 'traceSelection', 'cancel', 'clear', 'replay', 'readGlofas', 'addWatch', 'removeWatch', 'resumeWatches'];
 function mount(t, view) {
@@ -90,6 +93,7 @@ test('a result shows rivers, the method card, classes and every card state', asy
 test('no Raindrop string claims depth, inundation, stage, discharge values or evacuation', () => {
   const files = [
     'src/ui/views/panels/RaindropPanel.vue',
+    'src/ui/views/panels/RaindropPanelBody.vue',
     'src/ui/raindropController.js',
     'src/app/raindropTools.js',
     ...fs.readdirSync('src/hydro').filter((f) => f.endsWith('.js')).map((f) => `src/hydro/${f}`),

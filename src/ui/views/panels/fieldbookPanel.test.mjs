@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { useFieldbookStore } from '../../stores/fieldbook.js';
-import FieldbookPanel from './FieldbookPanel.vue';
+import FieldbookPanelBody from './FieldbookPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const FieldbookPanel = panelWithBody('fieldbook-panel', FieldbookPanelBody);
 import { analysisSnapshot } from '../../../fieldbook/analysisFixtures.mjs';
 import { comparisonSnapshot } from '../../../fieldbook/comparisonFixtures.mjs';
 import { createFieldbook } from '../../../fieldbook/document.js';

@@ -4433,5 +4433,6 @@
   "Battery": "Bateria",
   "Now: reduced, step {step} of {steps}": "Agora: reduzida, nível {step} de {steps}",
   "Now: full quality": "Agora: qualidade total",
-  "Display quality": "Qualidade de exibição"
+  "Display quality": "Qualidade de exibição",
+  "Try again": "Tentar novamente"
 }

@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { useChronicleStore } from '../../stores/chronicle.js';
-import ChroniclePanel from './ChroniclePanel.vue';
+import ChroniclePanelBody from './ChroniclePanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const ChroniclePanel = panelWithBody('chronicle-panel', ChroniclePanelBody);
 
 function mount(t, view) {
   document.body.replaceChildren();

@@ -7,7 +7,10 @@ import { useOrbitWitnessStore } from '../../stores/orbitWitness.js';
 import { OrbitWitnessController } from '../../orbitWitnessController.js';
 import { missionElementSets } from '../../../orbitWitness/tle.js';
 import { FIXTURE_TLE, MUSSOORIE } from '../../../orbitWitness/testFixtures.mjs';
-import OrbitWitnessPanel from './OrbitWitnessPanel.vue';
+import OrbitWitnessPanelBody from './OrbitWitnessPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const OrbitWitnessPanel = panelWithBody('orbit-witness-panel', OrbitWitnessPanelBody);
 
 const selection = {
   id: 'mussoorie',

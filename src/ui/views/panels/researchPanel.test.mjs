@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { useResearchStore } from '../../stores/research.js';
-import ResearchPanel from './ResearchPanel.vue';
+import ResearchPanelBody from './ResearchPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const ResearchPanel = panelWithBody('research-panel', ResearchPanelBody);
 function mount(t, view) {
   document.body.replaceChildren();
   const pinia = createPinia(),
