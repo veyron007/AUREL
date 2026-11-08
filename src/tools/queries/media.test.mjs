@@ -225,6 +225,10 @@ test('mounted camera fallback provenance survives the source and MCP image resul
   assert.equal(current.data.credit, camera.credit);
   assert.match(current.summary, /^Current view from/);
   const server = createMcpServer({ catalog, name: 'test', version: '1' });
+  // The proxy shares a real frame for up to 5 s (CCTV_FRAME_CACHE_MAX_AGE_MS);
+  // the outage below starts after that window, so the fallback is fetched.
+  const afterFrameCache = Date.now() + 6_000;
+  t.mock.method(Date, 'now', () => afterFrameCache);
   upstreamAvailable = false;
   const result = await server.handle({
     jsonrpc: '2.0',
