@@ -1,5 +1,7 @@
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
+import { watchLeftPanels } from '../bodyFlags.js';
 import { t } from '../../i18n/index.js';
 import UiButton from '../kit/UiButton.vue';
 import RailPanel from '../rail/RailPanel.vue';
@@ -28,6 +30,14 @@ import LocalCommandsPanel from './panels/LocalCommandsPanel.vue';
 // Scene sharing (src/scenes/sharing.js) offers its authoring bar and presents
 // its dialog through this store; without this view, neither is drawn.
 const { toolbar, dialog } = storeToRefs(useSceneSharingStore());
+// Cockpit hides its left pitch rail while a left panel is open; the body flag
+// replaces a page-wide body:has() rule.
+const stack = ref(null);
+let stopLeftPanels = () => {};
+onMounted(() => {
+  stopLeftPanels = watchLeftPanels(stack.value, document.body);
+});
+onBeforeUnmount(() => stopLeftPanels());
 // SceneControls presents the Scene panel's buttons, status and progress and
 // answers the buttons through the store.
 const scenes = useSceneStore();
@@ -49,7 +59,7 @@ async function importChosen(event) {
 </script>
 
 <template>
-  <div id="left-panel-stack" class="ui-scroll">
+  <div id="left-panel-stack" ref="stack" class="ui-scroll">
   <LensPanel />
   <FieldbookPanel />
   <PlannerPanel />

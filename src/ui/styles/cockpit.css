@@ -162,8 +162,7 @@
   text-align: left;
   transform: rotateY(-24deg) translateZ(-18px);
 }
-body.cockpit-mode:has(#left-panel-stack > .panel-collapsible:not(.collapsed))
-  .cockpit-pitch-rail-left {
+body.cockpit-mode[data-left-panel-open] .cockpit-pitch-rail-left {
   opacity: 0;
   transition: opacity 0.25s;
 }

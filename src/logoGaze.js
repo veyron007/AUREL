@@ -71,7 +71,20 @@ export function initLogoGaze(root = document) {
     currentY: 0,
     targetX: 0,
     targetY: 0,
+    rect: null,
   }));
+  // The logo's box is read once and again only after a resize (or when the
+  // inline logo replaces the fallback): reading it on every pointer move
+  // forced a layout whenever anything else had changed the page.
+  const rectOf = (state) => {
+    if (state.rect) return state.rect;
+    const rect = state.element.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) state.rect = rect;
+    return rect;
+  };
+  const forgetRects = () => {
+    for (const state of states) state.rect = null;
+  };
   let animationFrame = 0;
   let disposed = false;
 
@@ -132,6 +145,7 @@ export function initLogoGaze(root = document) {
         svg.setAttribute('focusable', 'false');
         svg.querySelector('title')?.remove();
         state.element.replaceChildren(svg);
+        state.rect = null;
         state.parts = [
           svg.querySelector('#globe'),
           svg.querySelector('#globe_cage'),
@@ -151,7 +165,7 @@ export function initLogoGaze(root = document) {
       const gaze = calculateLogoGaze(
         event.clientX,
         event.clientY,
-        state.element.getBoundingClientRect(),
+        rectOf(state),
       );
       state.targetX = gaze.x;
       state.targetY = gaze.y;
@@ -169,12 +183,14 @@ export function initLogoGaze(root = document) {
 
   window.addEventListener('pointermove', onPointerMove, { passive: true });
   window.addEventListener('blur', resetGaze);
+  window.addEventListener('resize', forgetRects, { passive: true });
   document.documentElement.addEventListener('pointerleave', resetGaze);
 
   return () => {
     disposed = true;
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('blur', resetGaze);
+    window.removeEventListener('resize', forgetRects);
     document.documentElement.removeEventListener('pointerleave', resetGaze);
     if (animationFrame) window.cancelAnimationFrame(animationFrame);
   };

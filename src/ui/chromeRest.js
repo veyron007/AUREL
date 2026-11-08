@@ -79,6 +79,7 @@ export class ChromeRest {
    * @param {number} [options.checkMs] Re-check interval while resting.
    * @param {Function} [options.setTimer]
    * @param {Function} [options.clearTimer]
+   * @param {() => number} [options.now] Milliseconds, for the last input time.
    */
   constructor({
     target,
@@ -88,6 +89,7 @@ export class ChromeRest {
     checkMs = CHROME_REST_CHECK_MS,
     setTimer = (callback, ms) => setTimeout(callback, ms),
     clearTimer = (id) => clearTimeout(id),
+    now = () => globalThis.performance?.now?.() ?? Date.now(),
   }) {
     Object.assign(this, {
       target,
@@ -97,8 +99,10 @@ export class ChromeRest {
       checkMs,
       setTimer,
       clearTimer,
+      now,
     });
     this.timer = null;
+    this.lastInput = 0;
     this.resting = false;
     this.started = false;
     this.destroyed = false;
@@ -116,11 +120,17 @@ export class ChromeRest {
       });
   }
 
-  /** Input arrived: show the chrome and start the quiet spell again. */
+  /**
+   * Input arrived: show the chrome and start the quiet spell again. Only the
+   * input time is stored; the one pending timer compares against it when it
+   * fires, so a stream of pointer moves never clears and re-arms a timeout.
+   */
   wake() {
     if (this.destroyed) return;
+    this.lastInput = this.now();
+    // A resting chrome's timer is the short re-check: replace it once.
+    if (this.resting || this.timer === null) this.schedule(this.delayMs);
     this.setResting(false);
-    this.schedule(this.delayMs);
   }
 
   schedule(ms) {
@@ -131,6 +141,11 @@ export class ChromeRest {
   tick() {
     this.timer = null;
     if (this.destroyed) return;
+    const quietMs = this.now() - this.lastInput;
+    if (!this.resting && quietMs < this.delayMs) {
+      this.schedule(this.delayMs - quietMs);
+      return;
+    }
     let held = true;
     try {
       held = this.isHeld();
