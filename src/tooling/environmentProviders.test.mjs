@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { promises as fsp } from 'node:fs';
+import { mkdtempSync, promises as fsp, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { terrainHeightsProxy } from 'gods-eye-view/server/providers/terrain';
 import { tomtomProxy } from 'gods-eye-view/server/providers/traffic';
 import { firmsProxy } from 'gods-eye-view/server/providers/firms';
@@ -45,6 +47,17 @@ function install(plugin, hook = 'configureServer') {
     return res;
   };
 }
+/**
+ * A terrain cache location of the test's own. The sqlite store opens a real
+ * file next to the cache path, so the default (the working directory's
+ * .gev-cache) would read whatever a running server left there.
+ */
+function isolatedTerrainCache(t) {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'gev-terrain-test-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  return { cachePath: path.join(dir, 'terrain-heights.json') };
+}
+
 function isolate(t, env = {}) {
   for (const [name, value] of Object.entries(env)) {
     const previous = process.env[name];
@@ -121,7 +134,7 @@ test('terrain middleware bounds missing points and reconstructs repeated/reorder
       results: points.map(([lon]) => ({ ellipsoid: lon + 100 })),
     });
   });
-  const request = install(terrainHeightsProxy());
+  const request = install(terrainHeightsProxy(isolatedTerrainCache(t)));
   const points = Array.from({ length: 64 }, (_, i) => `${i / 100},1`);
   const res = await request('/?points=' + points.join(';'));
   assert.equal(res.status, 200);
@@ -154,7 +167,9 @@ test('terrain middleware migrates valid legacy disk points without fabricating o
     assert.equal(new URL(raw).searchParams.get('points'), '3.00000,4.00000');
     return Response.json({ results: [{ ellipsoid: 88 }] });
   });
-  const res = await install(terrainHeightsProxy())('/?points=3,4;1,2');
+  const res = await install(terrainHeightsProxy(isolatedTerrainCache(t)))(
+    '/?points=3,4;1,2',
+  );
   assert.deepEqual(json(res), {
     results: [{ ellipsoid: 88 }, { ellipsoid: 77 }],
   });
@@ -391,7 +406,7 @@ test('terrain middleware retains successful chunks around a failure and retries 
       results: points.map(([lon]) => ({ ellipsoid: lon + 100 })),
     });
   });
-  const request = install(terrainHeightsProxy());
+  const request = install(terrainHeightsProxy(isolatedTerrainCache(t)));
   const points = Array.from({ length: 130 }, (_, i) => `${i / 100},1`);
   const urls = [0, 64, 128].map(
     (start) => '/?points=' + points.slice(start, start + 64).join(';'),
@@ -428,7 +443,7 @@ test('after a 429 the terrain proxy leaves the upstream alone and logs once', as
     return new Response('', { status: 429 });
   });
   t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
-  const request = install(terrainHeightsProxy());
+  const request = install(terrainHeightsProxy(isolatedTerrainCache(t)));
   // The retries' backoff runs on mocked time.
   let settled = false;
   const first = request('/?points=1,2').then(() => {
@@ -461,7 +476,7 @@ test('a far-off Retry-After pauses the terrain upstream for at most 10 minutes',
       ? new Response('', { status: 429, headers: { 'retry-after': '86400' } })
       : Response.json({ results: [{ ellipsoid: 100 }] }),
   );
-  const request = install(terrainHeightsProxy());
+  const request = install(terrainHeightsProxy(isolatedTerrainCache(t)));
   // The first request spends its retry budget on 429s, then the pause begins.
   let settled = false;
   const first = request('/?points=1,2').then((res) => {
@@ -508,7 +523,7 @@ test('during a terrain 429 pause fully cached points, even stale ones, are still
       ? new Response('', { status: 429, headers: { 'retry-after': '300' } })
       : Response.json({ results: [{ ellipsoid: 100 }] });
   });
-  const request = install(terrainHeightsProxy());
+  const request = install(terrainHeightsProxy(isolatedTerrainCache(t)));
   assert.equal((await request('/?points=5,6')).status, 200);
   // Past the 30-day TTL, so 5,6 is stale and would normally be refreshed.
   t.mock.timers.setTime(Date.now() + 31 * 24 * 3600_000);
@@ -531,7 +546,7 @@ test('a terrain upstream failure other than 429 does not pause later requests', 
     calls += 1;
     return new Response('', { status: 503 });
   });
-  const request = install(terrainHeightsProxy());
+  const request = install(terrainHeightsProxy(isolatedTerrainCache(t)));
   const first = await settleOnMockedTime(t, request('/?points=1,2'));
   assert.equal(first.status, 502);
   const afterFirst = calls;
@@ -555,7 +570,7 @@ test('a shorter concurrent Retry-After never cuts a terrain 429 pause short', as
       headers: { 'retry-after': retryAfter },
     });
   });
-  const request = install(terrainHeightsProxy());
+  const request = install(terrainHeightsProxy(isolatedTerrainCache(t)));
   // Load the disk cache first so both requests below reach the upstream in
   // order: the 300 s answer lands first, the 30 s answer after it.
   assert.equal((await request('/?points=0,0')).status, 200);
