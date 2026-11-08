@@ -225,6 +225,13 @@ async function probeOnce(browser, url, options, setup) {
     const { result: motion, taskMs } = await taskMsDuring(cdp, () =>
       sampleFps(page, true),
     );
+    const render = await page.evaluate(() => {
+      const { viewer } = window.__godsEyeView;
+      return {
+        msaaSamples: viewer.scene.msaaSamples,
+        resolutionScale: viewer.resolutionScale,
+      };
+    });
     const { heapBytes, ...metrics } = await readPageMetrics(
       page,
       STARTUP_MARK_ORDER,
@@ -239,6 +246,7 @@ async function probeOnce(browser, url, options, setup) {
       motionFps: motion.fps,
       motionP95FrameMs: motion.p95FrameMs,
       motionTaskMsPerFrame: motion.frames ? taskMs / motion.frames : null,
+      render,
       ...metrics,
     };
   } finally {
