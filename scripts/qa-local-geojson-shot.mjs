@@ -42,10 +42,22 @@ const VIEWS = Object.freeze({
     // A LineString dam (Clyde, New Zealand): the clamped ground line.
     { name: 'line', lon: 169.359, lat: -45.426, height: 1_500, pitch: -70 },
   ],
+  'telegeography-submarine-cables': [
+    { name: 'world', lon: -40, lat: 35, height: 9_000_000, pitch: -90 },
+    { name: 'close', lon: -73.5, lat: 40.4, height: 500_000, pitch: -90 },
+    // Landing pins, stems and tips at Manasquan, New Jersey, tilted.
+    { name: 'landing', lon: -74.05, lat: 39.8, height: 30_000, pitch: -40 },
+  ],
+  radio: [
+    { name: 'world', lon: 10, lat: 45, height: 9_000_000, pitch: -90 },
+    { name: 'close', lon: 2.35, lat: 48.85, height: 400_000, pitch: -90 },
+  ],
 });
 const SHORT_NAMES = Object.freeze({
   'local-datacenters': 'datacenters',
   'local-dams': 'dams',
+  'telegeography-submarine-cables': 'cables',
+  radio: 'radio',
 });
 
 function option(argv, name, fallback) {

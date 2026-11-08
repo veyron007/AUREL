@@ -19,6 +19,11 @@
       "id": "datacenters-only",
       "label": "Datacenters only (world view)",
       "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=d"
+    },
+    {
+      "id": "cables-only",
+      "label": "Cables only (world view)",
+      "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=u"
     }
   ]
 }

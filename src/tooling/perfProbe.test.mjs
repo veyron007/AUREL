@@ -53,6 +53,7 @@ test('the committed scene file parses and keeps the baseline scenes', () => {
       'flights-quakes-sats',
       'cables-datacenters-fires',
       'datacenters-only',
+      'cables-only',
     ],
   );
   assert.ok(scenes.every((scene) => scene.hash.includes('map=esri-imagery')));

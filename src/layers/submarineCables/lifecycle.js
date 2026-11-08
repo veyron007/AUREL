@@ -48,6 +48,11 @@ export function createLifecycle({ state, parts, source, mapStackEventTarget }) {
           },
         );
       }
+      if (!state._postRenderRemover && viewer.scene.postRender) {
+        state._postRenderRemover = viewer.scene.postRender.addEventListener(
+          () => parts.rendering.maintainPrimitives(),
+        );
+      }
       if (!state._moveEndRemover) {
         state._moveEndRemover = viewer.camera.moveEnd.addEventListener(() => {
           if (!state._enabled) return;
@@ -80,10 +85,10 @@ export function createLifecycle({ state, parts, source, mapStackEventTarget }) {
         state._loading = false;
         state._loadingLabel = '';
       }
-      // Free the entities rather than hide them; enable() rebuilds from the
-      // cached JSON. An in-flight load's own post-await ownership check
-      // removes whatever that stale generation adds later.
-      parts.rendering.releaseDataSources(state._viewer);
+      // Free the primitives rather than hide them; enable() rebuilds from the
+      // cached model. An in-flight load's own post-await ownership check
+      // keeps a stale generation from building anything later.
+      parts.rendering.releasePrimitives();
     },
 
     update(viewer) {
@@ -92,9 +97,8 @@ export function createLifecycle({ state, parts, source, mapStackEventTarget }) {
 
     destroy(viewer) {
       if (state._abort) state._abort.abort();
-      parts.rendering.releaseDataSources(viewer || state._viewer);
-      state._cachedCableJson = null;
-      state._cachedLandingJson = null;
+      parts.rendering.releasePrimitives();
+      state._model = null;
       // hide() clears every published host entry and goes invisible while
       // keeping the publisher reusable — the legacy layer supported re-init
       // after destroy, and hidden publishers already drop late publishes.
@@ -113,6 +117,10 @@ export function createLifecycle({ state, parts, source, mapStackEventTarget }) {
         state._moveEndRemover();
         state._moveEndRemover = null;
       }
+      if (state._postRenderRemover) {
+        state._postRenderRemover();
+        state._postRenderRemover = null;
+      }
       if (state._mapStackListener && mapStackEventTarget?.removeEventListener) {
         mapStackEventTarget.removeEventListener(
           'gev:map-stack-changed',
@@ -128,18 +136,20 @@ export function createLifecycle({ state, parts, source, mapStackEventTarget }) {
       state._error = null;
       state._lastUpdate = null;
       state._loadingLabel = '';
-      state._cableDataSource = null;
-      state._landingDataSource = null;
-      state._referenceDataSource = null;
-      state._referenceRecords = [];
-      state._surfaceRecords = [];
-      state._pickByEntity = new WeakMap();
       state._referenceLabelCount = 0;
       state._publishScratch.length = 0;
-      state._markerBlendDone = false;
-      state._markerBlendInvariantWarned = false;
       parts.rendering.resetPublishSignature();
       state._referenceSweepGate.reset();
+    },
+
+    /**
+     * The record behind a `scene.pick()` result, or null when the pick is
+     * not one of this layer's primitives (or the layer is off).
+     * @param {object|null} picked
+     * @returns {{kind:string, reference:{lon:number, lat:number}, label:string, featureId?:string|null}|null}
+     */
+    resolvePick(picked) {
+      return parts.interaction.resolvePickRecord(picked);
     },
 
     getStats() {

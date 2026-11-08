@@ -30,26 +30,20 @@ export function createState({ sweepClock, overlayHost }) {
 
   state._loadGeneration = 0;
 
-  state._cableDataSource = null;
-
-  state._landingDataSource = null;
-
-  state._referenceDataSource = null;
-
   /**
-   * Fetched cable/landing JSON kept across disable/enable. A disable RELEASES
-   * the three data sources (see releaseDataSources) instead of hiding them,
-   * so a re-enable has to rebuild the entities; the network/parse half of
-   * that rebuild is the expensive part users would notice, so it is cached.
+   * The primitives of the current enable cycle (renderer.js), or null. A
+   * disable destroys them; enable rebuilds from the cached model.
    */
 
-  state._cachedCableJson = null;
+  state._render = null;
 
-  state._cachedLandingJson = null;
+  /**
+   * The one parsed copy of the source (model.js), kept across
+   * disable/enable so a re-enable rebuilds without a fetch or re-parse. The
+   * raw JSON is not retained.
+   */
 
-  state._referenceRecords = [];
-
-  state._surfaceRecords = [];
+  state._model = null;
 
   state._clickHandler = null;
 
@@ -62,14 +56,6 @@ export function createState({ sweepClock, overlayHost }) {
   /** Active ground-line classification; refined from live scene state at init. */
 
   state._classificationType = Cesium.ClassificationType.BOTH;
-
-  /** True once both marker collections blend translucent (or the shape probe failed). */
-
-  state._markerBlendDone = false;
-
-  state._markerBlendInvariantWarned = false;
-
-  state._pickByEntity = new WeakMap();
 
   state._referenceLabelCount = 0;
 
@@ -99,8 +85,6 @@ export function createState({ sweepClock, overlayHost }) {
   state._lastPublishedCount = -1;
 
   state.cableColor = Cesium.Color.fromCssColorString(BASE_CABLE_COLOR);
-
-  state.cableOutline = Cesium.Color.BLACK.withAlpha(0.45);
 
   state.landingColor = Cesium.Color.fromCssColorString(BASE_LANDING_COLOR);
   return state;

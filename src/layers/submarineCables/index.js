@@ -10,6 +10,7 @@ export function createSubmarineCableLayer({
   screenSpaceEventHandlerFactory,
   mapStackEventTarget = null,
   sweepClock = defaultSweepClock,
+  renderOptions = {},
 }) {
   if (!source?.fetch || !source.label)
     throw new TypeError(
@@ -23,6 +24,7 @@ export function createSubmarineCableLayer({
     source,
     screenSpaceEventHandlerFactory,
     mapStackEventTarget,
+    renderOptions,
   };
   parts.rendering = createRendering(context);
   parts.ingestion = createIngestion(context);
@@ -40,7 +42,6 @@ export {
 export {
   cableClassificationTypeForStack,
   cableClassificationTypeForScene,
-  applyTranslucentMarkerBlend,
 } from './surface.js';
 export {
   CABLE_REFERENCE_LABEL_WINNER_CAP,

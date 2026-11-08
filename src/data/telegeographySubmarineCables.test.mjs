@@ -11,7 +11,6 @@ import {
   CABLE_STEM_TIP_EPSILON_M,
   CABLE_SWEEP_MOTION_EPSILON_M,
   CABLE_SWEEP_MOTION_PROBE_INTERVAL_MS,
-  applyTranslucentMarkerBlend,
   cableClassificationTypeForScene,
   cableClassificationTypeForStack,
   cableReferencePriority,
@@ -248,175 +247,6 @@ test('cable ground lines classify against exactly the active surface on every st
   );
 });
 
-test('a map-stack change re-classifies every cable line once, and destroy detaches the listener', async () => {
-  const listeners = new Map();
-  const eventTarget = {
-    addEventListener: (name, fn) => listeners.set(name, fn),
-    removeEventListener: (name, fn) => {
-      if (listeners.get(name) === fn) listeners.delete(name);
-    },
-  };
-  const env = await createRealCableLayerHarness({
-    mapStackEventTarget: eventTarget,
-  });
-  const cableSource = env.dataSources.find((ds) =>
-    /Submarine Cables/.test(ds.name || ''),
-  );
-  const classificationOf = (entity) =>
-    entity.polyline.classificationType.getValue();
-
-  // The harness scene has no globe → BOTH at init (safe unknown fallback).
-  const cableEntity = cableSource.entities.values[0];
-  assert.equal(classificationOf(cableEntity), Cesium.ClassificationType.BOTH);
-  const listener = listeners.get('gev:map-stack-changed');
-  assert.equal(
-    typeof listener,
-    'function',
-    'init must subscribe to the stack event',
-  );
-
-  listener({ detail: { activeId: 'photoreal', status: 'ready' } });
-  assert.equal(
-    classificationOf(cableEntity),
-    Cesium.ClassificationType.CESIUM_3D_TILE,
-  );
-
-  listener({ detail: { activeId: 'osm', status: 'ready' } });
-  assert.equal(
-    classificationOf(cableEntity),
-    Cesium.ClassificationType.TERRAIN,
-  );
-
-  env.layer.destroy(env.viewer);
-  assert.equal(
-    listeners.has('gev:map-stack-changed'),
-    false,
-    'destroy must detach the stack listener',
-  );
-});
-
-test('marker collections blend in a single translucent pass behind a loud shape invariant', async () => {
-  // Helper contract on a REAL Cesium cluster shape.
-  const ds = new Cesium.CustomDataSource('blend-probe');
-  let result = applyTranslucentMarkerBlend(ds);
-  assert.deepEqual(
-    result,
-    { applied: 0, pending: 2, invariantFailed: false },
-    'pre-visualizer clusters are pending, never a shape failure',
-  );
-
-  ds.clustering._billboardCollection = new Cesium.BillboardCollection();
-  ds.clustering._pointCollection = new Cesium.PointPrimitiveCollection();
-  result = applyTranslucentMarkerBlend(ds);
-  assert.deepEqual(result, { applied: 2, pending: 0, invariantFailed: false });
-  assert.equal(
-    ds.clustering._billboardCollection.blendOption,
-    Cesium.BlendOption.TRANSLUCENT,
-  );
-  assert.equal(
-    ds.clustering._pointCollection.blendOption,
-    Cesium.BlendOption.TRANSLUCENT,
-  );
-
-  // Shape drift fails LOUDLY-detectably instead of applying blindly: a
-  // renamed field or a foreign object type must never be touched.
-  assert.equal(
-    applyTranslucentMarkerBlend({ clustering: {} }).invariantFailed,
-    true,
-    'missing private fields mean Cesium changed shape',
-  );
-  const wrongType = new Cesium.CustomDataSource('wrong-type');
-  wrongType.clustering._billboardCollection = { blendOption: 0 };
-  const wrongResult = applyTranslucentMarkerBlend(wrongType);
-  assert.equal(wrongResult.invariantFailed, true);
-  assert.equal(
-    wrongType.clustering._billboardCollection.blendOption,
-    0,
-    'foreign objects are left untouched',
-  );
-  assert.equal(applyTranslucentMarkerBlend(null).invariantFailed, true);
-
-  // ATOMICITY: a shape failure on the SECOND collection must not leave the
-  // FIRST one already forced. Validation of every field/type completes before
-  // the first assignment, so a failed probe applies nothing at all — that is
-  // what "leaves Cesium's default blend untouched" has to mean.
-  const partial = new Cesium.CustomDataSource('partial-shape');
-  partial.clustering._billboardCollection = new Cesium.BillboardCollection();
-  partial.clustering._pointCollection = { blendOption: 0 }; // renamed/reshaped
-  const partialResult = applyTranslucentMarkerBlend(partial);
-  assert.equal(partialResult.invariantFailed, true);
-  assert.equal(
-    partialResult.applied,
-    0,
-    'a failed probe reports zero applications',
-  );
-  assert.equal(
-    partial.clustering._billboardCollection.blendOption,
-    Cesium.BlendOption.OPAQUE_AND_TRANSLUCENT,
-    "the valid first collection keeps Cesium's default blend when the second fails",
-  );
-  assert.equal(
-    partial.clustering._pointCollection.blendOption,
-    0,
-    'the malformed collection is never touched',
-  );
-
-  // Real-layer wiring: once the visualizers have created the collections,
-  // the next sweep applies the single-pass blend to both marker sources.
-  const env = await createRealCableLayerHarness();
-  env.raiseSweep();
-  const landingSource = env.dataSources.find((source) =>
-    /Landing Points/.test(source.name || ''),
-  );
-  const referenceSource = env.dataSources.find((source) =>
-    /References/.test(source.name || ''),
-  );
-  landingSource.clustering._billboardCollection =
-    new Cesium.BillboardCollection();
-  landingSource.clustering._pointCollection =
-    new Cesium.PointPrimitiveCollection();
-  referenceSource.clustering._billboardCollection =
-    new Cesium.BillboardCollection();
-  referenceSource.clustering._pointCollection =
-    new Cesium.PointPrimitiveCollection();
-  for (const fn of env.listeners.moveEnd) fn();
-  env.raiseSweep();
-  assert.equal(
-    landingSource.clustering._billboardCollection.blendOption,
-    Cesium.BlendOption.TRANSLUCENT,
-    'landing billboards blend in one pass after the sweep',
-  );
-  assert.equal(
-    referenceSource.clustering._pointCollection.blendOption,
-    Cesium.BlendOption.TRANSLUCENT,
-    'reference points blend in one pass after the sweep',
-  );
-  env.layer.destroy(env.viewer);
-
-  // The same atomicity holds ACROSS the two marker sources: the layer probes
-  // both before committing either, so a reshaped reference source can never
-  // leave the landing source already forced to TRANSLUCENT.
-  const failEnv = await createRealCableLayerHarness();
-  const failLanding = failEnv.dataSources.find((source) =>
-    /Landing Points/.test(source.name || ''),
-  );
-  const failReference = failEnv.dataSources.find((source) =>
-    /References/.test(source.name || ''),
-  );
-  failLanding.clustering._billboardCollection =
-    new Cesium.BillboardCollection();
-  failLanding.clustering._pointCollection =
-    new Cesium.PointPrimitiveCollection();
-  delete failReference.clustering._pointCollection; // Cesium reshaped
-  failEnv.raiseSweep();
-  assert.equal(
-    failLanding.clustering._billboardCollection.blendOption,
-    Cesium.BlendOption.OPAQUE_AND_TRANSLUCENT,
-    'a reference-source shape failure leaves the landing source on the default blend',
-  );
-  failEnv.layer.destroy(failEnv.viewer);
-});
-
 test('cable reference sweep gate is dirty-only — no timer path', () => {
   const gate = createCableReferenceSweepGate();
   assert.equal(gate.shouldRun(), true, 'initial dirtiness covers enable/load');
@@ -542,19 +372,15 @@ function makeStemRecord(lon = -40, lat = 35) {
   const setCalls = { position: 0, polyline: 0, polylineArrays: [] };
   return {
     record: {
-      entity: {
-        position: {
-          setValue: () => {
-            setCalls.position++;
-          },
+      point: {
+        set position(_value) {
+          setCalls.position++;
         },
-        polyline: {
-          positions: {
-            setValue: (value) => {
-              setCalls.polyline++;
-              setCalls.polylineArrays.push(value);
-            },
-          },
+      },
+      stem: {
+        set positions(value) {
+          setCalls.polyline++;
+          setCalls.polylineArrays.push(value);
         },
       },
       base,
@@ -628,12 +454,15 @@ test('the depth decision is the dated Option-2 host migration, superseding Optio
   });
 });
 
-test('cables create no native labels and no per-frame geometry callbacks', () => {
+test('cables create no entities, native labels or per-frame geometry callbacks', () => {
   const source = [
     '../../data/telegeographySubmarineCables.js',
     '../../app/layers/submarineCables.js',
     '../../app/layers/overlayHost.js',
     'rendering.js',
+    'renderer.js',
+    'primitives.js',
+    'model.js',
     'overlay.js',
     'surface.js',
     'ingestion.js',
@@ -658,20 +487,22 @@ test('cables create no native labels and no per-frame geometry callbacks', () =>
     /new Cesium\.CallbackProperty/,
     'reverting to per-frame stem callbacks must fail this pin',
   );
+  assert.doesNotMatch(
+    source,
+    /GeoJsonDataSource\.load|CustomDataSource|entities\.add/,
+    'the layer must stay off the Entity path',
+  );
   assert.match(
     source,
     /setOverlayEntries/,
     'labels must flow through the shared world-overlay host',
   );
-  assert.match(source, /record\.entity\.position\.setValue\(record\.tip\)/);
+  assert.match(source, /record\.point\.position = record\.tip/);
   assert.match(
     source,
     /const stemPositionBuffers = \[\s*\[base, tip\],\s*\[base, tip\],?\s*\]/,
   );
-  assert.match(
-    source,
-    /record\.entity\.polyline\.positions\.setValue\(stemPositions\)/,
-  );
+  assert.match(source, /record\.stem\.positions = stemPositions/);
 });
 
 const CABLE_FIXTURE = {
@@ -691,27 +522,14 @@ const CABLE_FIXTURE = {
     },
   ],
 };
-// Node has no `document`, so Point features (whose GeoJSON default marker
-// needs a canvas PinBuilder) cannot load here. Landing references only need
-// `properties.coordinates`, so a line geometry exercises the same path.
 const LANDING_FIXTURE = {
   type: 'FeatureCollection',
   features: [
     {
       type: 'Feature',
       id: 'lisbon',
-      properties: {
-        id: 'lisbon',
-        name: 'Lisbon, Portugal',
-        coordinates: [-9.1, 38.7],
-      },
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [-9.1, 38.7],
-          [-9.05, 38.72],
-        ],
-      },
+      properties: { id: 'lisbon', name: 'Lisbon, Portugal', is_tbd: false },
+      geometry: { type: 'Point', coordinates: [-9.1, 38.7] },
     },
   ],
 };
@@ -722,49 +540,41 @@ function fixtureForUrl(url) {
     : CABLE_FIXTURE;
 }
 
-function makeStubViewer(
-  listeners,
-  dataSources,
-  addCalls = { count: 0 },
-  addControl = null,
-) {
+// Node has no WebGL context: give the appearances' render states the limits a
+// real context reports, as the other primitive-backed layer tests do.
+Cesium.ContextLimits._minimumAliasedLineWidth = 1;
+Cesium.ContextLimits._maximumAliasedLineWidth = 10;
+
+/** Node has no canvas or DOM classes: stand-ins for the two DOM-bound factories. */
+const NODE_RENDER_OPTIONS = Object.freeze({
+  pinImage: () => 'data:image/png;base64,',
+  stemMaterial: () => ({ type: 'Color', destroy() {} }),
+});
+
+/** A scene collection that records what it holds and destroys what it drops. */
+function sceneCollection({ rejectAdd = false } = {}) {
+  const items = [];
   return {
-    dataSources: {
-      // Mirror Cesium's real DataSourceCollection.add(): the returned promise
-      // resolves — and the collection mutates — on a DEFERRED tick, never in
-      // the caller's synchronous frame. A remove() issued before the deferred
-      // add settles therefore removes NOTHING and the add still materializes
-      // afterwards (empirically verified against Cesium). Tests may hold the
-      // settle window open via addControl to abort inside it, and may mark an
-      // add rejected-AFTER-push: Cesium pushes into the collection BEFORE
-      // raising dataSourceAdded, so a throwing listener rejects the promise
-      // after the mutation already landed.
-      add: (source) => {
-        const callIndex = addCalls.count;
-        addCalls.count += 1;
-        return new Promise((resolve, reject) => {
-          const settle = () => {
-            dataSources.push(source);
-            if (addControl?.rejectAfterPush?.has(callIndex)) {
-              reject(
-                new Error(
-                  'dataSourceAdded listener threw after the push landed',
-                ),
-              );
-              return;
-            }
-            resolve(source);
-          };
-          if (addControl?.held) addControl.pending.push(settle);
-          else Promise.resolve().then(settle);
-        });
-      },
-      remove: (source) => {
-        const index = dataSources.indexOf(source);
-        if (index >= 0) dataSources.splice(index, 1);
-        return index >= 0;
-      },
+    items,
+    add(primitive) {
+      if (rejectAdd) throw new Error('scene rejected the primitives');
+      items.push(primitive);
+      return primitive;
     },
+    remove(primitive) {
+      const index = items.indexOf(primitive);
+      if (index < 0) return false;
+      items.splice(index, 1);
+      if (!primitive.isDestroyed?.()) primitive.destroy?.();
+      return true;
+    },
+  };
+}
+
+function makeStubViewer(listeners, { rejectAdd = false } = {}) {
+  const flights = [];
+  const viewer = {
+    flights,
     camera: {
       positionWC: Cesium.Cartesian3.fromDegrees(-40, 35, 4_500_000),
       frustum: { fov: Math.PI / 3 },
@@ -776,13 +586,21 @@ function makeStubViewer(
       },
       heading: 0,
       cancelFlight() {},
-      flyTo() {},
+      flyTo(options) {
+        flights.push(options);
+      },
     },
     scene: {
       canvas: { clientHeight: 900 },
+      primitives: sceneCollection({ rejectAdd }),
+      groundPrimitives: sceneCollection(),
+      frameState: { mode: Cesium.SceneMode.SCENE3D },
+      updateHeight: () => () => {},
+      getHeight: () => undefined,
       requestRender() {},
+      pickResult: null,
       pick() {
-        return null;
+        return viewer.scene.pickResult;
       },
       preRender: {
         addEventListener: (fn) => {
@@ -790,8 +608,70 @@ function makeStubViewer(
           return () => listeners.preRender.delete(fn);
         },
       },
+      postRender: {
+        addEventListener: (fn) => {
+          listeners.postRender.add(fn);
+          return () => listeners.postRender.delete(fn);
+        },
+      },
     },
   };
+  return viewer;
+}
+
+/** The layer's collections, read back from the stub scene. */
+function rendered(viewer) {
+  const root = viewer.scene.primitives.items[0] || null;
+  const ground = viewer.scene.groundPrimitives.items[0] || null;
+  const list = (collection) =>
+    collection
+      ? Array.from({ length: collection.length }, (_, i) => collection.get(i))
+      : [];
+  const groundPrimitives = list(ground);
+  return {
+    root,
+    ground,
+    pins: root ? list(root.get(0)) : [],
+    stems: root ? list(root.get(1)) : [],
+    tips: root ? list(root.get(2)) : [],
+    pinCollection: root?.get(0) || null,
+    tipCollection: root?.get(2) || null,
+    lines:
+      groundPrimitives.find(
+        (primitive) => primitive instanceof Cesium.GroundPolylinePrimitive,
+      ) || null,
+    groundPrimitives,
+  };
+}
+
+function sceneIsEmpty(viewer) {
+  return (
+    viewer.scene.primitives.items.length === 0 &&
+    viewer.scene.groundPrimitives.items.length === 0
+  );
+}
+
+function createLayer({ source, mapStackEventTarget = null, clock } = {}) {
+  const hostCalls = [];
+  const clickActions = [];
+  const layer = createTeleGeographySubmarineCableLayer({
+    overlayHost: {
+      setVisible: (...args) => hostCalls.push(['visible', ...args]),
+      setEntries: (...args) => hostCalls.push(['entries', ...args]),
+      clearSource: (...args) => hostCalls.push(['clear', ...args]),
+    },
+    screenSpaceEventHandlerFactory: () => ({
+      setInputAction(action) {
+        clickActions.push(action);
+      },
+      destroy() {},
+    }),
+    ...(source ? { source } : {}),
+    mapStackEventTarget,
+    ...(clock ? { sweepClock: clock } : {}),
+    renderOptions: NODE_RENDER_OPTIONS,
+  });
+  return { layer, hostCalls, clickActions };
 }
 
 /**
@@ -799,12 +679,12 @@ function makeStubViewer(
  * the abort signal like real fetch (reject with AbortError on abort). Load
  * lifecycle races are sequenced deterministically through it.
  */
-function createDeferredCableLayerHarness() {
-  const hostCalls = [];
-  const listeners = { preRender: new Set(), moveEnd: new Set() };
-  const dataSources = [];
-  const addCalls = { count: 0 };
-  const addControl = { held: false, pending: [], rejectAfterPush: new Set() };
+function createDeferredCableLayerHarness({ rejectAdd = false } = {}) {
+  const listeners = {
+    preRender: new Set(),
+    moveEnd: new Set(),
+    postRender: new Set(),
+  };
   const pendingFetches = [];
   const abortError = () =>
     Object.assign(new Error('The operation was aborted'), {
@@ -842,26 +722,14 @@ function createDeferredCableLayerHarness() {
       pendingFetches.push(entry);
     });
 
-  const layer = createTeleGeographySubmarineCableLayer({
-    overlayHost: {
-      setVisible: (...args) => hostCalls.push(['visible', ...args]),
-      setEntries: (...args) => hostCalls.push(['entries', ...args]),
-      clearSource: (...args) => hostCalls.push(['clear', ...args]),
-    },
-    screenSpaceEventHandlerFactory: () => ({
-      setInputAction() {},
-      destroy() {},
-    }),
-  });
-  const viewer = makeStubViewer(listeners, dataSources, addCalls, addControl);
+  const { layer, hostCalls } = createLayer();
+  const viewer = makeStubViewer(listeners, { rejectAdd });
   layer.init(viewer);
 
   return {
     layer,
     viewer,
     hostCalls,
-    dataSources,
-    addCalls,
     listeners,
     pendingFetches,
     raiseSweep() {
@@ -870,20 +738,6 @@ function createDeferredCableLayerHarness() {
     releaseAll() {
       for (const entry of [...pendingFetches]) entry.release();
       pendingFetches.length = 0;
-    },
-    /** Park every subsequent dataSources.add in its deferred settle window. */
-    holdAdds() {
-      addControl.held = true;
-    },
-    /** Make the Nth add (0-based) push into the collection, THEN reject. */
-    failAddAfterPush(callIndex) {
-      addControl.rejectAfterPush.add(callIndex);
-    },
-    /** Let the held adds mutate the collection (the deferred settle lands). */
-    releaseHeldAdds() {
-      addControl.held = false;
-      const pending = addControl.pending.splice(0);
-      for (const settle of pending) settle();
     },
     async settle() {
       // Drain the microtask/timer interleave the load path spans.
@@ -896,53 +750,8 @@ function createDeferredCableLayerHarness() {
   };
 }
 
-/**
- * Gate Cesium's GeoJsonDataSource.load: each call runs the REAL load, then
- * parks its resolution behind a test-owned gate. Opening gate N and aborting
- * in the same synchronous frame lands the abort exactly at the caller's
- * post-await ownership check for that boundary.
- */
-function installGeoJsonLoadGate() {
-  const original = Cesium.GeoJsonDataSource.load;
-  const calls = [];
-  const gates = [];
-  Cesium.GeoJsonDataSource.load = function gatedLoad(...args) {
-    calls.push(args);
-    let open;
-    const opened = new Promise((resolve) => {
-      open = resolve;
-    });
-    gates.push({ open });
-    return original
-      .apply(Cesium.GeoJsonDataSource, args)
-      .then((result) => opened.then(() => result));
-  };
-  return {
-    calls,
-    open(index) {
-      gates[index]?.open();
-    },
-    /**
-     * Open every gate, including ones created by continuations the opening
-     * itself unblocks (a load calls the landing build only after the cable
-     * gate opens), until no new gates appear.
-     */
-    async drainOpen(settle) {
-      let opened = 0;
-      while (opened < gates.length) {
-        for (; opened < gates.length; opened++) gates[opened].open();
-        await settle();
-      }
-    },
-    restore() {
-      Cesium.GeoJsonDataSource.load = original;
-    },
-  };
-}
-
-test('an abort landing at the post-fetch boundary stops the stale load before GeoJson work', async () => {
+test('an abort landing at the post-fetch boundary stops the stale load before any build', async () => {
   const env = createDeferredCableLayerHarness();
-  const geojson = installGeoJsonLoadGate();
   try {
     env.layer.enable(env.viewer);
     // Release A's fetches and abort in the SAME frame: A's continuation runs
@@ -951,174 +760,12 @@ test('an abort landing at the post-fetch boundary stops the stale load before Ge
     env.layer.disable();
     env.layer.enable(env.viewer);
     await env.settle();
-    assert.equal(
-      geojson.calls.length,
-      0,
-      'stale load A must not reach GeoJsonDataSource.load',
-    );
+    assert.ok(sceneIsEmpty(env.viewer), 'stale load A must build nothing');
 
     env.releaseAll();
     await env.settle();
-    await geojson.drainOpen(() => env.settle());
-    assert.equal(
-      geojson.calls.length,
-      2,
-      'load B alone performs the two GeoJson loads',
-    );
-    assert.equal(env.addCalls.count, 3);
-    assert.equal(env.dataSources.length, 3);
-    assert.equal(env.layer.getStats().count, 2);
-  } finally {
-    geojson.restore();
-    env.layer.destroy(env.viewer);
-    env.cleanup();
-  }
-});
-
-test('an abort landing at the post-cable-GeoJson boundary stops the stale load before the landing build', async () => {
-  const env = createDeferredCableLayerHarness();
-  const geojson = installGeoJsonLoadGate();
-  try {
-    env.layer.enable(env.viewer);
-    env.releaseAll();
-    await env.settle();
-    assert.equal(env.pendingFetches.length, 0);
-    assert.equal(
-      geojson.calls.length,
-      1,
-      'load A is parked on the gated cable GeoJson build',
-    );
-
-    // Open the cable gate and abort in the same frame: A resumes at the
-    // post-cable owns() check with ownership lost.
-    geojson.open(0);
-    env.layer.disable();
-    env.layer.enable(env.viewer);
-    await env.settle();
-    // A already cached the fetched JSON, so load B skips the network and goes
-    // straight to its own CABLE build; the only new GeoJson call must be that
-    // one — a landing build here would mean stale A ran on past its check.
-    assert.equal(
-      env.pendingFetches.length,
-      0,
-      'load B rebuilds from the cached JSON without refetching',
-    );
-    assert.equal(
-      geojson.calls.length,
-      2,
-      'stale load A must not start the landing GeoJson build',
-    );
-    assert.ok(
-      Cesium.Color.equals(
-        geojson.calls[1][1].stroke,
-        geojson.calls[0][1].stroke,
-      ),
-      "the second GeoJson call is load B's cable build, not A's landing build",
-    );
-
-    env.releaseAll();
-    await env.settle();
-    await geojson.drainOpen(() => env.settle());
-    assert.equal(
-      geojson.calls.length,
-      3,
-      'load B adds its own two GeoJson builds',
-    );
-    assert.equal(env.addCalls.count, 3);
-    assert.equal(env.dataSources.length, 3);
-    assert.equal(env.layer.getStats().count, 2);
-  } finally {
-    geojson.restore();
-    env.layer.destroy(env.viewer);
-    env.cleanup();
-  }
-});
-
-test('an abort landing at the pre-add boundary stops the stale load before any dataSources.add', async () => {
-  const env = createDeferredCableLayerHarness();
-  const geojson = installGeoJsonLoadGate();
-  try {
-    env.layer.enable(env.viewer);
-    env.releaseAll();
-    await env.settle();
-    geojson.open(0);
-    await env.settle();
-    assert.equal(
-      geojson.calls.length,
-      2,
-      'load A is parked on the gated landing GeoJson build',
-    );
-
-    // Open the landing gate and abort in the same frame: A resumes at the
-    // pre-add owns() check with ownership lost.
-    geojson.open(1);
-    env.layer.disable();
-    env.layer.enable(env.viewer);
-    await env.settle();
-    assert.equal(
-      env.addCalls.count,
-      0,
-      'stale load A must never call dataSources.add',
-    );
-
-    env.releaseAll();
-    await env.settle();
-    await geojson.drainOpen(() => env.settle());
-    assert.equal(env.addCalls.count, 3, 'load B alone adds the trio');
-    assert.equal(env.dataSources.length, 3);
-    assert.equal(env.layer.getStats().count, 2);
-  } finally {
-    geojson.restore();
-    env.layer.destroy(env.viewer);
-    env.cleanup();
-  }
-});
-
-test('a destroy inside the deferred add window leaves zero post-destroy data sources', async () => {
-  const env = createDeferredCableLayerHarness();
-  try {
-    env.layer.enable(env.viewer);
-    env.releaseAll();
-    env.holdAdds();
-    // Let the load run until all three adds have been CALLED but none has
-    // settled — Cesium mutates the collection on a deferred tick, so this
-    // window is real, and a remove() issued inside it removes nothing.
-    const deadline = Date.now() + 2_000;
-    while (env.addCalls.count < 3 && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }
-    assert.equal(
-      env.addCalls.count,
-      3,
-      'all three adds are in their deferred window',
-    );
-    assert.equal(
-      env.dataSources.length,
-      0,
-      'nothing has settled into the collection yet',
-    );
-
-    // Destroy lands in the window: it can remove nothing, so the stale
-    // load's own post-add ownership check must compensate once the deferred
-    // adds settle.
-    env.layer.destroy(env.viewer);
-    env.releaseHeldAdds();
-    await env.settle();
-    assert.equal(
-      env.dataSources.length,
-      0,
-      'the deferred adds settled post-destroy and must be rolled back by their own load',
-    );
-
-    // The layer still honors its re-init contract afterwards.
-    env.layer.enable(env.viewer);
-    env.releaseAll();
-    await env.settle();
-    assert.equal(
-      env.dataSources.length,
-      3,
-      're-enable after the raced destroy loads cleanly',
-    );
+    assert.equal(env.viewer.scene.primitives.items.length, 1);
+    assert.equal(env.viewer.scene.groundPrimitives.items.length, 1);
     assert.equal(env.layer.getStats().count, 2);
   } finally {
     env.layer.destroy(env.viewer);
@@ -1126,44 +773,19 @@ test('a destroy inside the deferred add window leaves zero post-destroy data sou
   }
 });
 
-test('a destroy in the deferred window with a rejected-after-push add still leaves zero sources', async () => {
-  const env = createDeferredCableLayerHarness();
+test('a scene that rejects the primitives leaves nothing behind and reports the error', async () => {
+  const env = createDeferredCableLayerHarness({ rejectAdd: true });
+  const originalWarn = console.warn;
+  console.warn = () => {};
   try {
     env.layer.enable(env.viewer);
     env.releaseAll();
-    env.holdAdds();
-    // Cesium pushes the source into the collection BEFORE raising
-    // dataSourceAdded, so a throwing listener rejects the add promise AFTER
-    // its mutation landed. Make add #1 exactly that: pushed, then rejected;
-    // #2/#3 fulfill normally.
-    env.failAddAfterPush(0);
-    const deadline = Date.now() + 2_000;
-    while (env.addCalls.count < 3 && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }
-    assert.equal(
-      env.addCalls.count,
-      3,
-      'all three adds are in their deferred window',
-    );
-    assert.equal(
-      env.dataSources.length,
-      0,
-      'nothing has settled into the collection yet',
-    );
-
-    // Destroy lands in the window; the adds then settle as
-    // [rejected-after-push, fulfilled, fulfilled]. Compensation that removes
-    // only FULFILLED adds would strand the rejected-but-pushed source.
-    env.layer.destroy(env.viewer);
-    env.releaseHeldAdds();
     await env.settle();
-    assert.equal(
-      env.dataSources.length,
-      0,
-      'a rejected add still landed its push, so compensation must remove it too',
-    );
+    assert.ok(sceneIsEmpty(env.viewer));
+    assert.match(env.layer.getStats().error, /scene rejected/);
+    assert.equal(env.layer.getStats().loading, false);
   } finally {
+    console.warn = originalWarn;
     env.layer.destroy(env.viewer);
     env.cleanup();
   }
@@ -1175,7 +797,7 @@ test('a direct destroy of a published layer clears and hides its host source', a
     env.layer.enable(env.viewer);
     env.releaseAll();
     await env.settle();
-    assert.equal(env.dataSources.length, 3, 'layer is fully loaded');
+    assert.equal(env.viewer.scene.primitives.items.length, 1, 'loaded');
     // Drive the sweep through the layer's real preRender listener so the
     // host actually holds published cable entries.
     env.raiseSweep();
@@ -1186,8 +808,7 @@ test('a direct destroy of a published layer clears and hides its host source', a
     env.hostCalls.length = 0;
 
     // Destroy DIRECTLY — no disable() first. The publisher teardown must
-    // still clear the published source and hide it; skipping it would leave
-    // a visible overlay source with orphan labels.
+    // still clear the published source and hide it.
     env.layer.destroy(env.viewer);
     assert.ok(
       env.hostCalls.some(
@@ -1200,6 +821,7 @@ test('a direct destroy of a published layer clears and hides its host source', a
       ['visible', CABLE_OVERLAY_SOURCE_ID, false],
       'direct destroy must hide the host source after clearing it',
     );
+    assert.ok(sceneIsEmpty(env.viewer), 'destroy frees every primitive');
   } finally {
     env.cleanup();
   }
@@ -1216,12 +838,12 @@ test("a stale aborted load never clobbers the next load's lifecycle (A/B/C toggl
       'load A has two fetches in flight',
     );
 
-    // Abort A and immediately start B before A\'s rejection lands.
+    // Abort A and immediately start B before A's rejection lands.
     env.layer.disable();
     env.layer.enable(env.viewer);
-    await env.settle(); // A\'s stale catch/finally runs here, after B began.
+    await env.settle(); // A's stale catch/finally runs here, after B began.
 
-    // C: with A\'s stale completion having cleared nothing it does not own,
+    // C: with A's stale completion having cleared nothing it does not own,
     // the layer still reports a load in flight, so update() must not start a
     // third load.
     void env.layer.update(env.viewer);
@@ -1235,15 +857,11 @@ test("a stale aborted load never clobbers the next load's lifecycle (A/B/C toggl
       "only load B's two fetches remain in flight — no duplicate load C",
     );
 
-    // Releasing everything must produce exactly one set of scene adds.
+    // Releasing everything must produce exactly one set of primitives.
     env.releaseAll();
     await env.settle();
-    assert.equal(
-      env.addCalls.count,
-      3,
-      'exactly one cable/landing/reference data-source trio is added',
-    );
-    assert.equal(env.dataSources.length, 3);
+    assert.equal(env.viewer.scene.primitives.items.length, 1);
+    assert.equal(env.viewer.scene.groundPrimitives.items.length, 1);
     const stats = env.layer.getStats();
     assert.equal(stats.error, null);
     assert.equal(stats.count, 2, 'one cable + one landing point loaded once');
@@ -1256,17 +874,17 @@ test("a stale aborted load never clobbers the next load's lifecycle (A/B/C toggl
 test('destroy mid-load stays clean and a re-enabled layer reloads exactly once', async () => {
   const env = createDeferredCableLayerHarness();
   try {
-    // Destroy while load A\'s fetches are still in flight.
+    // Destroy while load A's fetches are still in flight.
     env.layer.enable(env.viewer);
     assert.equal(env.pendingFetches.length, 2);
     env.layer.destroy(env.viewer);
 
     // Legacy contract: the layer supports re-init after destroy. Enable D
-    // before A\'s aborted rejection lands.
+    // before A's aborted rejection lands.
     env.layer.enable(env.viewer);
-    await env.settle(); // A\'s stale finally runs here.
+    await env.settle(); // A's stale finally runs here.
 
-    // A\'s stale completion must not have cleared D\'s in-flight lifecycle:
+    // A's stale completion must not have cleared D's in-flight lifecycle:
     // update() must not start a duplicate load E.
     void env.layer.update(env.viewer);
     await env.settle();
@@ -1277,12 +895,8 @@ test('destroy mid-load stays clean and a re-enabled layer reloads exactly once',
 
     env.releaseAll();
     await env.settle();
-    assert.equal(
-      env.addCalls.count,
-      3,
-      'the destroyed load added nothing; the re-enable added once',
-    );
-    assert.equal(env.dataSources.length, 3);
+    assert.equal(env.viewer.scene.primitives.items.length, 1);
+    assert.equal(env.viewer.scene.groundPrimitives.items.length, 1);
     assert.equal(env.layer.getStats().count, 2);
   } finally {
     env.layer.destroy(env.viewer);
@@ -1294,114 +908,25 @@ async function createRealCableLayerHarness({
   source,
   mapStackEventTarget = null,
 } = {}) {
-  const hostCalls = [];
   // The sweep gate's motion-fallback clock is FROZEN here and advanced only by
   // the tests that exercise it, so every other harness test observes the pure
   // event-dirty behavior with no wall-clock coupling.
   let clockMs = 0;
-  const layer = createTeleGeographySubmarineCableLayer({
-    overlayHost: {
-      setVisible: (...args) => hostCalls.push(['visible', ...args]),
-      setEntries: (...args) => hostCalls.push(['entries', ...args]),
-      clearSource: (...args) => hostCalls.push(['clear', ...args]),
-    },
-    screenSpaceEventHandlerFactory: () => ({
-      setInputAction() {},
-      destroy() {},
-    }),
-    ...(source ? { source } : {}),
+  const { layer, hostCalls, clickActions } = createLayer({
+    source,
     mapStackEventTarget,
-    sweepClock: () => clockMs,
+    clock: () => clockMs,
   });
-
-  const listeners = { preRender: new Set(), moveEnd: new Set() };
-  const dataSources = [];
-  const viewer = {
-    dataSources: {
-      add: (source) => {
-        dataSources.push(source);
-        return Promise.resolve(source);
-      },
-      remove: (source) => {
-        const index = dataSources.indexOf(source);
-        if (index >= 0) dataSources.splice(index, 1);
-        return true;
-      },
-    },
-    camera: {
-      positionWC: Cesium.Cartesian3.fromDegrees(-40, 35, 4_500_000),
-      frustum: { fov: Math.PI / 3 },
-      moveEnd: {
-        addEventListener: (fn) => {
-          listeners.moveEnd.add(fn);
-          return () => listeners.moveEnd.delete(fn);
-        },
-      },
-      heading: 0,
-      cancelFlight() {},
-      flyTo() {},
-    },
-    scene: {
-      canvas: { clientHeight: 900 },
-      requestRender() {},
-      pick() {
-        return null;
-      },
-      preRender: {
-        addEventListener: (fn) => {
-          listeners.preRender.add(fn);
-          return () => listeners.preRender.delete(fn);
-        },
-      },
-    },
+  const listeners = {
+    preRender: new Set(),
+    moveEnd: new Set(),
+    postRender: new Set(),
   };
-
+  const viewer = makeStubViewer(listeners);
   const originalFetch = globalThis.fetch;
-  // Node has no `document`, so Point features (whose GeoJSON default marker
-  // needs a canvas PinBuilder) cannot load here. Landing references only need
-  // `properties.coordinates`, so a line geometry exercises the same path.
   globalThis.fetch = async (url) => ({
     ok: true,
-    json: async () =>
-      String(url).includes('landing-point')
-        ? {
-            type: 'FeatureCollection',
-            features: [
-              {
-                type: 'Feature',
-                id: 'lisbon',
-                properties: {
-                  id: 'lisbon',
-                  name: 'Lisbon, Portugal',
-                  coordinates: [-9.1, 38.7],
-                },
-                geometry: {
-                  type: 'LineString',
-                  coordinates: [
-                    [-9.1, 38.7],
-                    [-9.05, 38.72],
-                  ],
-                },
-              },
-            ],
-          }
-        : {
-            type: 'FeatureCollection',
-            features: [
-              {
-                type: 'Feature',
-                id: 'ac1',
-                properties: { id: 'ac1', name: 'Atlantic Crossing-1' },
-                geometry: {
-                  type: 'LineString',
-                  coordinates: [
-                    [-40, 35],
-                    [-30, 40],
-                  ],
-                },
-              },
-            ],
-          },
+    json: async () => fixtureForUrl(url),
   });
   try {
     layer.init(viewer);
@@ -1418,22 +943,202 @@ async function createRealCableLayerHarness({
   } finally {
     globalThis.fetch = originalFetch;
   }
-  const raiseSweep = () => {
-    for (const fn of listeners.preRender) fn();
-  };
-  const advanceClock = (ms) => {
-    clockMs += ms;
-  };
   return {
     layer,
     viewer,
     hostCalls,
-    dataSources,
-    raiseSweep,
     listeners,
-    advanceClock,
+    raiseSweep() {
+      for (const fn of listeners.preRender) fn();
+    },
+    advanceClock(ms) {
+      clockMs += ms;
+    },
+    /** Click with `scene.pick` returning `picked`; returns the flight, if any. */
+    click(picked) {
+      viewer.scene.pickResult = picked;
+      const before = viewer.flights.length;
+      for (const action of clickActions) action({ position: { x: 1, y: 1 } });
+      return viewer.flights.length > before ? viewer.flights.at(-1) : null;
+    },
   };
 }
+
+function flightTarget(flight) {
+  const carto = Cesium.Cartographic.fromCartesian(flight.destination);
+  return {
+    lon: Number(Cesium.Math.toDegrees(carto.longitude).toFixed(6)),
+    lat: Number(Cesium.Math.toDegrees(carto.latitude).toFixed(6)),
+  };
+}
+
+test('a map-stack change re-classifies the cable lines once, and destroy detaches the listener', async () => {
+  const listeners = new Map();
+  const eventTarget = {
+    addEventListener: (name, fn) => listeners.set(name, fn),
+    removeEventListener: (name, fn) => {
+      if (listeners.get(name) === fn) listeners.delete(name);
+    },
+  };
+  const env = await createRealCableLayerHarness({
+    mapStackEventTarget: eventTarget,
+  });
+  // The harness scene has no globe → BOTH at init (safe unknown fallback).
+  assert.equal(
+    rendered(env.viewer).lines.classificationType,
+    Cesium.ClassificationType.BOTH,
+  );
+  const listener = listeners.get('gev:map-stack-changed');
+  assert.equal(
+    typeof listener,
+    'function',
+    'init must subscribe to the stack event',
+  );
+
+  const before = rendered(env.viewer).lines;
+  listener({ detail: { activeId: 'photoreal', status: 'ready' } });
+  const photoreal = rendered(env.viewer).lines;
+  assert.equal(
+    photoreal.classificationType,
+    Cesium.ClassificationType.CESIUM_3D_TILE,
+  );
+  assert.ok(before.isDestroyed(), 'the replaced line primitive is freed');
+  assert.equal(
+    rendered(env.viewer).groundPrimitives.length,
+    1,
+    'exactly one cable line primitive after the rebuild',
+  );
+
+  listener({ detail: { activeId: 'osm', status: 'ready' } });
+  assert.equal(
+    rendered(env.viewer).lines.classificationType,
+    Cesium.ClassificationType.TERRAIN,
+  );
+  listener({ detail: { activeId: 'osm', status: 'ready' } });
+  assert.ok(
+    !rendered(env.viewer).lines.isDestroyed(),
+    'an unchanged surface does not rebuild',
+  );
+
+  env.layer.destroy(env.viewer);
+  assert.equal(
+    listeners.has('gev:map-stack-changed'),
+    false,
+    'destroy must detach the stack listener',
+  );
+});
+
+test('markers and tips blend in one translucent pass with the shipped styling', async () => {
+  const env = await createRealCableLayerHarness();
+  try {
+    const view = rendered(env.viewer);
+    assert.equal(
+      view.pinCollection.blendOption,
+      Cesium.BlendOption.TRANSLUCENT,
+    );
+    assert.equal(
+      view.tipCollection.blendOption,
+      Cesium.BlendOption.TRANSLUCENT,
+    );
+
+    // Landing point: the GeoJSON default pin, ground-clamped, bottom anchored.
+    assert.equal(view.pins.length, 1);
+    const pin = view.pins[0];
+    assert.equal(pin.heightReference, Cesium.HeightReference.CLAMP_TO_GROUND);
+    assert.equal(pin.verticalOrigin, Cesium.VerticalOrigin.BOTTOM);
+
+    // Reference tips and stems: cable then landing point.
+    const cable = Cesium.Color.fromCssColorString('#39d5ff');
+    const landing = Cesium.Color.fromCssColorString('#8fffd2');
+    assert.deepEqual(
+      view.tips.map((tip) => [tip.pixelSize, tip.outlineWidth]),
+      [
+        [7, 1],
+        [8, 1],
+      ],
+    );
+    assert.ok(Cesium.Color.equals(view.tips[0].color, cable.withAlpha(0.84)));
+    assert.ok(Cesium.Color.equals(view.tips[1].color, landing.withAlpha(0.94)));
+    assert.ok(
+      Cesium.Color.equals(
+        view.tips[0].outlineColor,
+        Cesium.Color.BLACK.withAlpha(0.65),
+      ),
+    );
+    assert.equal(view.tips[0].disableDepthTestDistance, 0);
+    assert.deepEqual(
+      view.stems.map((stem) => stem.width),
+      [2, 2.4],
+    );
+
+    // Cable ground line: RHUMB, 2.5 px, the base colour at 0.92 alpha.
+    const [instance] = view.lines.geometryInstances;
+    assert.equal(instance.geometry.width, 2.5);
+    assert.equal(instance.geometry.arcType, Cesium.ArcType.RHUMB);
+    assert.deepEqual(
+      Array.from(instance.attributes.color.value),
+      Array.from(
+        Cesium.ColorGeometryInstanceAttribute.toValue(cable.withAlpha(0.92)),
+      ),
+    );
+    assert.ok(view.lines.appearance instanceof Cesium.PolylineColorAppearance);
+  } finally {
+    env.layer.destroy(env.viewer);
+  }
+});
+
+test('picking a cable, a landing pin, a stem or a tip resolves its record and flies to it', async () => {
+  const env = await createRealCableLayerHarness();
+  try {
+    const view = rendered(env.viewer);
+    const lineKey = view.lines.geometryInstances[0].id;
+    const atlantic = flightTarget(
+      env.click({ id: lineKey, primitive: view.lines }),
+    );
+    // A LineString without properties.coordinates anchors at its mean vertex.
+    assert.deepEqual(atlantic, { lon: -35, lat: 37.5 });
+    assert.deepEqual(env.layer.resolvePick({ id: lineKey }), {
+      kind: 'cable',
+      reference: { lon: -35, lat: 37.5 },
+      label: 'Atlantic Crossing-1',
+    });
+
+    const pin = view.pins[0];
+    assert.deepEqual(flightTarget(env.click({ id: pin.id, primitive: pin })), {
+      lon: -9.1,
+      lat: 38.7,
+    });
+    assert.equal(
+      env.layer.resolvePick({ id: pin.id }).label,
+      'Lisbon, Portugal',
+    );
+
+    const stem = view.stems[1];
+    const tip = view.tips[1];
+    assert.equal(stem.id, tip.id, 'a stem and its tip share one record');
+    assert.deepEqual(env.layer.resolvePick({ id: tip.id, primitive: tip }), {
+      kind: 'landing-point',
+      reference: { lon: -9.1, lat: 38.7 },
+      label: 'Lisbon, Portugal',
+      featureId: 'lisbon',
+    });
+    assert.ok(env.click({ primitive: stem, id: stem.id }));
+
+    // Foreign picks and empty space never fly.
+    assert.equal(env.click({ id: 'flight-abc123' }), null);
+    assert.equal(env.click({ id: { name: 'entity' } }), null);
+    assert.equal(env.click(null), null);
+
+    env.layer.disable();
+    assert.equal(
+      env.layer.resolvePick({ id: lineKey }),
+      null,
+      'a disabled layer resolves nothing',
+    );
+  } finally {
+    env.layer.destroy(env.viewer);
+  }
+});
 
 test('a real enabled cable layer publishes host entries and has zero native labels', async () => {
   const env = await createRealCableLayerHarness();
@@ -1450,25 +1155,6 @@ test('a real enabled cable layer publishes host entries and has zero native labe
     collisionCapacity: CABLE_OVERLAY_COLLISION_CAPACITY,
     moving: false,
   });
-
-  const referenceSource = env.dataSources.find((ds) =>
-    /References/.test(ds.name || ''),
-  );
-  assert.ok(referenceSource, 'reference data source must exist');
-  const referenceEntities = referenceSource.entities.values;
-  assert.ok(referenceEntities.length > 0);
-  assert.ok(
-    referenceEntities.every((entity) => entity.label === undefined),
-    'no reference entity may carry a native LabelGraphics',
-  );
-  assert.ok(
-    referenceEntities.every(
-      (entity) =>
-        entity.position?.isConstant === true &&
-        entity.polyline?.positions?.isConstant === true,
-    ),
-    'stem properties must be constants, never per-frame callbacks',
-  );
 
   const stats = env.layer.getStats();
   assert.equal(stats.referenceLabelCount, 2);
@@ -1487,34 +1173,37 @@ test('a real enabled cable layer publishes host entries and has zero native labe
   );
 
   env.layer.destroy(env.viewer);
-  assert.equal(
-    env.dataSources.length,
-    0,
-    'destroy must remove every data source',
-  );
+  assert.ok(sceneIsEmpty(env.viewer), 'destroy must remove every primitive');
 });
 
-test('stems never rebuild mid-drag; exactly one rebuild lands on moveEnd', async () => {
+/** Count real stem rewrites on one reference stem. */
+function countStemRewrites(stem) {
+  const descriptor = Object.getOwnPropertyDescriptor(
+    Object.getPrototypeOf(stem),
+    'positions',
+  );
+  const counter = { count: 0 };
+  Object.defineProperty(stem, 'positions', {
+    configurable: true,
+    get() {
+      return descriptor.get.call(this);
+    },
+    set(value) {
+      counter.count++;
+      descriptor.set.call(this, value);
+    },
+  });
+  return counter;
+}
+
+test('stems never re-size mid-drag; exactly one re-size lands on moveEnd', async () => {
   const env = await createRealCableLayerHarness();
   env.raiseSweep(); // initial sizing at the parked camera
 
-  const referenceSource = env.dataSources.find((ds) =>
-    /References/.test(ds.name || ''),
-  );
-  const entity = referenceSource.entities.values[0];
-  let stemRebuilds = 0;
-  const originalSet = entity.polyline.positions.setValue.bind(
-    entity.polyline.positions,
-  );
-  entity.polyline.positions.setValue = (...args) => {
-    stemRebuilds++;
-    return originalSet(...args);
-  };
+  const rewrites = countStemRewrites(rendered(env.viewer).stems[0]);
 
   // Mid-drag: the camera moves every tick and frames keep rendering, but no
-  // moveEnd fires. However long this goes on, the stem constants must never
-  // be redefined — each redefinition rebuilt the whole batched stem
-  // primitive, and its unready replacement frames were the felt hitch.
+  // moveEnd fires. However long this goes on, the stems must not move.
   const camera = env.viewer.camera.positionWC;
   for (let tick = 0; tick < 30; tick++) {
     env.viewer.camera.positionWC = Cesium.Cartesian3.add(
@@ -1526,14 +1215,14 @@ test('stems never rebuild mid-drag; exactly one rebuild lands on moveEnd', async
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
   assert.equal(
-    stemRebuilds,
+    rewrites.count,
     0,
-    'render ticks without moveEnd must never redefine a stem',
+    'render ticks without moveEnd must never re-size a stem',
   );
 
   // The gesture ends close over the cable's reference point (inside the
   // 700 m..85 km stem clamp band, so the re-size is a real tip change):
-  // one moveEnd, one sweep, exactly one redefinition.
+  // one moveEnd, one sweep, exactly one re-size.
   env.viewer.camera.positionWC = Cesium.Cartesian3.fromDegrees(
     -35,
     37.5,
@@ -1541,9 +1230,9 @@ test('stems never rebuild mid-drag; exactly one rebuild lands on moveEnd', async
   );
   for (const fn of env.listeners.moveEnd) fn();
   env.raiseSweep();
-  assert.equal(stemRebuilds, 1, 'moveEnd re-sizes the stem exactly once');
+  assert.equal(rewrites.count, 1, 'moveEnd re-sizes the stem exactly once');
   env.raiseSweep();
-  assert.equal(stemRebuilds, 1, 'the next frame does not re-run the sweep');
+  assert.equal(rewrites.count, 1, 'the next frame does not re-run the sweep');
 
   env.layer.destroy(env.viewer);
 });
@@ -1552,8 +1241,7 @@ test('a tracked camera that never emits moveEnd is swept by the motion fallback'
   const env = await createRealCableLayerHarness();
   // Tracking hands over a mid-altitude follow camera. 400 km keeps the stem
   // inside the 700 m..85 km clamp band, so a sweep is observable as a real
-  // tip re-size (at the harness's 4,500 km parking altitude every stem sits
-  // pinned at the 85 km clamp and no sweep could be distinguished).
+  // tip re-size.
   env.viewer.camera.positionWC = Cesium.Cartesian3.fromDegrees(
     -35,
     37.5,
@@ -1561,18 +1249,7 @@ test('a tracked camera that never emits moveEnd is swept by the motion fallback'
   );
   env.raiseSweep(); // initial sizing at the tracking handoff
 
-  const referenceSource = env.dataSources.find((ds) =>
-    /References/.test(ds.name || ''),
-  );
-  const entity = referenceSource.entities.values[0];
-  let stemRebuilds = 0;
-  const originalSet = entity.polyline.positions.setValue.bind(
-    entity.polyline.positions,
-  );
-  entity.polyline.positions.setValue = (...args) => {
-    stemRebuilds++;
-    return originalSet(...args);
-  };
+  const rewrites = countStemRewrites(rendered(env.viewer).stems[0]);
 
   // Entity tracking / orbit: the follow camera advances every frame and
   // moveEnd NEVER fires. Frames are simulated at 60 Hz on the harness clock.
@@ -1590,19 +1267,17 @@ test('a tracked camera that never emits moveEnd is swept by the motion fallback'
     }
   };
 
-  // Inside the first probe window the sweep stays event-dirty-only, so the
-  // batched stem primitive is not rebuilt mid-motion (the shipped tradeoff).
   trackFrames(0, 60);
   assert.equal(
-    stemRebuilds,
+    rewrites.count,
     0,
-    'inside the probe window a tracked camera still costs no rebuilds',
+    'inside the probe window a tracked camera re-sizes nothing',
   );
 
   // Past the window the fallback fires — exactly once, not per frame.
   trackFrames(60, 130);
   assert.equal(
-    stemRebuilds,
+    rewrites.count,
     1,
     'the tracked camera earns exactly one fallback sweep per window',
   );
@@ -1617,7 +1292,7 @@ test('a tracked camera that never emits moveEnd is swept by the motion fallback'
   };
   parkFrames(240); // 4 s parked: two full probe windows
   assert.equal(
-    stemRebuilds,
+    rewrites.count,
     2,
     'a stopped camera settles its residual motion in one further sweep',
   );
@@ -1625,7 +1300,7 @@ test('a tracked camera that never emits moveEnd is swept by the motion fallback'
   // ...and the parked camera then costs zero sweeps for as long as it sits.
   parkFrames(3600); // 60 s parked
   assert.equal(
-    stemRebuilds,
+    rewrites.count,
     2,
     'a settled parked camera never spends another sweep',
   );
@@ -1675,15 +1350,12 @@ test('an unchanged cohort never republishes, so a parked camera stays governor-i
   env.layer.destroy(env.viewer);
 });
 
-test('a toggle-off releases every data source and a toggle-on rebuilds them without refetching', async () => {
+test('a toggle-off frees every primitive and a toggle-on rebuilds them without refetching', async () => {
   const env = await createRealCableLayerHarness();
-  assert.equal(
-    env.dataSources.length,
-    3,
-    'cable + landing + reference sources while on',
-  );
-  const before = env.layer.getStats().count;
-  assert.equal(before, 2);
+  const before = rendered(env.viewer);
+  assert.equal(env.viewer.scene.primitives.items.length, 1);
+  assert.equal(env.viewer.scene.groundPrimitives.items.length, 1);
+  assert.equal(env.layer.getStats().count, 2);
 
   // Any fetch after this point is a bug: the rebuild must come from the cache.
   const originalFetch = globalThis.fetch;
@@ -1694,31 +1366,29 @@ test('a toggle-off releases every data source and a toggle-on rebuilds them with
   };
   try {
     env.layer.disable();
-    assert.equal(
-      env.dataSources.length,
-      0,
-      'hidden entities are not free; disable must remove the sources',
-    );
+    assert.ok(sceneIsEmpty(env.viewer), 'disable must remove the primitives');
+    for (const primitive of [
+      before.root,
+      before.ground,
+      before.lines,
+      before.pinCollection,
+      before.tipCollection,
+    ]) {
+      assert.ok(primitive.isDestroyed(), 'disable frees GPU resources');
+    }
 
     env.layer.enable(env.viewer);
     const deadline = Date.now() + 2_000;
-    while (Date.now() < deadline && env.dataSources.length < 3) {
+    while (Date.now() < deadline && sceneIsEmpty(env.viewer)) {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
     assert.equal(fetches, 0, 'the rebuild must not touch the network');
     assert.equal(env.layer.getStats().error, null);
-    assert.equal(env.dataSources.length, 3, 're-enable rebuilds the trio');
-    assert.equal(env.layer.getStats().count, before);
-    const referenceSource = env.dataSources.find((ds) =>
-      /References/.test(ds.name || ''),
-    );
-    assert.ok(
-      referenceSource?.entities.values.length > 0,
-      'reference stems are rebuilt',
-    );
+    assert.equal(env.layer.getStats().count, 2);
+    assert.equal(rendered(env.viewer).stems.length, 2, 'stems are rebuilt');
 
     env.layer.destroy(env.viewer);
-    assert.equal(env.dataSources.length, 0);
+    assert.ok(sceneIsEmpty(env.viewer));
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -1738,17 +1408,13 @@ test('another GeoJSON source renders with its own label and rebuilds from accept
   try {
     assert.equal(env.layer.source, source.label);
     assert.equal(reads, 1);
-    assert.equal(env.dataSources.length, 3);
-    assert.ok(
-      env.dataSources.every((item) => item.name.startsWith(source.label)),
-    );
     env.layer.disable();
-    assert.equal(env.dataSources.length, 0);
+    assert.ok(sceneIsEmpty(env.viewer));
     env.layer.enable(env.viewer);
     for (let i = 0; i < 8; i++)
       await new Promise((resolve) => setTimeout(resolve, 0));
     assert.equal(env.layer.getStats().count, 2);
-    assert.equal(env.dataSources.length, 3);
+    assert.equal(env.viewer.scene.primitives.items.length, 1);
     assert.equal(reads, 1);
   } finally {
     env.layer.destroy(env.viewer);
@@ -1814,7 +1480,14 @@ function geometrySource(cables, landingPoints = []) {
   };
 }
 
-test('multipart association accepts frozen provider collections without modifying properties', async () => {
+/** Every drawn ground segment's pick record, in draw order. */
+function segmentRecords(env) {
+  return rendered(env.viewer).lines.geometryInstances.map((instance) =>
+    env.layer.resolvePick({ id: instance.id }),
+  );
+}
+
+test('multipart association accepts frozen provider collections without modifying them', async () => {
   const payload = {
     cables: { type: 'FeatureCollection', features: multipartCableFixture() },
     landingPoints: {
@@ -1837,19 +1510,20 @@ test('multipart association accepts frozen provider collections without modifyin
     source: { label: 'Frozen multipart source', fetch: async () => payload },
   });
   try {
-    for (const dataSource of env.dataSources.slice(0, 2)) {
+    const lines = rendered(env.viewer).groundPrimitives.filter(
+      (primitive) => primitive instanceof Cesium.GroundPolylinePrimitive,
+    );
+    assert.equal(lines.length, 2, 'cable lines and landing lines');
+    for (const primitive of lines) {
       assert.deepEqual(
-        dataSource.entities.values.map(
-          (entity) => entity.__gevTeleGeography?.label,
+        primitive.geometryInstances.map(
+          (instance) => env.layer.resolvePick({ id: instance.id })?.label,
         ),
         ['Alpha cable', 'Alpha cable', 'Alpha cable', 'Beta cable'],
       );
     }
-    assert.equal(env.dataSources[2].entities.values.length, 4);
+    assert.equal(rendered(env.viewer).stems.length, 4);
     assert.deepEqual(payload, before);
-    const entity = env.dataSources[0].entities.values[0];
-    assert.equal(entity.properties.__gevSourceFeatureIndex.getValue(), 0);
-    assert.match(entity.description.getValue(), /__gevSourceFeatureIndex/);
   } finally {
     env.layer.destroy(env.viewer);
   }
@@ -1862,31 +1536,35 @@ test('multipart cables retain their own styling, picking and culling on every se
     source: geometrySource(features),
   });
   try {
-    const entities = env.dataSources[0].entities.values;
-    assert.equal(entities.length, 4);
-    for (const [index, entity] of entities.entries()) {
+    const instances = rendered(env.viewer).lines.geometryInstances;
+    assert.equal(instances.length, 4);
+    for (const [index, instance] of instances.entries()) {
       const feature = features[index < 3 ? 0 : 1];
-      const info = entity.__gevTeleGeography;
-      assert.equal(info?.label, feature.properties.name, entity.id);
+      const info = env.layer.resolvePick({ id: instance.id });
+      assert.equal(info?.label, feature.properties.name, instance.id);
       assert.deepEqual(info.reference, {
         lon: feature.properties.coordinates[0],
         lat: feature.properties.coordinates[1],
       });
       assert.deepEqual(
-        entity.polyline.material.color.getValue(),
-        Cesium.Color.fromCssColorString(feature.properties.color).withAlpha(
-          0.92,
+        Array.from(instance.attributes.color.value),
+        Array.from(
+          Cesium.ColorGeometryInstanceAttribute.toValue(
+            Cesium.Color.fromCssColorString(feature.properties.color).withAlpha(
+              0.92,
+            ),
+          ),
         ),
       );
-      assert.equal(entity.polyline.width.getValue(), 2.5);
+      assert.equal(instance.geometry.width, 2.5);
     }
+    // The sweep culls every segment by its feature's reference point; the
+    // line primitive is not ready in Node, so the values queue for it.
     env.raiseSweep();
-    assert.deepEqual(
-      entities.map((entity) => entity.show),
-      [true, true, true, false],
-    );
+    const visibleTips = rendered(env.viewer).tips.map((tip) => tip.show);
+    assert.deepEqual(visibleTips, [true, false]);
     assert.equal(
-      env.dataSources[2].entities.values.length,
+      rendered(env.viewer).stems.length,
       2,
       'one reference per feature',
     );
@@ -1900,7 +1578,7 @@ test('multipart cables retain their own styling, picking and culling on every se
   }
 });
 
-test('multipart association supports missing and repeated IDs without guessing Cesium suffixes', async () => {
+test('multipart association supports missing and repeated IDs', async () => {
   const features = multipartCableFixture();
   features[1].id = 'alpha_2';
   delete features[1].properties.id;
@@ -1916,13 +1594,8 @@ test('multipart association supports missing and repeated IDs without guessing C
     source: geometrySource(features),
   });
   try {
-    const entities = env.dataSources[0].entities.values;
     assert.deepEqual(
-      entities.map((entity) => entity.id),
-      ['alpha', 'alpha_2', 'alpha_3', 'alpha_2_2', 'cable-2', 'alpha_4'],
-    );
-    assert.deepEqual(
-      entities.map((entity) => entity.__gevTeleGeography?.label),
+      segmentRecords(env).map((info) => info?.label),
       [
         'Alpha cable',
         'Alpha cable',
@@ -1933,8 +1606,8 @@ test('multipart association supports missing and repeated IDs without guessing C
       ],
     );
     assert.deepEqual(
-      env.dataSources[2].entities.values.map(
-        (entity) => entity.__gevTeleGeography.featureId,
+      rendered(env.viewer).tips.map(
+        (tip) => env.layer.resolvePick({ id: tip.id }).featureId,
       ),
       ['alpha', 'alpha_2', 'cable-2', 'alpha'],
     );
@@ -1949,56 +1622,130 @@ test('multipart landing geometry keeps every pick with one reference per feature
     source: geometrySource([], features),
   });
   try {
-    const entities = env.dataSources[1].entities.values;
+    const records = segmentRecords(env);
     assert.deepEqual(
-      entities.map((entity) => entity.__gevTeleGeography?.label),
+      records.map((info) => info?.label),
       ['Alpha cable', 'Alpha cable', 'Alpha cable', 'Beta cable'],
     );
-    assert.ok(
-      entities.every(
-        (entity) => entity.__gevTeleGeography.kind === 'landing-point',
-      ),
+    assert.ok(records.every((info) => info.kind === 'landing-point'));
+    assert.equal(rendered(env.viewer).stems.length, 2);
+    // Landing lines keep the GeoJSON defaults and draw on every surface.
+    const instance = rendered(env.viewer).lines.geometryInstances[0];
+    assert.equal(instance.geometry.width, 2);
+    assert.equal(
+      rendered(env.viewer).lines.classificationType,
+      Cesium.ClassificationType.BOTH,
     );
-    assert.equal(env.dataSources[2].entities.values.length, 2);
   } finally {
     env.layer.destroy(env.viewer);
   }
 });
 
-test('every bundled cable segment is associated with its source feature', async () => {
-  const { features } = JSON.parse(
+/**
+ * The records the Entity path produced, recomputed from the raw file: one
+ * per GeoJSON entity (MultiLineString members, Points), labelled and
+ * anchored by the feature, plus one reference per feature.
+ */
+function expectedRecords(features, kind) {
+  const label = (feature) =>
+    String(
+      feature.properties?.name || feature.properties?.id || feature.id || '',
+    ).trim();
+  const reference = (feature) =>
+    feature.properties?.coordinates
+      ? {
+          lon: feature.properties.coordinates[0],
+          lat: feature.properties.coordinates[1],
+        }
+      : {
+          lon: feature.geometry.coordinates[0],
+          lat: feature.geometry.coordinates[1],
+        };
+  const parts = (feature) =>
+    feature.geometry.type === 'MultiLineString'
+      ? feature.geometry.coordinates.length
+      : 1;
+  return {
+    segments: features.flatMap((feature) =>
+      Array.from({ length: parts(feature) }, () => ({
+        kind,
+        reference: reference(feature),
+        label: label(feature),
+      })),
+    ),
+    references: features.map((feature, index) => ({
+      kind,
+      reference: reference(feature),
+      label: label(feature),
+      featureId: String(
+        feature.properties?.id || feature.id || `${kind}-${index}`,
+      ),
+    })),
+  };
+}
+
+function readBundled(name) {
+  return JSON.parse(
     readFileSync(
       new URL(
-        './local_data/telegeography_submarine_cables/cable-geo.json',
+        `./local_data/telegeography_submarine_cables/${name}`,
         import.meta.url,
       ),
       'utf8',
     ),
   );
-  // Some bundled features share a cable ID but have different references.
-  const expandedFeatures = features.flatMap((feature) =>
-    feature.geometry.coordinates.map(() => feature),
-  );
-  assert.ok(expandedFeatures.length > features.length);
+}
+
+test('every bundled cable segment and landing point keeps its record (equivalence)', async () => {
+  const cables = readBundled('cable-geo.json');
+  const landings = readBundled('landing-point-geo.json');
   const env = await createRealCableLayerHarness({
-    source: geometrySource(features),
+    source: {
+      label: 'TeleGeography',
+      fetch: async () => ({ cables, landingPoints: landings }),
+    },
   });
   try {
-    const entities = env.dataSources[0].entities.values;
-    assert.equal(entities.length, expandedFeatures.length);
-    for (const [index, entity] of entities.entries()) {
-      const feature = expandedFeatures[index];
-      assert.equal(
-        entity.__gevTeleGeography?.label,
-        feature.properties.name,
-        entity.id,
-      );
-      assert.deepEqual(entity.__gevTeleGeography.reference, {
-        lon: feature.properties.coordinates[0],
-        lat: feature.properties.coordinates[1],
-      });
-    }
-    assert.equal(env.dataSources[2].entities.values.length, features.length);
+    const expectedCables = expectedRecords(cables.features, 'cable');
+    const expectedLandings = expectedRecords(
+      landings.features,
+      'landing-point',
+    );
+    const view = rendered(env.viewer);
+    assert.equal(
+      env.layer.getStats().count,
+      cables.features.length + landings.features.length,
+    );
+    assert.deepEqual(segmentRecords(env), expectedCables.segments);
+    assert.deepEqual(
+      view.pins.map((pin) => env.layer.resolvePick({ id: pin.id })),
+      expectedLandings.segments,
+    );
+    assert.deepEqual(
+      view.tips.map((tip) => env.layer.resolvePick({ id: tip.id })),
+      expectedCables.references
+        .map((info) => ({ ...info, kind: 'cable' }))
+        .concat(expectedLandings.references),
+    );
+    // Each landing pin sits on its own point, sized as the 6 px pin.
+    assert.equal(view.pins.length, 1917);
+    assert.equal(view.stems.length, cables.features.length + 1917);
+    // The bundled colours survive per segment.
+    const colored = cables.features.flatMap((feature) =>
+      feature.geometry.coordinates.map(() => feature.properties.color),
+    );
+    assert.deepEqual(
+      view.lines.geometryInstances.map((instance) =>
+        Array.from(instance.attributes.color.value),
+      ),
+      colored.map((css) =>
+        Array.from(
+          Cesium.ColorGeometryInstanceAttribute.toValue(
+            Cesium.Color.fromCssColorString(css).withAlpha(0.92),
+          ),
+        ),
+      ),
+    );
   } finally {
     env.layer.destroy(env.viewer);
   }

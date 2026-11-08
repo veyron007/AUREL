@@ -1,5 +1,3 @@
-import * as Cesium from 'cesium';
-
 export const BASE_CABLE_COLOR = '#39d5ff';
 
 export const BASE_LANDING_COLOR = '#8fffd2';
@@ -87,18 +85,48 @@ export const CABLE_GLOBE_STACK_IDS = Object.freeze(
   ]),
 );
 
-/** EntityCluster's private marker collections and their required types. */
+/** Prefix of every pick key the layer's primitives carry. */
 
-export const MARKER_COLLECTION_EXPECTATIONS = Object.freeze([
-  Object.freeze({
-    key: '_billboardCollection',
-    type: Cesium.BillboardCollection,
+export const CABLE_PICK_PREFIX = 'gev-cable:';
+
+/** Cable ground lines: the entity path's restyled width and alpha. */
+
+export const CABLE_LINE_WIDTH_PX = 2.5;
+
+export const CABLE_LINE_ALPHA = 0.92;
+
+/** GeoJSON defaults the layer never restyled (non-point landing geometry). */
+
+export const LANDING_LINE_WIDTH_PX = 2;
+
+export const LANDING_LINE_ALPHA = 0.9;
+
+export const CABLE_POLYGON_ALPHA = 0.18;
+
+export const LANDING_POLYGON_ALPHA = 0.35;
+
+/** GeoJSON default marker (PinBuilder pin) size for both collections. */
+
+export const CABLE_PIN_SIZE_PX = 6;
+
+/** Reference stem and tip styling per reference kind. */
+
+export const CABLE_REFERENCE_STYLE = Object.freeze({
+  cable: Object.freeze({
+    stemWidthPx: 2,
+    stemAlpha: 0.58,
+    tipPixelSize: 7,
+    tipAlpha: 0.84,
   }),
-  Object.freeze({
-    key: '_pointCollection',
-    type: Cesium.PointPrimitiveCollection,
+  'landing-point': Object.freeze({
+    stemWidthPx: 2.4,
+    stemAlpha: 0.68,
+    tipPixelSize: 8,
+    tipAlpha: 0.94,
   }),
-]);
+});
+
+export const CABLE_TIP_OUTLINE_ALPHA = 0.65;
 
 /**
  * Monotonic clock for the sweep gate's motion probe. A hoisted declaration:
