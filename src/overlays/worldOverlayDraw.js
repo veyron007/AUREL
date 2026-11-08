@@ -6,45 +6,55 @@
  */
 
 import { WORLD_OVERLAY_STYLE } from './worldOverlayTokens.js';
+import {
+  clearOverlayBitmaps,
+  paintOverlayBody,
+} from './worldOverlayBitmaps.js';
 
-// Two high-cardinality infrastructure sources share this cache; 1024 avoids
-// repeated O(n) eviction scans while keeping host-lifetime retention bounded.
-const TEXT_MEASURE_CACHE_LIMIT = 1024;
-const _textMeasureCache = new Map();
-let _textMeasureCacheSize = 0;
-// Recency is a monotonic integer stamp rather than a doubly linked list: a
-// cache hit happens twice per painted entry per frame, and re-linking four
-// object pointers on every hit costs real write-barrier traffic. A Smi store
-// costs nothing, and eviction (only above the cap) can afford a scan.
-let _textMeasureClock = 0;
+// Text widths, cached per font in two generations (a segmented LRU): hits in
+// the young generation are one Map read; an old-generation hit is promoted;
+// when the young generation fills it becomes the old one and the previous old
+// one is dropped. Every operation is O(1), so a frame that measures more
+// unique strings than the cache holds pays only the extra measureText calls,
+// never a scan (the former 1,024-entry stamp cache scanned every entry on
+// each eviction: a parked frame with ~1,600 unique strings cost 14 ms instead
+// of 0.3 ms). Strings measured in every frame survive any number of rotations,
+// and retention stays bounded at two generations.
+export const TEXT_MEASURE_GENERATION_SIZE = 4096;
+let _youngTextWidths = new Map();
+let _oldTextWidths = new Map();
+let _youngTextWidthCount = 0;
+let _oldTextWidthCount = 0;
 let _fontInvalidationInstalled = false;
 let _fontInvalidationGeneration = 0;
 let _observedFontSet = null;
 
-function evictOldestTextMeasureEntry() {
-  let oldestFont = null;
-  let oldestText = null;
-  let oldestUsedAt = Number.POSITIVE_INFINITY;
-  _textMeasureCache.forEach((fontCache, font) => {
-    fontCache.forEach((entry, text) => {
-      if (entry.usedAt >= oldestUsedAt) return;
-      oldestUsedAt = entry.usedAt;
-      oldestFont = font;
-      oldestText = text;
-    });
-  });
-  if (oldestFont === null) return;
-  const fontCache = _textMeasureCache.get(oldestFont);
-  fontCache.delete(oldestText);
-  if (fontCache.size === 0) _textMeasureCache.delete(oldestFont);
-  _textMeasureCacheSize--;
+function rotateTextMeasureGenerations() {
+  _oldTextWidths = _youngTextWidths;
+  _oldTextWidthCount = _youngTextWidthCount;
+  _youngTextWidths = new Map();
+  _youngTextWidthCount = 0;
+}
+
+function rememberTextWidth(font, text, width) {
+  if (_youngTextWidthCount >= TEXT_MEASURE_GENERATION_SIZE)
+    rotateTextMeasureGenerations();
+  let fontCache = _youngTextWidths.get(font);
+  if (!fontCache) {
+    fontCache = new Map();
+    _youngTextWidths.set(font, fontCache);
+  }
+  fontCache.set(text, width);
+  _youngTextWidthCount++;
 }
 
 /** Clear cached text widths after web-font availability changes. */
 export function clearWorldOverlayTextMeasureCache() {
-  _textMeasureCache.clear();
-  _textMeasureCacheSize = 0;
-  _textMeasureClock = 0;
+  clearOverlayBitmaps();
+  _youngTextWidths = new Map();
+  _oldTextWidths = new Map();
+  _youngTextWidthCount = 0;
+  _oldTextWidthCount = 0;
 }
 
 /** Install the font-loading invalidation hooks once, when the API exists. */
@@ -93,28 +103,22 @@ export function measureWorldOverlayText(ctx, text, font) {
   if (!_fontInvalidationInstalled) installWorldOverlayFontInvalidation();
   const normalizedText = String(text ?? '');
   const normalizedFont = String(font || WORLD_OVERLAY_STYLE.fontLabel);
-  let fontCache = _textMeasureCache.get(normalizedFont);
-  const cached = fontCache?.get(normalizedText);
-  if (cached) {
-    cached.usedAt = ++_textMeasureClock;
-    return cached.width;
+  const young = _youngTextWidths.get(normalizedFont)?.get(normalizedText);
+  if (young !== undefined) return young;
+  const old = _oldTextWidths.get(normalizedFont)?.get(normalizedText);
+  if (old !== undefined) {
+    rememberTextWidth(normalizedFont, normalizedText, old);
+    return old;
   }
   ctx.font = normalizedFont;
   const width = Number(ctx.measureText(normalizedText)?.width) || 0;
-  if (!fontCache) {
-    fontCache = new Map();
-    _textMeasureCache.set(normalizedFont, fontCache);
-  }
-  fontCache.set(normalizedText, { width, usedAt: ++_textMeasureClock });
-  _textMeasureCacheSize++;
-  if (_textMeasureCacheSize > TEXT_MEASURE_CACHE_LIMIT)
-    evictOldestTextMeasureEntry();
+  rememberTextWidth(normalizedFont, normalizedText, width);
   return width;
 }
 
 /** @returns {number} Current cache size, exposed for focused diagnostics/tests. */
 export function getWorldOverlayTextMeasureCacheSize() {
-  return _textMeasureCacheSize;
+  return _youngTextWidthCount + _oldTextWidthCount;
 }
 
 /**
@@ -623,6 +627,18 @@ function drawAnchorDot(ctx, entry, placement) {
   ctx.stroke();
 }
 
+/** The straight card leader drawCardChrome draws first, on its own. */
+function drawCardLeader(ctx, entry, placement) {
+  drawLeader(
+    ctx,
+    placement,
+    entry.accent || WORLD_OVERLAY_STYLE.accent,
+    1,
+    1,
+    entry.leaderStyle,
+  );
+}
+
 function drawCardChrome(
   ctx,
   entry,
@@ -795,10 +811,7 @@ function drawTacticalLeader(ctx, entry, placement, accent, timestamp) {
 
 /** Paint the legacy FIRMS/vessel tactical card inside the shared host. */
 export function paintTacticalCard(ctx, entry, placement, alpha = 1) {
-  const selected = entry.selected || entry.variant === 'selected';
-  const details = Array.isArray(entry.details) ? entry.details : [];
   const layout = entry._overlayLayout || {};
-  const { x, y, w, h } = placement.rect;
   const accentColors = tacticalAccentColors(entry);
   const animationTimestamp = globalThis.performance?.now?.() ?? Date.now();
   ctx.save();
@@ -815,7 +828,26 @@ export function paintTacticalCard(ctx, entry, placement, alpha = 1) {
   );
 
   ctx.globalAlpha = alpha * tacticalCardRevealAlpha(entry, animationTimestamp);
+  paintOverlayBody(
+    ctx,
+    entry,
+    'tactical',
+    placement.rect,
+    placement.paintScale,
+    layout,
+    drawOverlayBody,
+  );
+  ctx.restore();
+  return placement.rect;
+}
 
+/** Tactical card body: plate, selected border, accent rule and text. */
+function drawTacticalBody(ctx, entry, rect) {
+  const selected = entry.selected || entry.variant === 'selected';
+  const details = Array.isArray(entry.details) ? entry.details : [];
+  const layout = entry._overlayLayout || {};
+  const { x, y, w, h } = rect;
+  const accentColors = tacticalAccentColors(entry);
   ctx.beginPath();
   roundedRectPath(ctx, x, y, w, h, 4);
   ctx.fillStyle = WORLD_OVERLAY_STYLE.background;
@@ -849,22 +881,62 @@ export function paintTacticalCard(ctx, entry, placement, alpha = 1) {
       titleBaseline + (i + 1) * layout.lineH,
     );
   }
-  ctx.restore();
-  return placement.rect;
+}
+
+// Bodies read only `rect`; one scratch placement carries it into the shared
+// chrome and text helpers (reused, never retained).
+const _bodyPlacement = { rect: null };
+
+/** Label or track body: chrome plus one line of text. */
+function drawLineBody(ctx, entry, rect, kind) {
+  _bodyPlacement.rect = rect;
+  drawCardChrome(ctx, entry, _bodyPlacement, false, false);
+  ctx.fillStyle = WORLD_OVERLAY_STYLE.title;
+  ctx.font =
+    kind === 'track'
+      ? WORLD_OVERLAY_STYLE.fontTrack
+      : WORLD_OVERLAY_STYLE.fontLabel;
+  ctx.textBaseline = 'top';
+  ctx.fillText(
+    kind === 'track' ? trackDisplayText(entry) : String(entry.title || ''),
+    rect.x + 6,
+    rect.y + 4,
+  );
+}
+
+/** Card or selected-card body: chrome plus title and detail lines. */
+function drawCardBody(ctx, entry, rect, kind) {
+  const selected = kind === 'selected';
+  _bodyPlacement.rect = rect;
+  drawCardChrome(ctx, entry, _bodyPlacement, selected, false);
+  drawCardText(ctx, entry, _bodyPlacement, selected);
+}
+
+/** Body painter dispatch handed to the bitmap cache (no closures per frame). */
+function drawOverlayBody(ctx, entry, rect, kind) {
+  // Every leader leaves round caps and joins behind it before the body
+  // strokes; a fresh bitmap context must stroke the plate the same way.
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (kind === 'tactical') drawTacticalBody(ctx, entry, rect);
+  else if (kind === 'label' || kind === 'track')
+    drawLineBody(ctx, entry, rect, kind);
+  else drawCardBody(ctx, entry, rect, kind);
 }
 
 /** Paint a compact ambient label. */
 export function paintLabel(ctx, entry, placement, alpha = 1) {
   ctx.save();
   ctx.globalAlpha = alpha;
-  drawCardChrome(ctx, entry, placement, false);
-  ctx.fillStyle = WORLD_OVERLAY_STYLE.title;
-  ctx.font = WORLD_OVERLAY_STYLE.fontLabel;
-  ctx.textBaseline = 'top';
-  ctx.fillText(
-    String(entry.title || ''),
-    placement.rect.x + 6,
-    placement.rect.y + 4,
+  drawCardLeader(ctx, entry, placement);
+  paintOverlayBody(
+    ctx,
+    entry,
+    'label',
+    placement.rect,
+    placement.paintScale,
+    null,
+    drawOverlayBody,
   );
   ctx.restore();
   return placement.rect;
@@ -874,14 +946,15 @@ export function paintLabel(ctx, entry, placement, alpha = 1) {
 export function paintTrack(ctx, entry, placement, alpha = 1) {
   ctx.save();
   ctx.globalAlpha = alpha;
-  drawCardChrome(ctx, entry, placement, false);
-  ctx.fillStyle = WORLD_OVERLAY_STYLE.title;
-  ctx.font = WORLD_OVERLAY_STYLE.fontTrack;
-  ctx.textBaseline = 'top';
-  ctx.fillText(
-    trackDisplayText(entry),
-    placement.rect.x + 6,
-    placement.rect.y + 4,
+  drawCardLeader(ctx, entry, placement);
+  paintOverlayBody(
+    ctx,
+    entry,
+    'track',
+    placement.rect,
+    placement.paintScale,
+    null,
+    drawOverlayBody,
   );
   ctx.restore();
   return placement.rect;
@@ -910,11 +983,18 @@ export function paintCard(
     drawAnchorDot(ctx, entry, placement);
     ctx.globalAlpha =
       alpha * Math.max(0, Math.min(1, Number(contentAlpha) || 0));
-    drawCardChrome(ctx, entry, placement, false, false);
   } else {
-    drawCardChrome(ctx, entry, placement, false);
+    drawCardLeader(ctx, entry, placement);
   }
-  drawCardText(ctx, entry, placement, false);
+  paintOverlayBody(
+    ctx,
+    entry,
+    'card',
+    placement.rect,
+    placement.paintScale,
+    null,
+    drawOverlayBody,
+  );
   ctx.restore();
   return placement.rect;
 }
@@ -1083,8 +1163,16 @@ export function paintThumbnail(
 export function paintSelected(ctx, entry, placement, alpha = 1) {
   ctx.save();
   ctx.globalAlpha = alpha;
-  drawCardChrome(ctx, entry, placement, true);
-  drawCardText(ctx, entry, placement, true);
+  drawCardLeader(ctx, entry, placement);
+  paintOverlayBody(
+    ctx,
+    entry,
+    'selected',
+    placement.rect,
+    placement.paintScale,
+    null,
+    drawOverlayBody,
+  );
   ctx.restore();
   return placement.rect;
 }

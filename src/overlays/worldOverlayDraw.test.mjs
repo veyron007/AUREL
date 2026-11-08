@@ -9,6 +9,7 @@ import {
   distanceScale,
   destroyWorldOverlayDraw,
   getWorldOverlayTextMeasureCacheSize,
+  TEXT_MEASURE_GENERATION_SIZE,
   installWorldOverlayFontInvalidation,
   measureOverlayEntry,
   measureWorldOverlayText,
@@ -432,18 +433,44 @@ test('text measurement cache is font-aware and font hooks follow host lifetime',
   delete globalThis.document;
 });
 
-test('text measurement cache caps LRU retention at 1024 entries', () => {
+test('text measurement cache keeps two bounded generations', () => {
   clearWorldOverlayTextMeasureCache();
   const ctx = mockContext();
-  for (let i = 0; i < 1100; i++)
+  const generation = TEXT_MEASURE_GENERATION_SIZE;
+  for (let i = 0; i < generation; i++)
     measureWorldOverlayText(ctx, `label-${i}`, '10px mono');
-  assert.equal(getWorldOverlayTextMeasureCacheSize(), 1024);
+  assert.equal(getWorldOverlayTextMeasureCacheSize(), generation);
+  // The next new string rotates: the full generation becomes the old one.
+  measureWorldOverlayText(ctx, 'fresh', '10px mono');
+  assert.equal(getWorldOverlayTextMeasureCacheSize(), generation + 1);
   const measured = ctx.measureCount;
+  // An old-generation hit is promoted without measuring again.
   measureWorldOverlayText(ctx, 'label-0', '10px mono');
-  assert.equal(ctx.measureCount, measured + 1);
-  measureWorldOverlayText(ctx, 'label-1099', '10px mono');
-  assert.equal(ctx.measureCount, measured + 1);
-  assert.equal(getWorldOverlayTextMeasureCacheSize(), 1024);
+  assert.equal(ctx.measureCount, measured);
+  // Filling the young generation again drops everything never touched since.
+  for (let i = 0; i < generation; i++)
+    measureWorldOverlayText(ctx, `other-${i}`, '10px mono');
+  assert.ok(getWorldOverlayTextMeasureCacheSize() <= generation * 2);
+  const before = ctx.measureCount;
+  measureWorldOverlayText(ctx, 'label-1', '10px mono');
+  assert.equal(ctx.measureCount, before + 1);
+  clearWorldOverlayTextMeasureCache();
+});
+
+test('a frame with more unique strings than one generation still hits', () => {
+  clearWorldOverlayTextMeasureCache();
+  const ctx = mockContext();
+  const unique = Math.round(TEXT_MEASURE_GENERATION_SIZE * 1.5);
+  const frame = () => {
+    for (let i = 0; i < unique; i++)
+      measureWorldOverlayText(ctx, `card-${i}`, '10px mono');
+  };
+  frame();
+  frame();
+  const measured = ctx.measureCount;
+  frame();
+  // Strings re-measured per frame are bounded by the overflow, not the total.
+  assert.ok(ctx.measureCount - measured < unique);
   clearWorldOverlayTextMeasureCache();
 });
 

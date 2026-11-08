@@ -1587,5 +1587,7 @@
   "src/data/firmsHeatRaster.perf.test.mjs",
   "src/layers/vessels/records.perf.test.mjs",
   "src/overlays/worldOverlayDraw.perf.test.mjs",
-  "src/data/localGeojsonCore.perf.test.mjs"
+  "src/data/localGeojsonCore.perf.test.mjs",
+  "src/overlays/worldOverlayBitmaps.js",
+  "src/overlays/worldOverlayBitmaps.test.mjs"
 ]

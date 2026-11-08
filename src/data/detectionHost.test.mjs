@@ -883,8 +883,10 @@ test('pathological detection paint holds alternate frames without freezing share
     const detectionBanners = env.detectionCtx.calls.filter(([name, text]) => name === 'fillText'
       && String(text).startsWith('DENSE  VIS:')).length;
     const sharedClears = env.ctx.calls.filter(([name]) => name === 'clearRect').length;
-    const sharedCards = env.ctx.calls.filter(([name, text]) => name === 'fillText'
-      && text === 'AMBIENT-CONTINUES').length;
+    // A card body paints as its text or, once cached, as one bitmap blit.
+    const cardPaints = () => env.ctx.calls.filter(([name, text]) => name === 'drawImage'
+      || (name === 'fillText' && text === 'AMBIENT-CONTINUES')).length;
+    const sharedCards = cardPaints();
 
     env.postRender.raise();
     assert.equal(env.detectionCtx.calls.filter(([name]) => name === 'clearRect').length, detectionClears,
@@ -893,9 +895,7 @@ test('pathological detection paint holds alternate frames without freezing share
       && String(text).startsWith('DENSE  VIS:')).length, detectionBanners);
     assert.equal(env.ctx.calls.filter(([name]) => name === 'clearRect').length, sharedClears + 1,
       'the shared surface still clears');
-    assert.equal(env.ctx.calls.filter(([name, text]) => name === 'fillText'
-      && text === 'AMBIENT-CONTINUES').length, sharedCards + 1,
-      'the shared lane still repaints');
+    assert.equal(cardPaints(), sharedCards + 1, 'the shared lane still repaints');
     assert.equal(getDetectionDiagnostics().throttleSkipCount, 1);
 
     env.postRender.raise();
