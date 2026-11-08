@@ -37,6 +37,10 @@ function fixture(name, overrides = {}, preview = false) {
     ifNoneMatchHits, snapshotCacheControl,
     // The adsbdb proxy's bounded store, pacer and batch parser.
     ...adsbdbStore,
+    // The terrain proxy's point store; fixtures keep it in memory.
+    createTrackedPointMap: () => new Map(),
+    openTerrainStore: () => null,
+    terrainStorePath: (file) => file,
     // terrain.js gates cross-site requests first; fixture requests carry no
     // browser headers, so admit them like a loopback tool.
     admitSameSiteKeyless: () => false,

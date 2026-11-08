@@ -79,3 +79,30 @@ test('an expired entry is not served', async () => {
   clock = 500;
   assert.equal(await cache.get('a'), undefined);
 });
+
+test('background prunes run at most once a minute however many writes land', async (t) => {
+  const dir = await tempDir();
+  t.after(() => fsp.rm(dir, { recursive: true, force: true }));
+  let clock = 1_000_000;
+  const timers = [];
+  const cache = createBoundedCache({
+    dir,
+    ttlMs: 3_600_000,
+    now: () => clock,
+    setTimer: (fn, ms) => timers.push({ fn, ms }),
+  });
+  const readdir = t.mock.method(fsp, 'readdir');
+  await cache.set('a', 1);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(readdir.mock.callCount(), 1, 'the first write prunes');
+  clock += 1_000;
+  for (const key of ['b', 'c', 'd']) await cache.set(key, 1);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(readdir.mock.callCount(), 1, 'writes inside the minute wait');
+  assert.equal(timers.length, 1, 'one deferred prune is armed');
+  assert.equal(timers[0].ms, 59_000);
+  clock += 59_000;
+  timers[0].fn();
+  await cache.prune();
+  assert.ok(readdir.mock.callCount() >= 2);
+});

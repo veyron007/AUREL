@@ -12,6 +12,11 @@ import {
 } from '../../src/data/terrainHeightsProxy.js';
 import { makeRateLimiter, clientKey } from './common/rate-limit.js';
 import { admitSameSiteKeyless } from './common/same-site.js';
+import {
+  createTrackedPointMap,
+  openTerrainStore,
+  terrainStorePath,
+} from './terrainStore.js';
 
 /**
  * Re:Earth terrain point-height proxy: batched lon/lat → ellipsoidal height
@@ -96,8 +101,20 @@ export function terrainHeightsProxy(options = {}) {
     globalMax: RATE_PER_MIN * 3,
   });
 
-  /** @type {Map<string, {at:number, result:object}>} keyed by canonical 5dp lon/lat. */
-  const mem = new Map();
+  /**
+   * Keyed by canonical 5dp lon/lat. The map tracks which points changed so a
+   * flush writes only those rows to the sqlite store (terrainStore.js).
+   * @type {Map<string, {at:number, result:object}> & {takeChanges: Function}}
+   */
+  const mem = createTrackedPointMap();
+  /** The sqlite store beside the legacy JSON file; null keeps the JSON writer. */
+  let store = null;
+  /** Rows per store transaction (about 10 ms of writing). */
+  const STORE_WRITE_CHUNK = 2_000;
+  /** Keys whose last flush failed, written again with the next one. */
+  const retryKeys = new Set();
+  /** Set once the legacy JSON file has been carried into the store. */
+  let legacyMigrationPending = false;
 
   /**
    * Drop the oldest entries until the map is back inside its ceiling.
@@ -124,10 +141,91 @@ export function terrainHeightsProxy(options = {}) {
   let diskLoaded = false;
   let diskDirty = false;
 
+  /**
+   * Load the newest points from the sqlite store. Returns false when there is
+   * no store or it is still empty (first run, or before migration).
+   */
+  function loadFromStore() {
+    store = openTerrainStore(terrainStorePath(CACHE_PATH));
+    if (!store || store.count() === 0) return false;
+    for (const [key, entry] of store.loadNewest(CACHE_MAX_ENTRIES)) {
+      if (Number.isFinite(entry.at) && validTerrainResult(entry.result))
+        mem.set(key, entry);
+    }
+    mem.takeChanges();
+    return true;
+  }
+
+  /**
+   * Write the points that changed since the last flush, in transactions of at
+   * most STORE_WRITE_CHUNK rows with a yield between them, so even the
+   * one-time migration of a full cache never stalls the event loop for long.
+   */
+  async function flushToStore() {
+    const { upserts, deletes } = mem.takeChanges();
+    const keys = new Set(retryKeys);
+    for (const [key] of upserts) keys.add(key);
+    for (const key of deletes) keys.add(key);
+    retryKeys.clear();
+    const rows = [];
+    const gone = [];
+    for (const key of keys) {
+      if (mem.has(key)) rows.push([key, mem.get(key)]);
+      else gone.push(key);
+    }
+    try {
+      store.write([], gone);
+      for (let i = 0; i < rows.length; i += STORE_WRITE_CHUNK) {
+        if (i > 0) await new Promise((resolve) => setImmediate(resolve));
+        store.write(rows.slice(i, i + STORE_WRITE_CHUNK), []);
+      }
+    } catch (error) {
+      for (const key of keys) retryKeys.add(key);
+      throw error;
+    }
+  }
+
+  /** The former whole-file JSON writer, kept for when no store can open. */
+  async function flushToJson() {
+    await fsp.mkdir(CACHE_DIR, { recursive: true });
+    const obj = { version: 2, points: Object.fromEntries(mem.entries()) };
+    await fsp.writeFile(CACHE_PATH, JSON.stringify(obj), 'utf8');
+  }
+
+  let flushing = false;
+  async function flushDisk() {
+    // A chunked flush can outlast the 15 s tick; never run two at once.
+    if (!diskDirty || flushing) return;
+    diskDirty = false;
+    flushing = true;
+    try {
+      if (!store) return await flushToJson();
+      await flushToStore();
+      if (legacyMigrationPending) {
+        legacyMigrationPending = false;
+        // Every point now lives in the store; the old file is never read again.
+        await fsp.rm(CACHE_PATH, { force: true });
+      }
+    } catch (err) {
+      diskDirty = true; // retry next tick
+      console.warn('[terrain-heights-proxy] cache write failed');
+    } finally {
+      flushing = false;
+    }
+  }
+
   /** Load the on-disk cache into memory once, lazily (first request only). */
   async function loadDiskOnce() {
     if (diskLoaded) return;
     diskLoaded = true;
+    try {
+      if (loadFromStore()) {
+        scheduleFlush();
+        return;
+      }
+    } catch {
+      store = null;
+    }
     try {
       // A cache file past the ceiling is not read back into memory: loading it
       // would reinstate exactly the unbounded map the ceiling exists to stop.
@@ -186,23 +284,21 @@ export function terrainHeightsProxy(options = {}) {
       }
       orderByAge();
       evictOverflow();
+      // Points read from the legacy JSON file are carried into the store on
+      // the first flush, after which the file is removed.
+      if (store && mem.size > 0) {
+        diskDirty = true;
+        legacyMigrationPending = true;
+      }
     } catch {
       /* no disk cache yet */
     }
-    // Periodic flush, same shape as adsbdbProxy: coalesce writes instead of
-    // hitting disk on every request.
-    setInterval(async () => {
-      if (!diskDirty) return;
-      diskDirty = false;
-      try {
-        await fsp.mkdir(CACHE_DIR, { recursive: true });
-        const obj = { version: 2, points: Object.fromEntries(mem.entries()) };
-        await fsp.writeFile(CACHE_PATH, JSON.stringify(obj), 'utf8');
-      } catch (err) {
-        diskDirty = true; // retry next tick
-        console.warn('[terrain-heights-proxy] cache write failed');
-      }
-    }, 15_000).unref?.();
+    scheduleFlush();
+  }
+
+  /** Periodic flush, same shape as adsbdbProxy: coalesce writes. */
+  function scheduleFlush() {
+    setInterval(flushDisk, 15_000).unref?.();
   }
 
   /**
