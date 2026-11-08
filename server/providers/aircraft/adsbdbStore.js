@@ -125,7 +125,7 @@ export function createPacer({
   concurrency,
   gapMs,
   maxQueued,
-  now = Date.now,
+  now = () => Date.now(),
   setTimer = (fn, ms) => setTimeout(fn, ms).unref?.(),
 }) {
   const queue = [];

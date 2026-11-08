@@ -11,6 +11,7 @@ import {
   aisStreamRows,
   newestAisPositionAt,
 } from './ais-store.js';
+import { parseVesselArea } from './ais-snapshot.js';
 // ---------------------------------------------------------------------------
 // AISStream live vessel cache state
 // ---------------------------------------------------------------------------
@@ -114,7 +115,12 @@ export function aisLiveProxy() {
           AISSTREAM_CACHE_MAX,
           AISSTREAM_CACHE_MAX,
         );
-        const rows = aisStreamRows(maxRows);
+        // The client asks for the vessels around its view; a wide view sends
+        // no area and gets every vessel, as before.
+        const rows = aisStreamRows(
+          maxRows,
+          parseVesselArea(incoming.searchParams),
+        );
 
         const feed = aisStreamStatusSnapshot();
 
