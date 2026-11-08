@@ -1571,5 +1571,9 @@
   "src/voice/cesiumFrameCapture.test.mjs",
   "src/ui/agentDeskCapture.test.mjs",
   "src/testSupport/fakeCesiumCanvas.mjs",
-  "scripts/qa-canvas-capture.mjs"
+  "scripts/qa-canvas-capture.mjs",
+  "src/ui/cameraMotionFlag.js",
+  "src/ui/cameraMotionFlag.test.mjs",
+  "src/ui/styles/spatial-budget.css",
+  "scripts/qa-spatial-perf-shots.mjs"
 ]

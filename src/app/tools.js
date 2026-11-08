@@ -1,3 +1,4 @@
+import { installCameraMotionFlag } from '../ui/cameraMotionFlag.js';
 import { createSessionControls } from './sessionControls.js';
 import { createLocalCommandTools } from './localCommandTools.js';
 import { createPaletteTools } from './paletteTools.js';
@@ -282,6 +283,13 @@ export function createApplicationTools({
   // nothing animates per frame. Installed AFTER every module above has had
   // its chance to register pre-install holds. (perf wave 2)
   installRenderGovernor(viewer);
+  // Spatial glass turns solid while the camera moves (spatial-budget.css).
+  defer(
+    installCameraMotionFlag({
+      camera: viewer.camera,
+      root: document.documentElement,
+    }),
+  );
   // Cesium keeps a turned-off layer's draw commands (and so all its entities)
   // alive in reused per-pass arrays; trim them after each disable.
   defer(
