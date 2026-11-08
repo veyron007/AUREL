@@ -17,6 +17,12 @@ import { localGeoJsonServices } from '../app/localGeojsonServices.js';
 import { layerFeedState } from './manager.js';
 import { INFRA_LOD_ACTIVE_MIN, INFRA_LOD_ACTIVE_MAX } from './localGeojsonLod.js';
 import {
+  localSceneStub,
+  renderedRecords,
+  sceneIsEmpty,
+  NODE_RENDER_OPTIONS,
+} from './localGeojsonSceneStub.mjs';
+import {
   installRenderGovernor,
   getRenderGovernorDiagnostics,
   _resetRenderGovernorForTest,
@@ -24,7 +30,7 @@ import {
 
 /** The catalog's services, with the overlay host each test supplies. */
 const createLocalGeoJsonLayer = (options) =>
-  createLayer(options, {
+  createLayer({ ...NODE_RENDER_OPTIONS, ...options }, {
     ...localGeoJsonServices,
     overlayHost: options.overlayHost ?? localGeoJsonServices.overlayHost,
   });
@@ -67,7 +73,7 @@ async function createRealLocalLayerHarness({
   const originalWindow = globalThis.window;
   const preRender = new MockLayerEvent();
   const moveEnd = new MockLayerEvent();
-  const dataSources = [];
+  const sceneParts = localSceneStub();
   const hostCalls = [];
   globalThis.fetch = async () => ({
     ok: true,
@@ -99,14 +105,6 @@ async function createRealLocalLayerHarness({
   };
   const viewer = {
     selectedEntity: undefined,
-    dataSources: {
-      add(dataSource) { dataSources.push(dataSource); return dataSource; },
-      remove(dataSource) {
-        const index = dataSources.indexOf(dataSource);
-        if (index >= 0) dataSources.splice(index, 1);
-        return index >= 0;
-      },
-    },
     camera: {
       positionWC: Cesium.Cartesian3.fromDegrees(-97.695, 30.205, 100_000),
       directionWC: new Cesium.Cartesian3(),
@@ -126,6 +124,7 @@ async function createRealLocalLayerHarness({
       flyTo() {},
     },
     scene: {
+      ...sceneParts,
       canvas: { clientWidth: 800, clientHeight: 600 },
       preRender,
       sampleHeightSupported,
@@ -158,8 +157,9 @@ async function createRealLocalLayerHarness({
   return {
     layer,
     viewer,
-    dataSources,
     hostCalls,
+    /** The drawn records: carrier, stem polyline, tip point. */
+    records: () => renderedRecords(viewer.scene),
     preRender,
     moveEnd,
     sampleCalls,
@@ -399,39 +399,37 @@ test('real layer disable clears its published host entries and balances settle l
   env.cleanup();
 });
 
-test('unchanged moveEnds do not redefine stem constants and real tip changes update once', async () => {
+/** Count writes to one stem polyline's positions and its tip's position. */
+function spyStemWrites(record) {
+  const writes = { stem: 0, tip: 0 };
+  for (const [target, key, counter] of [
+    [record.stem, 'positions', 'stem'],
+    [record.point, 'position', 'tip'],
+  ]) {
+    const accessor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(target), key);
+    Object.defineProperty(target, key, {
+      configurable: true,
+      get() { return accessor.get.call(this); },
+      set(value) {
+        writes[counter]++;
+        accessor.set.call(this, value);
+      },
+    });
+  }
+  return writes;
+}
+
+test('unchanged moveEnds do not rewrite stems and real tip changes write once', async () => {
   const env = await createRealLocalLayerHarness();
   env.preRender.raise();
-  const entity = env.dataSources[0].entities.values[0];
-  let positionSetCalls = 0;
-  let polylineSetCalls = 0;
-  let polylineDefinitionChanges = 0;
-  const stemArrays = [];
-  const initialStemArray = entity.polyline.positions.getValue();
-  const originalPositionSet = entity.position.setValue.bind(entity.position);
-  const originalPolylineSet = entity.polyline.positions.setValue.bind(entity.polyline.positions);
-  const removeDefinitionListener = entity.polyline.definitionChanged.addEventListener(
-    (_polyline, propertyName) => {
-      if (propertyName === 'positions') polylineDefinitionChanges++;
-    },
-  );
-  entity.position.setValue = (...args) => {
-    positionSetCalls++;
-    return originalPositionSet(...args);
-  };
-  entity.polyline.positions.setValue = (...args) => {
-    polylineSetCalls++;
-    stemArrays.push(args[0]);
-    return originalPolylineSet(...args);
-  };
+  const [record] = env.records();
+  const writes = spyStemWrites(record);
 
   env.moveEnd.raise();
   env.preRender.raise();
   env.moveEnd.raise();
   env.preRender.raise();
-  assert.equal(positionSetCalls, 0);
-  assert.equal(polylineSetCalls, 0);
-  assert.equal(polylineDefinitionChanges, 0);
+  assert.deepEqual(writes, { stem: 0, tip: 0 });
 
   const camera = env.viewer.camera.positionWC;
   env.viewer.camera.positionWC = Cesium.Cartesian3.add(
@@ -441,61 +439,40 @@ test('unchanged moveEnds do not redefine stem constants and real tip changes upd
   );
   env.moveEnd.raise();
   env.preRender.raise();
-  assert.equal(positionSetCalls, 0, 'sub-epsilon camera noise must not redefine the tip');
-  assert.equal(polylineSetCalls, 0);
-  assert.equal(polylineDefinitionChanges, 0, 'sub-epsilon jitter must not redefine the polyline');
+  assert.deepEqual(writes, { stem: 0, tip: 0 }, 'sub-epsilon camera noise must not move the stem');
 
-  env.viewer.camera.positionWC = Cesium.Cartesian3.add(
-    camera,
-    new Cesium.Cartesian3(10_000, 0, 0),
-    new Cesium.Cartesian3(),
-  );
-  env.moveEnd.raise();
-  env.preRender.raise();
-  assert.equal(positionSetCalls, 1);
-  assert.equal(polylineSetCalls, 1);
-  assert.equal(polylineDefinitionChanges, 1, 'one real tip change must emit one polyline notification');
-
-  env.viewer.camera.positionWC = Cesium.Cartesian3.add(
-    camera,
-    new Cesium.Cartesian3(20_000, 0, 0),
-    new Cesium.Cartesian3(),
-  );
-  env.moveEnd.raise();
-  env.preRender.raise();
-  assert.equal(positionSetCalls, 2);
-  assert.equal(polylineSetCalls, 2);
-  assert.equal(polylineDefinitionChanges, 2, 'each real tip change must emit exactly one notification');
-
-  env.viewer.camera.positionWC = Cesium.Cartesian3.add(
-    camera,
-    new Cesium.Cartesian3(30_000, 0, 0),
-    new Cesium.Cartesian3(),
-  );
-  env.moveEnd.raise();
-  env.preRender.raise();
-  assert.equal(positionSetCalls, 3);
-  assert.equal(polylineSetCalls, 3);
-  assert.equal(polylineDefinitionChanges, 3, 'third real tip change must emit exactly one notification');
-  assert.notEqual(stemArrays[0], initialStemArray, 'first real update must select the alternate buffer');
-  assert.equal(stemArrays[1], initialStemArray, 'second real update must return to the initial buffer');
-  assert.equal(stemArrays[2], stemArrays[0], 'consecutive real updates must alternate buffer identity');
-  assert.equal(
-    new Set([initialStemArray, ...stemArrays]).size,
-    2,
-    'steady-state updates must allocate no stem arrays beyond the two preallocated buffers',
-  );
-  removeDefinitionListener();
+  for (const [step, expected] of [[10_000, 1], [20_000, 2], [30_000, 3]]) {
+    env.viewer.camera.positionWC = Cesium.Cartesian3.add(
+      camera,
+      new Cesium.Cartesian3(step, 0, 0),
+      new Cesium.Cartesian3(),
+    );
+    env.moveEnd.raise();
+    env.preRender.raise();
+    assert.deepEqual(writes, { stem: expected, tip: expected },
+      'each real tip change writes the polyline and the point exactly once');
+  }
+  const [base, tip] = record.stem.positions;
+  assert.ok(Cesium.Cartesian3.equals(tip, record.point.position), 'stem and tip agree');
+  assert.ok(Cesium.Cartesian3.equals(base, record.carrier.__localBaseCartesian));
   env.layer.destroy(env.viewer);
   env.cleanup();
 });
 
-test('a real enabled local layer has no native label graphics at runtime', async () => {
+test('a real enabled local layer draws stems, pins and tips but no labels', async () => {
   const env = await createRealLocalLayerHarness();
-  const entities = env.dataSources[0].entities.values;
-  assert.ok(entities.length > 0, 'runtime guard requires a populated real data source');
-  assert.ok(entities.every((entity) => entity.label === undefined));
+  const root = env.viewer.scene.primitives.items[0];
+  assert.equal(env.viewer.scene.primitives.items.length, 1);
+  assert.equal(root.length, 3);
+  assert.ok(root.get(0) instanceof Cesium.PolylineCollection);
+  assert.ok(root.get(1) instanceof Cesium.BillboardCollection);
+  assert.ok(root.get(2) instanceof Cesium.PointPrimitiveCollection);
+  assert.equal(env.records().length, 1);
+  const ground = env.viewer.scene.groundPrimitives.items[0];
+  assert.equal(ground.length, 1, 'one batched footprint primitive');
+  assert.ok(ground.get(0) instanceof Cesium.GroundPrimitive);
   env.layer.destroy(env.viewer);
+  assert.ok(sceneIsEmpty(env.viewer.scene), 'destroy removes every primitive');
   env.cleanup();
 });
 
@@ -503,28 +480,27 @@ for (const [heightM, minStemM, maxStemM] of [[500, 45, 90], [10000, 1100, 1400]]
   test(`local infrastructure keeps stems proportional at ${heightM} m`, async (t) => {
     const env = await createRealLocalLayerHarness();
     t.after(() => { env.layer.destroy(env.viewer); env.cleanup(); });
-    const entity = env.dataSources[0].entities.values[0];
-    const carto = entity.__localBaseCarto;
+    const [record] = env.records();
+    const carto = record.carrier.__localBaseCarto;
     env.viewer.camera.positionWC = Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, heightM);
     env.preRender.raise(env.viewer.scene, Cesium.JulianDate.now());
-    const positions = entity.polyline.positions.getValue(Cesium.JulianDate.now());
+    const positions = record.stem.positions;
     const stemM = Cesium.Cartesian3.distance(positions[0], positions[1]);
     assert.ok(stemM >= minStemM && stemM <= maxStemM,
       `a ${heightM} m close-up must not inherit a globe-sized stem: ${stemM.toFixed(1)} m`);
   });
 }
 
-test('local infrastructure creates no native labels or per-frame geometry callbacks', () => {
-  const source = readFileSync(new URL('./localGeojsonCore.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /new Cesium\.LabelGraphics/);
-  assert.doesNotMatch(source, /new Cesium\.CallbackProperty/);
-  assert.match(source, /feature\.position = tip/);
-  assert.match(source, /record\.entity\.position\.setValue\(record\.tip\)/);
-  assert.match(source, /const stemPositionBuffers = \[\s*\[base, tip\],\s*\[base, tip\],?\s*\]/);
-  assert.match(source, /record\.entity\.polyline\.positions\.setValue\(stemPositions\)/);
-  assert.match(source, /viewer\.camera\.moveEnd\.addEventListener/);
-  assert.match(source, /if \(refreshStemGeometry \|\| terrainFloorChanged\)/);
-  assert.match(source, /now - _lastVisibilityUpdate < VISIBILITY_UPDATE_MS/);
+test('local infrastructure creates no Entities, native labels or per-frame callbacks', () => {
+  const read = (file) => readFileSync(new URL(file, import.meta.url), 'utf8');
+  const sources = ['./localGeojsonCore.js', './localGeojsonPrimitives.js', './localGeojsonRecords.js']
+    .map(read).join('\n');
+  assert.doesNotMatch(sources, /Cesium\.GeoJsonDataSource|new Cesium\.Entity\b|\.dataSources\b/);
+  assert.doesNotMatch(sources, /Cesium\.(LabelCollection|LabelGraphics|CallbackProperty)/);
+  const core = read('./localGeojsonCore.js');
+  assert.match(core, /viewer\.camera\.moveEnd\.addEventListener/);
+  assert.match(core, /if \(walk\.refreshStemGeometry \|\| terrainFloorChanged\)/);
+  assert.match(core, /now - _lastVisibilityUpdate < VISIBILITY_UPDATE_MS/);
 });
 
 // ─── Bundled-dataset failure surfacing (roadmap L7) ───────────
@@ -534,14 +510,18 @@ test('local infrastructure creates no native labels or per-frame geometry callba
 // empty one both reported {count: 0} and the manager painted a green ON chip.
 
 /** Build the failing layer alone — the harness above owns the happy path. */
-async function enableLayerWithFetch(fetchImpl, { dataSources, windowStub } = {}) {
+async function enableLayerWithFetch(fetchImpl, { scene, windowStub } = {}) {
   const originalFetch = globalThis.fetch;
   const originalWindow = globalThis.window;
   globalThis.window = windowStub || { dispatchEvent() {} };
   const viewer = {
-    dataSources: dataSources || { add() {}, remove() { return true; } },
     camera: { positionWC: Cesium.Cartesian3.fromDegrees(0, 0, 1000), moveEnd: new MockLayerEvent() },
-    scene: { canvas: {}, preRender: new MockLayerEvent(), pick() { return null; } },
+    scene: {
+      ...(scene || localSceneStub()),
+      canvas: {},
+      preRender: new MockLayerEvent(),
+      pick() { return null; },
+    },
   };
   const layer = createLocalGeoJsonLayer({
     id: 'local-dams',
@@ -604,8 +584,6 @@ test('a corrupt dataset line reports malformed rather than parsing into nothing'
   cleanup();
 });
 
-// Polygon, like the harness above: Cesium builds Point features through a
-// canvas pin builder, which needs a DOM these tests do not have.
 const ONE_POLYGON_FEATURE = JSON.stringify({
   type: 'Feature',
   id: 'dam-1',
@@ -622,32 +600,7 @@ const serveOnePolygon = async () => ({
   text: async () => ONE_POLYGON_FEATURE,
 });
 
-/**
- * Scene collection with Cesium's real timing: DataSourceCollection.add()
- * returns a promise and inserts on a LATER microtask, so the source is not in
- * the collection when add() returns. A synchronous mock hides exactly the bug
- * this models.
- */
-function asyncDataSources({ rejectAdd = false } = {}) {
-  const added = [];
-  return {
-    added,
-    add(dataSource) {
-      if (rejectAdd) return Promise.reject(new Error('scene rejected the data source'));
-      return Promise.resolve().then(() => {
-        added.push(dataSource);
-        return dataSource;
-      });
-    },
-    remove(dataSource) {
-      const index = added.indexOf(dataSource);
-      if (index >= 0) added.splice(index, 1);
-      return index >= 0;
-    },
-  };
-}
-
-/** A window whose context store throws once — an exception during post-processing. */
+/** A window whose context store throws once — an exception during the build. */
 function windowThatFailsOnce() {
   let armed = true;
   let store;
@@ -664,14 +617,12 @@ function windowThatFailsOnce() {
   };
 }
 
-test('a post-processing failure after the scene accepts the source rolls it back, and the retry does not double-add', async () => {
-  // The window between GeoJsonDataSource.load() and the end of entity
-  // post-processing. Publishing early made every later enable() skip the
-  // loader; rolling back before the add settled left Cesium to insert the
-  // "removed" source afterwards, which the retry would then double up on.
-  const scene = asyncDataSources();
+test('a build failure rolls every primitive back, and the retry does not double-add', async () => {
+  // Publishing a half-built layer made every later enable() skip the loader,
+  // so the layer could never clear its error or retry.
+  const scene = localSceneStub();
   const { layer, cleanup, enable } = await enableLayerWithFetch(serveOnePolygon, {
-    dataSources: scene,
+    scene,
     windowStub: windowThatFailsOnce(),
   });
 
@@ -680,29 +631,27 @@ test('a post-processing failure after the scene accepts the source rolls it back
   assert.equal(failed.count, 0);
   assert.equal(failed.lastUpdate, null);
   assert.equal(layerFeedState(failed), 'unavailable');
-  assert.equal(scene.added.length, 0,
-    'rollback must remove the source the scene already accepted');
+  assert.ok(sceneIsEmpty(scene), 'rollback must leave nothing in the scene');
 
   await enable();
   const retried = layer.getStats();
   assert.equal(retried.error, null, 'the retry must clear the error, not skip the loader');
   assert.equal(retried.count, 1);
   assert.ok(Number.isFinite(retried.lastUpdate));
-  assert.equal(scene.added.length, 1, 'the retry must not leave two sources in the scene');
+  assert.equal(scene.primitives.items.length, 1, 'the retry must not leave two builds in the scene');
+  assert.equal(scene.groundPrimitives.items.length, 1);
   cleanup();
 });
 
-test('a rejected scene add surfaces as an error instead of healthy stats', async () => {
-  const scene = asyncDataSources({ rejectAdd: true });
-  const { layer, cleanup } = await enableLayerWithFetch(serveOnePolygon, {
-    dataSources: scene,
-  });
+test('a scene that rejects the primitives surfaces as an error instead of healthy stats', async () => {
+  const scene = localSceneStub({ rejectAdd: true });
+  const { layer, cleanup } = await enableLayerWithFetch(serveOnePolygon, { scene });
   const stats = layer.getStats();
-  assert.equal(stats.error, 'dataset unavailable (scene rejected the data source)');
+  assert.equal(stats.error, 'dataset unavailable (scene rejected the primitives)');
   assert.equal(stats.count, 0);
   assert.equal(stats.lastUpdate, null);
   assert.equal(layerFeedState(stats), 'unavailable');
-  assert.equal(scene.added.length, 0);
+  assert.ok(sceneIsEmpty(scene));
   cleanup();
 });
 
@@ -798,8 +747,8 @@ test('an unseen base is not sampled and arms no retry until it is in view', asyn
  * `groundM` (or directly away from it).
  */
 function aimRealCamera(env, { groundM, cameraM, southM, away = false, fov = Math.PI / 3 }) {
-  const entity = env.dataSources[0].entities.values[0];
-  const base = Cesium.Cartographic.fromCartesian(entity.__localBaseCartesian);
+  const { carrier } = env.records()[0];
+  const base = Cesium.Cartographic.fromCartesian(carrier.__localBaseCartesian);
   const ground = Cesium.Cartesian3.fromRadians(base.longitude, base.latitude, groundM);
   const position = Cesium.Cartesian3.fromRadians(
     base.longitude,
@@ -835,7 +784,7 @@ function aimRealCamera(env, { groundM, cameraM, southM, away = false, fov = Math
   });
   return frustum
     .computeCullingVolume(position, direction, up)
-    .computeVisibility(new Cesium.BoundingSphere(entity.__localBaseCartesian, 1));
+    .computeVisibility(new Cesium.BoundingSphere(carrier.__localBaseCartesian, 1));
 }
 
 const loadedTerrain = (height) => ({ show: true, tilesLoaded: true, getHeight: () => height });
@@ -1044,8 +993,8 @@ function runArmedRetryChain(env, t, clock, cycles) {
 
 /** Height of the (mutated-in-place) stem base — 0 until a sample lands. */
 function baseHeightM(env) {
-  const entity = env.dataSources[0].entities.values[0];
-  return Cesium.Cartographic.fromCartesian(entity.__localBaseCartesian).height;
+  const { carrier } = env.records()[0];
+  return Cesium.Cartographic.fromCartesian(carrier.__localBaseCartesian).height;
 }
 
 /**
@@ -1254,12 +1203,10 @@ async function createMultiFeatureLodHarness({ featureCount = 150, cameraHeightM 
   const originalWindow = globalThis.window;
   const preRender = new MockLayerEvent();
   const moveEnd = new MockLayerEvent();
-  const dataSources = [];
+  const sceneParts = localSceneStub();
   const centerLon = -97.7;
   const centerLat = 30.2;
-  // Polygons, not Points: Cesium's GeoJsonDataSource builds a PinBuilder
-  // billboard for a Point, which needs a DOM canvas the node test env lacks.
-  // The layer takes the polygon's bounding-sphere centre as the stem anchor.
+  // The layer takes each polygon's bounding-sphere centre as the stem anchor.
   const lines = Array.from({ length: featureCount }, (_, i) => {
     const lon = centerLon + (i % 12) * 0.02;
     const lat = centerLat + Math.floor(i / 12) * 0.02;
@@ -1290,14 +1237,6 @@ async function createMultiFeatureLodHarness({ featureCount = 150, cameraHeightM 
   };
   const viewer = {
     selectedEntity: undefined,
-    dataSources: {
-      add(ds) { dataSources.push(ds); return ds; },
-      remove(ds) {
-        const i = dataSources.indexOf(ds);
-        if (i >= 0) dataSources.splice(i, 1);
-        return i >= 0;
-      },
-    },
     camera: {
       positionWC: null,
       positionCartographic: null,
@@ -1306,6 +1245,7 @@ async function createMultiFeatureLodHarness({ featureCount = 150, cameraHeightM 
       flyTo() {},
     },
     scene: {
+      ...sceneParts,
       canvas: { clientWidth: 1440, clientHeight: 900 },
       preRender,
       sampleHeightSupported: false,
@@ -1332,12 +1272,16 @@ async function createMultiFeatureLodHarness({ featureCount = 150, cameraHeightM 
   return {
     layer,
     viewer,
-    dataSources,
     preRender,
     moveEnd,
     setCameraHeight: setPos,
+    carriers: () => renderedRecords(viewer.scene).map((record) => record.carrier),
     shownCount() {
-      return dataSources[0].entities.values.filter((entity) => entity.show === true).length;
+      return renderedRecords(viewer.scene).filter(({ carrier, stem, point }) => {
+        assert.equal(stem.show, carrier.show, 'stem follows the carrier');
+        assert.equal(point.show, carrier.show, 'tip follows the carrier');
+        return carrier.show === true;
+      }).length;
     },
     cleanup() {
       if (originalWindow === undefined) delete globalThis.window;
@@ -1356,14 +1300,14 @@ test('globe-LOD caps live stems at the camera-height budget and widens as you zo
 
   // Full-earth framing: 150 in-view features, but the global band allows 80.
   env.preRender.raise();
-  assert.equal(env.dataSources[0].entities.values.length, 150, 'all features are materialized');
+  assert.equal(env.carriers().length, 150, 'all features are materialized');
   assert.equal(env.shownCount(), INFRA_LOD_ACTIVE_MIN, 'only the global-band budget carries a stem');
 
   // Named features (label priority ~1240) outrank anonymous nodes (~60), so
   // every one of the 75 named features keeps a stem; the 5 remaining budget
   // slots go to unnamed ones.
   const shownIds = new Set(
-    env.dataSources[0].entities.values.filter((entity) => entity.show === true).map((entity) => entity.id),
+    env.carriers().filter((carrier) => carrier.show === true).map((carrier) => carrier.id),
   );
   const namedIds = Array.from({ length: 150 }, (_, i) => i).filter((i) => i % 2 === 0).map((i) => `dc-${i}`);
   assert.ok(namedIds.every((id) => shownIds.has(id)), 'every named feature wins a stem before any unnamed one');
@@ -1386,18 +1330,18 @@ test('globe-LOD selection is stable between camera moves (no per-frame churn)', 
   });
 
   env.preRender.raise();
-  const firstSet = env.dataSources[0].entities.values
-    .filter((entity) => entity.show === true)
-    .map((entity) => entity.id)
+  const firstSet = env.carriers()
+    .filter((carrier) => carrier.show === true)
+    .map((carrier) => carrier.id)
     .sort();
   assert.equal(firstSet.length, INFRA_LOD_ACTIVE_MIN);
 
   // A second walk with no intervening moveEnd must not re-select.
   clock.advance(500);
   env.preRender.raise();
-  const secondSet = env.dataSources[0].entities.values
-    .filter((entity) => entity.show === true)
-    .map((entity) => entity.id)
+  const secondSet = env.carriers()
+    .filter((carrier) => carrier.show === true)
+    .map((carrier) => carrier.id)
     .sort();
   assert.deepEqual(secondSet, firstSet, 'the active set only changes on camera moves');
 });
@@ -1442,8 +1386,9 @@ test('globe-LOD releases every stem when the layer is disabled', async (t) => {
   assert.equal(env.shownCount(), 40, 'under-budget: all 40 show');
 
   env.layer.disable(env.viewer);
-  // The data source is hidden wholesale on disable; re-enabling starts from a
-  // fresh (empty) LOD selection rather than inheriting the old active set.
+  assert.ok(sceneIsEmpty(env.viewer.scene), 'disable frees every primitive');
+  // Re-enabling starts from a fresh (empty) LOD selection rather than
+  // inheriting the old active set.
   await env.layer.enable(env.viewer);
   env.preRender.raise();
   assert.equal(env.shownCount(), 40, 're-enable rebuilds the selection cleanly');

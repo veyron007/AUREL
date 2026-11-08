@@ -41,7 +41,7 @@ export function selectCableReferenceLabelWinners(
     .sort(
       (a, b) =>
         a.distanceM - b.distanceM ||
-        String(a.entity?.id || '').localeCompare(String(b.entity?.id || '')),
+        String(a.id || '').localeCompare(String(b.id || '')),
     )
     .slice(0, cap);
 }
@@ -248,12 +248,11 @@ export function createCableReferenceSweepGate({
 }
 
 /**
- * Recompute one staticized stem on the sweep cadence. Replaces the former
- * per-frame `CallbackProperty` pair: constant properties are redefined only
- * when the camera-scaled tip moved beyond the settle epsilon, and the two
- * preallocated position buffers alternate so each real change raises exactly
- * one geometry notification (the localGeojson double-buffer pattern).
- * @param {object} record Reference record with entity/base/tip/nextTip/buffers.
+ * Recompute one stem on the sweep cadence. The stem polyline and tip point
+ * are rewritten only when the camera-scaled tip moved beyond the settle
+ * epsilon, and the two preallocated position buffers alternate so the
+ * PolylineCollection never aliases the array it was last handed.
+ * @param {object} record Reference record with stem/point/base/tip/nextTip/buffers.
  * @param {Cesium.Cartesian3} cameraPositionWC
  * @param {number} canvasHeight CSS-pixel canvas height.
  * @param {number} fov Camera frustum field of view (radians).
@@ -294,8 +293,8 @@ export function updateCableReferenceStem(
     record.stemPositionBuffers[record.stemPositionBufferIndex];
   stemPositions[0] = record.base;
   stemPositions[1] = record.tip;
-  record.entity.position.setValue(record.tip);
-  record.entity.polyline.positions.setValue(stemPositions);
+  record.point.position = record.tip;
+  record.stem.positions = stemPositions;
   return true;
 }
 

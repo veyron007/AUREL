@@ -2,7 +2,7 @@ import { isDrivableFlowSegment } from './roadModes.js';
 import { createVectorTileSource } from '../../sources/vectorTiles.js';
 import { clipTileLine } from '../../sources/openFreeMap.js';
 import { tileToBBox } from '../../data/tomtomTiles.js';
-import { decodeFlowTile } from './flowDecode.js';
+import { createFlowDecodeClient } from './flowDecodeClient.js';
 
 const FLOW_TILE_PATH = (z, x, y) => `/api/tomtom/flow/${z}/${x}/${y}.pbf`;
 
@@ -53,26 +53,37 @@ function clipFlowSegment(segment, bbox) {
   }));
 }
 
-/** Own one bounded decoded flow cache; every request still passes the server tile budget. */
+/**
+ * Own one bounded decoded flow cache; every request still passes the server
+ * tile budget. Tiles decode in a worker (flowDecodeClient.js).
+ * @param {object} [options]
+ * @param {Function} [options.fetchImpl]
+ * @param {{decode: Function, close: Function}|null} [options.decoder] Test seam.
+ */
 export function createFlowTileSource({
   fetchImpl = (...args) => globalThis.fetch(...args),
+  decoder = null,
 } = {}) {
   // Freshness travels in response headers, but the tile cache keeps only
   // decoded segments: hold each response's freshness until its tile decodes,
   // then key it by the decoded tile, which the cache hands back on a hit.
   const pending = new Map();
   const freshness = new WeakMap();
+  const flowDecoder = decoder ?? createFlowDecodeClient();
   const tiles = createVectorTileSource({
     template: FLOW_TILE_PATH('{z}', '{x}', '{y}'),
     allowedOrigin: 'http://localhost',
-    decode: (bytes, z, x, y) => {
+    decode: async (bytes, z, x, y) => {
       // Take the mark before decoding, so a tile that fails to decode
       // leaves nothing behind.
       const path = FLOW_TILE_PATH(z, x, y);
       const entry = pending.get(path);
       const mark = entry?.mark;
       entry?.release();
-      const segments = decodeFlowTile(bytes, z, x, y, { strict: true })
+      // Decoded off the main thread; filtering and clipping stay here, where
+      // each piece's `line` must be this thread's object.
+      const decoded = await flowDecoder.decode(bytes, z, x, y);
+      const segments = decoded
         .filter(isDrivableFlowSegment)
         .flatMap((segment) => clipFlowSegment(segment, tileToBBox(z, x, y)));
       if (mark) freshness.set(segments, mark);
@@ -147,6 +158,7 @@ export function createFlowTileSource({
     resetFlowTileCache: () => {
       for (const entry of pending.values()) entry.release();
       tiles.clear();
+      flowDecoder.close();
     },
   };
 }

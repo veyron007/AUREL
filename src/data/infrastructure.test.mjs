@@ -5,6 +5,11 @@ import { readFileSync } from 'node:fs';
 import * as Cesium from 'cesium';
 import { createInfrastructureLayers } from 'gods-eye-view/infrastructure';
 import { createLocalGeoJsonLayer } from 'gods-eye-view/infrastructure/geojson';
+import {
+  NODE_RENDER_OPTIONS,
+  localSceneStub,
+  renderedRecords,
+} from './localGeojsonSceneStub.mjs';
 
 function services() {
   const records = new Map();
@@ -118,10 +123,11 @@ test('two viewers use their supplied contexts and dispose independently', async 
   }));
   const hosts = [services(), services()];
   const instances = hosts.map((host) => {
-    const sources = new Cesium.DataSourceCollection();
+    const scene = localSceneStub();
     let click;
     const layer = createLocalGeoJsonLayer(
       {
+        ...NODE_RENDER_OPTIONS,
         id: 'local-dams',
         name: 'Dams',
         osmDerived: true,
@@ -137,13 +143,13 @@ test('two viewers use their supplied contexts and dispose independently', async 
       host,
     );
     const viewer = {
-      dataSources: sources,
       scene: {
+        ...scene,
         canvas: {},
         preRender: new Cesium.Event(),
         requestRender() {},
         screenSpaceCameraController: { enableInputs: true },
-        pick: () => ({ id: sources.get(0).entities.values[0] }),
+        pick: () => ({ id: renderedRecords(scene)[0].carrier }),
       },
       camera: { moveEnd: new Cesium.Event(), flyTo() {} },
     };
@@ -165,7 +171,8 @@ test('two viewers use their supplied contexts and dispose independently', async 
   instances[0].layer.destroy(instances[0].viewer);
   assert.equal(hosts[0].records.size, 0);
   assert.equal(hosts[1].records.size, 1);
-  assert.equal(instances[1].viewer.dataSources.length, 1);
+  assert.equal(instances[0].viewer.scene.primitives.items.length, 0);
+  assert.equal(instances[1].viewer.scene.primitives.items.length, 1);
 });
 
 test('consumer build includes only infrastructure code and resolves assets under a non-root base', async () => {
@@ -195,8 +202,26 @@ test('consumer build includes only infrastructure code and resolves assets under
     'infrastructureData.js',
     'infrastructureOverlayEntry.js',
     'localGeojsonCore.js',
+    'localGeojsonGround.js',
     'localGeojsonLod.js',
+    'localGeojsonOverlay.js',
+    'localGeojsonParse.js',
+    'localGeojsonParseClient.js',
+    'localGeojsonPrimitives.js',
+    'localGeojsonRecords.js',
   ]);
+  const worker =
+    output.find(
+      (item) =>
+        item.type === 'chunk' &&
+        item.fileName.includes('localGeojsonParse.worker'),
+    ) ??
+    output.find(
+      (item) =>
+        item.type === 'asset' &&
+        item.fileName.includes('localGeojsonParse.worker'),
+    );
+  assert.ok(worker, 'the dataset parse worker must be emitted');
   assert.deepEqual(
     entry.imports,
     ['cesium'],

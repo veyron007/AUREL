@@ -29,7 +29,7 @@ function viewer(t) {
     entities: new C.EntityCollection(), dataSources: new C.DataSourceCollection(),
     camera: { moveEnd: new C.Event(), positionCartographic: { height: 1000 } },
     scene: { requestRender: noop, canvas: { addEventListener: noop, removeEventListener: noop }, preRender: new C.Event(),
-      primitives: { add: (p) => p, remove: noop }, screenSpaceCameraController: { enableInputs: true } },
+      primitives: { add: (p) => p, remove: noop }, groundPrimitives: { add: (p) => p, remove: noop }, screenSpaceCameraController: { enableInputs: true } },
   };
   return v;
 }

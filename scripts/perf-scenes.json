@@ -71,6 +71,16 @@
       "id": "text-stress",
       "label": "Label stress: flights, quakes, sats, fires, cables, datacenters, launches, military",
       "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=f.e.s.w.u.d.x.m"
+    },
+    {
+      "id": "datacenters-only",
+      "label": "Datacenters only (world view)",
+      "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=d"
+    },
+    {
+      "id": "cables-only",
+      "label": "Cables only (world view)",
+      "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=u"
     }
   ]
 }

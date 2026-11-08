@@ -312,8 +312,20 @@ export function createRendering({
       layerState._selectedId = null;
     }
 
+    buildStationEntities(stations);
+    updateSelectionEntity();
+    updateRenderVisibility();
+  }
+
+  /**
+   * Rebuild the station markers. Without a data source (the layer is off)
+   * only the station table is kept; the markers are built when it returns.
+   * @param {object[]} stations
+   */
+  function buildStationEntities(stations) {
     if (layerState._dataSource) layerState._dataSource.entities.removeAll();
     layerState._renderById.clear();
+    if (!layerState._dataSource) return;
     for (const station of stations) {
       const position = markerPosition(station);
       const markerColor = parts.model.radioCategoryColor(
@@ -342,8 +354,31 @@ export function createRendering({
       });
       layerState._renderById.set(station.id, { station, entity, position });
     }
-    updateSelectionEntity();
-    updateRenderVisibility();
+  }
+
+  /**
+   * Create the clustered station data source and its markers. The layer
+   * builds it when it is shown and removes it when it is turned off: a
+   * hidden data source still walks its visualizers and clusters every frame.
+   */
+  function ensureStationEntities() {
+    if (layerState._dataSource || !layerState._viewer) return;
+    layerState._dataSource = new Cesium.CustomDataSource('Radio stations');
+    layerState._dataSource.show = false;
+    layerState._viewer.dataSources.add(layerState._dataSource);
+    installClusterStyling();
+    buildStationEntities(layerState._stations);
+  }
+
+  /** Remove the station data source and its markers; the stations stay cached. */
+  function releaseStationEntities() {
+    layerState._removeClusterListener?.();
+    layerState._removeClusterListener = null;
+    const dataSource = layerState._dataSource;
+    layerState._dataSource = null;
+    layerState._renderById.clear();
+    if (dataSource && layerState._viewer)
+      layerState._viewer.dataSources.remove(dataSource, true);
   }
 
   function installClusterStyling() {
@@ -403,5 +438,7 @@ export function createRendering({
     updateRenderVisibility,
     reconcileStations,
     installClusterStyling,
+    ensureStationEntities,
+    releaseStationEntities,
   };
 }

@@ -2,11 +2,6 @@ import * as Cesium from 'cesium';
 import { isPointerFree } from '../../data/inputOwnership.js';
 
 export function createInteraction({ state, screenSpaceEventHandlerFactory }) {
-  function registerPickEntity(entity, info) {
-    entity.__gevTeleGeography = info;
-    state._pickByEntity.set(entity, info);
-  }
-
   function beginInteraction(viewer) {
     if (state._clickHandler) return;
     state._clickHandler = screenSpaceEventHandlerFactory(viewer.scene.canvas);
@@ -21,32 +16,19 @@ export function createInteraction({ state, screenSpaceEventHandlerFactory }) {
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
 
+  /**
+   * Every cable, landing and reference primitive carries a string pick key
+   * (the instance id of a ground segment, the id of a pin, stem or tip); the
+   * current enable cycle's renderer maps it to the record.
+   * @param {object|null} picked Result of `scene.pick()`.
+   * @returns {{kind:string, reference:{lon:number, lat:number}, label:string}|null}
+   */
   function resolvePickRecord(picked) {
-    if (!picked) return null;
-    const primitive = picked.primitive;
-    if (primitive) {
-      const primitiveInfo = state._pickByEntity.get(primitive);
-      if (primitiveInfo) return primitiveInfo;
-      if (primitive.__gevTeleGeography) return primitive.__gevTeleGeography;
-      if (
-        primitive.id &&
-        typeof primitive.id === 'object' &&
-        primitive.id.reference
-      ) {
-        return primitive.id;
-      }
-    }
-
-    const entity = picked.id;
-    if (entity) {
-      const entityInfo = state._pickByEntity.get(entity);
-      if (entityInfo) return entityInfo;
-      if (entity.__gevTeleGeography) return entity.__gevTeleGeography;
-      if (entity.id && typeof entity.id === 'object' && entity.id.reference) {
-        return entity.id;
-      }
-    }
-
+    const picks = state._render?.picks;
+    if (!picked || !picks) return null;
+    if (typeof picked.id === 'string') return picks.get(picked.id) || null;
+    const primitiveId = picked.primitive?.id;
+    if (typeof primitiveId === 'string') return picks.get(primitiveId) || null;
     return null;
   }
 
@@ -70,7 +52,6 @@ export function createInteraction({ state, screenSpaceEventHandlerFactory }) {
     });
   }
   return {
-    registerPickEntity,
     beginInteraction,
     resolvePickRecord,
     flyToReference,

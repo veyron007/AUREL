@@ -9,6 +9,10 @@ import {
   seededRandom,
 } from '../testSupport/perfBench.mjs';
 import { createLocalGeoJsonLayer } from './localGeojsonCore.js';
+import {
+  NODE_RENDER_OPTIONS,
+  localSceneStub,
+} from './localGeojsonSceneStub.mjs';
 import { selectInfraLod } from './localGeojsonLod.js';
 import {
   INFRASTRUCTURE_DATA_URLS,
@@ -17,13 +21,14 @@ import {
 
 // Local datacenter GeoJSON ingest through createLocalGeoJsonLayer with the
 // shipped datacenter options (src/data/infrastructure.js), a faked fetch, a
-// stub click-handler factory and a viewer without a real scene. Cesium's
-// PinBuilder draws point pins on a canvas, so a minimal document stub (one
-// no-op 2D context) is installed for the duration; pins are cached per colour,
-// so it is created once per layer.
+// stub click-handler factory and a viewer whose scene only collects the
+// layer's primitives (src/data/localGeojsonSceneStub.mjs; no WebGL, so no GPU
+// upload is measured). Node has no Worker, so the dataset parse runs on this
+// thread here; in the browser it runs in localGeojsonParse.worker.js.
 //  - parse: parseGeojsonLines over the synthetic .geojsonl text.
-//  - enable: fetch + parse + Cesium.GeoJsonDataSource.load + stem/entity and
-//    overlay-entry build (a fresh layer per run, so nothing is cached).
+//  - enable: fetch + parse into compact records + carriers, context records,
+//    stem/tip/pin/footprint primitives and overlay entries (a fresh layer per
+//    run, so nothing is cached).
 //  - firstWalk: the first preRender walk, which builds the globe-LOD active
 //    set (selectInfraLod + eviction grace), sizes stems and publishes the
 //    overlay cohort.
@@ -35,9 +40,12 @@ import {
 //
 // Measured 2026-11-08, Apple M4, Node v26.13.0 — per-run median of 7 (5 for
 // enable/firstWalk) after warm-up, median (range) over 3 runs:
-//   parse=8.0ms (7.8-10.5)  enable=197ms (188-242)  firstWalk=12.2ms (11.2-17.9)
-//   lodRecompute=1.1ms (0.8-2.4)  selectInfraLod=0.43ms (0.39-0.56)
-// Budgets are roughly 2.5-3x those medians, with a floor for sub-ms rows.
+//   Entity path (GeoJsonDataSource):  parse=6.3ms  enable=140ms
+//     firstWalk=7.7ms  lodRecompute=0.55ms  selectInfraLod=0.32ms
+//   Primitive path (WP4.2):  parse=6.5ms (6.2-6.6)  enable=52ms (50-53)
+//     firstWalk=2.6ms (2.5-3.3)  lodRecompute=0.61ms (0.60-0.65)
+//     selectInfraLod=0.28ms (0.23-0.30)
+// Budgets are roughly 3x those medians, with a floor for sub-ms rows.
 
 const FEATURE_COUNT = 4_352;
 const POINT_EVERY = 5; // ≈19% points in the shipped file
@@ -54,8 +62,8 @@ const SYNC_RUNS = Object.freeze({ warmup: 3, runs: 7 });
 const ENABLE_RUNS = Object.freeze({ warmup: 2, runs: 5 });
 const BUDGET_MS = Object.freeze({
   parse: 25,
-  enable: 550,
-  firstWalk: 40,
+  enable: 160,
+  firstWalk: 10,
   lodRecompute: 5,
   selectInfraLod: 2,
 });
@@ -71,6 +79,7 @@ const noop = () => {};
 // The shipped datacenter options from src/data/infrastructure.js, plus test
 // seams for the click handler and window projection.
 const DATACENTER_OPTIONS = Object.freeze({
+  ...NODE_RENDER_OPTIONS,
   id: 'local-datacenters',
   name: 'Datacenters',
   color: '#00ffff',
@@ -154,13 +163,9 @@ function eventStub() {
 function viewerStub() {
   const preRender = eventStub();
   const moveEnd = eventStub();
-  const sources = new Set();
+  const scene = localSceneStub();
   const viewer = {
     selectedEntity: undefined,
-    dataSources: {
-      add: (source) => (sources.add(source), source),
-      remove: (source) => sources.delete(source),
-    },
     camera: {
       positionWC: Cesium.Cartesian3.fromDegrees(
         CAMERA.lon,
@@ -176,6 +181,7 @@ function viewerStub() {
       flyTo: noop,
     },
     scene: {
+      ...scene,
       canvas: CANVAS,
       preRender,
       sampleHeightSupported: false,
@@ -184,7 +190,7 @@ function viewerStub() {
       requestRender: noop,
     },
   };
-  return { viewer, preRender, moveEnd, sources };
+  return { viewer, preRender, moveEnd, scene };
 }
 
 function servicesStub() {
@@ -212,24 +218,6 @@ function servicesStub() {
   };
 }
 
-/** A 2D context whose every method is a no-op (PinBuilder's drawPin). */
-function silentContext2d() {
-  return new Proxy(
-    {},
-    {
-      get: (target, key) => (key in target ? target[key] : noop),
-      set: (target, key, value) => {
-        target[key] = value;
-        return true;
-      },
-    },
-  );
-}
-
-const DOCUMENT_STUB = Object.freeze({
-  createElement: () => ({ width: 0, height: 0, getContext: silentContext2d }),
-});
-
 /** Install `value` on globalThis[key]; returns a function that restores it. */
 function overrideGlobal(key, value) {
   const had = Object.hasOwn(globalThis, key);
@@ -241,7 +229,7 @@ function overrideGlobal(key, value) {
   };
 }
 
-/** Run `fn` with fetch, window and document faked; restores all afterwards. */
+/** Run `fn` with fetch and window faked; restores both afterwards. */
 async function withFakeFetch(text, fn) {
   const restores = [
     overrideGlobal('fetch', async () => ({
@@ -250,7 +238,6 @@ async function withFakeFetch(text, fn) {
       text: async () => text,
     })),
     overrideGlobal('window', { dispatchEvent: noop }),
-    overrideGlobal('document', DOCUMENT_STUB),
   ];
   try {
     return await fn();
@@ -282,7 +269,8 @@ function walk(harness) {
 }
 
 const TEXT = syntheticDatacenterLines(FEATURE_COUNT);
-// Cesium makes one entity per polygon of a MultiPolygon (two each here).
+// One record per polygon of a MultiPolygon (two each here), as Cesium's
+// GeoJsonDataSource made one entity each.
 const MULTIPOLYGON_COUNT = Math.ceil(FEATURE_COUNT / MULTIPOLYGON_EVERY);
 const ENTITY_COUNT = FEATURE_COUNT + MULTIPOLYGON_COUNT;
 
@@ -292,7 +280,8 @@ test('synthetic datacenters ingest into one stem per feature and a bounded LOD s
   await withFakeFetch(TEXT, async () => {
     const harness = await enableDatacenters();
     try {
-      assert.equal(harness.sources.size, 1);
+      assert.equal(harness.scene.primitives.items.length, 1);
+      assert.equal(harness.scene.groundPrimitives.items.length, 1);
       assert.equal(harness.published.contexts, ENTITY_COUNT);
       const lod = walk(harness);
       assert.equal(lod.total, ENTITY_COUNT);

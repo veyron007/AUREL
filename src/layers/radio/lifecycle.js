@@ -1,4 +1,3 @@
-import * as Cesium from 'cesium';
 import {
   RADIO_OVERLAY_SOURCE_ID,
   DEFAULT_RADIO_VOLUME,
@@ -15,18 +14,16 @@ export function createLifecycle({
   const { clearOverlaySource, setOverlaySourceVisible } = services.overlays;
 
   const methods = {
-    /** Initialize the Cesium data source and the single audio element. */
+    /** Initialize the hidden station data source and the single audio element. */
     init(viewer) {
       layerState._sessionGeneration += 1;
       layerState._viewer = viewer;
       parts.clustering.resetRadioClusterOverlayIdentities();
       parts.playback.installAudio();
-      if (!layerState._dataSource) {
-        layerState._dataSource = new Cesium.CustomDataSource('Radio stations');
-        viewer.dataSources.add(layerState._dataSource);
-        parts.rendering.installClusterStyling();
-      }
-      layerState._dataSource.show = false;
+      // Created hidden and empty at init, as before: EntityCluster seeds each
+      // clustering from its previous result, so the first enable shows the
+      // same clusters it always did. Disable frees it; enable recreates it.
+      parts.rendering.ensureStationEntities();
       clearOverlaySource(RADIO_OVERLAY_SOURCE_ID);
       setOverlaySourceVisible(RADIO_OVERLAY_SOURCE_ID, false);
     },
@@ -55,7 +52,9 @@ export function createLifecycle({
       layerState._cancelledTuningPresentationStation = null;
       layerState._tuningUnavailableStationId = null;
       parts.playback.stopRadioPlayback({ origin: 'layer-disable' });
-      if (layerState._dataSource) layerState._dataSource.show = false;
+      // Free the markers rather than hide them; the next show rebuilds them
+      // from the cached stations.
+      parts.rendering.releaseStationEntities();
       if (layerState._selectedEntity && layerState._viewer)
         layerState._viewer.entities.remove(layerState._selectedEntity);
       layerState._selectedEntity = null;
@@ -83,11 +82,7 @@ export function createLifecycle({
       if (layerState._audio) layerState._audio.volume = DEFAULT_RADIO_VOLUME;
       layerState._audio = null;
       layerState._userVolume = DEFAULT_RADIO_VOLUME;
-      layerState._removeClusterListener?.();
-      layerState._removeClusterListener = null;
-      if (layerState._dataSource && layerState._viewer)
-        layerState._viewer.dataSources.remove(layerState._dataSource, true);
-      layerState._dataSource = null;
+      parts.rendering.releaseStationEntities();
       clearOverlaySource(RADIO_OVERLAY_SOURCE_ID);
       layerState._stations = [];
       layerState._acceptedCatalogSnapshot = EMPTY_ACCEPTED_CATALOG_SNAPSHOT;

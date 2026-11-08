@@ -29,7 +29,7 @@ const layers = createInfrastructureLayers({
 | `overlayHost.setEntries` | `(sourceId, entries, options)`; publish the existing infrastructure overlay records and paint budget |
 | `overlayHost.setVisible` | `(sourceId, visible)`; toggle a source |
 | `overlayHost.clearSource` | `(sourceId)`; remove that source's overlay entries |
-| `registerEntityContext` | `(entity, metadata)`; register selectable feature metadata, including the owning layer and data source |
+| `registerEntityContext` | `(carrier, metadata)`; register selectable feature metadata on the plain pick object the layer draws with |
 | `selectEntityContext` | `(entity)`; select that registered feature |
 | `clearSelectedEntityContextForLayer` | `(layerId)`; clear selection only if owned by this layer |
 | `removeEntityContextsForLayer` | `(layerId)`; remove records owned by the layer on destruction or failed setup |
@@ -43,9 +43,15 @@ host permits one live instance per layer ID; destroy an old instance before
 replacing it. Separate applications may use identical IDs with separate hosts.
 Callbacks must be ready before enable and remain usable through destruction.
 
-Disable retains the loaded dataset for reuse and clears selection and listeners.
+The layers draw with Cesium primitives, not Entities: stems in a
+`PolylineCollection`, tips in a `PointPrimitiveCollection`, Point pins in a
+ground-clamped `BillboardCollection`, footprints and lines in ground primitives.
+Each pick object is a plain carrier object holding the context id.
+
+Disable retains the parsed dataset for reuse, removes and destroys every
+primitive, and clears selection and listeners.
 Concurrent enables share one load. Destroy is permanent, aborts pending fetches,
-discards late results, and clears the owned data source, context records, overlays,
+discards late results, and clears the owned primitives, context records, overlays,
 input handler and listeners. The layer never creates an application context store,
 overlay host, viewer, or render scheduler. The consumer must resolve one compatible
 Cesium installation shared with its viewer; it must not bundle separate copies.
@@ -57,6 +63,6 @@ Consumers use the package exports, which do not import standalone application
 globals.
 
 Dataset files and source/license notices remain under `src/data/local_data/`.
-Their input counts are 4,351 datacenter features and 704 dam features. Cesium may
-expand multipart geometries into multiple entities; entity and stem counts are
-different measurements. This change does not refresh or relicense the datasets.
+Their input counts are 4,351 datacenter features and 704 dam features.
+Multipart geometries expand into one record per part (ids keep Cesium's `_2`,
+`_3` suffixes); record and feature counts are different measurements. This change does not refresh or relicense the datasets.

@@ -7,13 +7,20 @@ import {
   createLocalGeoJsonLayer as createLayer,
   mapAnalystRecord,
 } from './localGeojsonCore.js';
+import {
+  NODE_RENDER_OPTIONS,
+  localSceneStub,
+} from './localGeojsonSceneStub.mjs';
 
 /** The catalog's services, with the overlay host each test supplies. */
 const createLocalGeoJsonLayer = (options) =>
-  createLayer(options, {
-    ...localGeoJsonServices,
-    overlayHost: options.overlayHost,
-  });
+  createLayer(
+    { ...NODE_RENDER_OPTIONS, ...options },
+    {
+      ...localGeoJsonServices,
+      overlayHost: options.overlayHost,
+    },
+  );
 
 const DC_RAW = {
   id: '1176042553',
@@ -151,14 +158,6 @@ test('infra getAnalystRecords: enabled layer snapshots loaded stems; disable ret
   });
   const viewer = {
     selectedEntity: undefined,
-    dataSources: {
-      add(dataSource) {
-        return dataSource;
-      },
-      remove() {
-        return true;
-      },
-    },
     camera: {
       positionWC: Cesium.Cartesian3.fromDegrees(-97.695, 30.205, 100_000),
       frustum: { fov: Math.PI / 3 },
@@ -166,6 +165,7 @@ test('infra getAnalystRecords: enabled layer snapshots loaded stems; disable ret
       flyTo() {},
     },
     scene: {
+      ...localSceneStub(),
       canvas: { clientWidth: 800, clientHeight: 600 },
       preRender: new MockLayerEvent(),
       sampleHeightSupported: false,

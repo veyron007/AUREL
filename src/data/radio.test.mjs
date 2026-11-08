@@ -1790,3 +1790,101 @@ test('voice playback confirmation accepts fallback buffering but times out safel
   assert.equal(confirmed, false);
   assert.ok(Date.now() - startedAt >= 8);
 });
+
+test('turning Radio off frees its station markers and turning it on rebuilds them from cache', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalAudio = globalThis.Audio;
+  globalThis.Audio = class FakeAudio {
+    constructor() { this.volume = 0.8; }
+    addEventListener() {}
+    pause() {}
+    play() { return Promise.resolve(); }
+    removeAttribute() {}
+    load() {}
+  };
+  const stationRows = ['1', '2', '3'].map((suffix, index) => ({
+    id: `00000000-0000-4000-8000-00000000000${suffix}`,
+    name: `Station ${suffix}`,
+    lat: 30 + index,
+    lon: -97 - index,
+    streamUrl: `https://radio.example.com/${suffix}.mp3`,
+    homepage: null,
+    tags: ['news'],
+    languages: ['English'],
+    state: 'Texas',
+    country: 'United States',
+    countryCode: 'US',
+    metadataTrust: 'untrusted-community',
+    codec: 'MP3',
+    bitrate: 128,
+  }));
+  let fetches = 0;
+  globalThis.fetch = async () => {
+    fetches += 1;
+    return {
+      ok: true,
+      json: async () => ({
+        stations: stationRows,
+        updatedAt: new Date().toISOString(),
+        stale: false,
+        degraded: false,
+        acceptedGeneration: 1,
+        catalogInstance: 'qa-instance-a',
+      }),
+    };
+  };
+  const live = [];
+  const removed = [];
+  const viewer = {
+    camera: { positionWC: { x: 7_000_000, y: 0, z: 0 } },
+    scene: { canvas: { disableRootEvents: true, onwheel: null, addEventListener() {}, removeEventListener() {} } },
+    dataSources: {
+      add(source) { live.push(source); },
+      remove(source, destroy) {
+        const index = live.indexOf(source);
+        if (index >= 0) live.splice(index, 1);
+        removed.push({ source, destroy });
+        return index >= 0;
+      },
+    },
+    entities: { add(entity) { return entity; }, remove() {} },
+  };
+  const presentation = { lifecycleState: 'enabled', enabled: true, uncertain: false };
+
+  radioLayer.destroy();
+  try {
+    radioLayer.init(viewer);
+    assert.equal(live.length, 1, 'init creates the hidden, empty data source');
+    assert.equal(live[0].entities.values.length, 0);
+    radioLayer.enable();
+    radioLayer.setLifecyclePresentation(presentation);
+    await radioLayer.update();
+    assert.equal(live.length, 1);
+    const first = live[0];
+    assert.equal(first.entities.values.length, stationRows.length);
+    assert.equal(first.show, true);
+
+    radioLayer.disable();
+    assert.equal(live.length, 0, 'disable removes the data source instead of hiding it');
+    assert.deepEqual(removed.at(-1), { source: first, destroy: true });
+
+    radioLayer.enable();
+    radioLayer.setLifecyclePresentation(presentation);
+    assert.equal(live.length, 1, 'enable rebuilds the markers');
+    assert.notEqual(live[0], first);
+    assert.deepEqual(
+      live[0].entities.values.map((entity) => entity.id).sort(),
+      first.entities.values.map((entity) => entity.id).sort(),
+      'the rebuilt markers are the same stations',
+    );
+    assert.equal(fetches, 1, 'the rebuild comes from the cached stations');
+
+    radioLayer.destroy();
+    assert.equal(live.length, 0);
+  } finally {
+    radioLayer.destroy();
+    globalThis.fetch = originalFetch;
+    if (originalAudio === undefined) delete globalThis.Audio;
+    else globalThis.Audio = originalAudio;
+  }
+});
