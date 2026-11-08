@@ -394,7 +394,10 @@ test('disable cancels a pending source and a late response cannot repopulate the
   } finally { h.layer.destroy(h.viewer); h.cleanup(); }
 });
 
-test('the heatmap is preloaded under the markers before the first zoom-out', (t) => {
+/** Let the heat raster build (main-thread fallback here) land. */
+const settleHeatBuild = () => new Promise((done) => setImmediate(done));
+
+test('the heatmap is preloaded under the markers before the first zoom-out', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const priorDocument = globalThis.document;
   globalThis.document = {
@@ -434,6 +437,8 @@ test('the heatmap is preloaded under the markers before the first zoom-out', (t)
     h.layer._renderLodForTest('close');
     assert.equal(added.length, 0, 'the markers paint first; the build trails');
     t.mock.timers.tick(HEAT_REBUILD_MS);
+    assert.equal(added.length, 0, 'the build runs off the frame');
+    await settleHeatBuild();
     assert.equal(added.length, 1, 'then the heatmap is draped');
     assert.equal(added[0].alpha, 0, 'invisible until the hand-off');
     assert.equal(added[0].show, true, 'but mapped onto the globe tiles');
@@ -445,7 +450,7 @@ test('the heatmap is preloaded under the markers before the first zoom-out', (t)
   }
 });
 
-test('far zoom drapes one heatmap and the hand-off cross-fades it with the markers', () => {
+test('far zoom drapes one heatmap and the hand-off cross-fades it with the markers', async () => {
   // A canvas stub for the heat drape and the detection glow sprites.
   const priorDocument = globalThis.document;
   const restoreDocument = () => {
@@ -501,6 +506,7 @@ test('far zoom drapes one heatmap and the hand-off cross-fades it with the marke
       imageryHost: () => ({ kind: 'globe', collection }),
     });
     h.layer._renderLodForTest('global');
+    await settleHeatBuild();
     assert.equal(added.length, 1, 'one heat imagery layer');
     assert.equal(added[0].show, true);
     assert.equal(added[0].alpha, 1);

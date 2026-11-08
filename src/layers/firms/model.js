@@ -301,10 +301,17 @@ export function createModel({
    * @param {?Array<Cesium.Cartesian3>} [cullPositions=null] Index-aligned lifted
    *   occlusion-test anchors (see {@link fireCullPosition}); falls back to the
    *   billboard's own render position wherever an entry is absent.
+   * @param {?Cesium.Color} [revealColor=null] Colour a sprite takes when it
+   *   turns visible (the current hand-off fade).
    * @returns {number} Count of billboards left visible (0 when nothing to test).
    */
 
-  function applyHorizonCull(billboards, occluder, cullPositions = null) {
+  function applyHorizonCull(
+    billboards,
+    occluder,
+    cullPositions = null,
+    revealColor = null,
+  ) {
     if (!billboards || typeof billboards.get !== 'function') return 0;
     if (typeof occluder?.isPointVisible !== 'function') return 0;
     const total = Number(billboards.length) || 0;
@@ -314,7 +321,16 @@ export function createModel({
       if (!billboard) continue;
       const point = (cullPositions && cullPositions[i]) || billboard.position;
       const visible = occluder.isPointVisible(point) === true;
-      if (billboard.show !== visible) billboard.show = visible;
+      if (billboard.show !== visible) {
+        billboard.show = visible;
+        // A sprite hidden through a hand-off step missed its fade write.
+        if (
+          visible &&
+          revealColor &&
+          !Cesium.Color.equals(billboard.color, revealColor)
+        )
+          billboard.color = revealColor;
+      }
       if (visible) visibleCount += 1;
     }
     return visibleCount;

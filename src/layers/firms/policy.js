@@ -78,8 +78,8 @@ export const HANDOFF_FADE = Object.freeze({ from: 3_600_000, to: 5_400_000 });
 
 /**
  * Trailing delay before a stale heatmap is rebuilt while one is already on
- * screen: a slider drag fires many filter changes, and a build plus PNG
- * encode costs a few hundred milliseconds. The first paint is immediate.
+ * screen: a slider drag fires many filter changes. Builds run in the raster
+ * worker (heatRasterClient.js); the first one in a far band starts at once.
  */
 
 export const HEAT_REBUILD_MS = 150;

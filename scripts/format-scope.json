@@ -1589,5 +1589,13 @@
   "src/overlays/worldOverlayDraw.perf.test.mjs",
   "src/data/localGeojsonCore.perf.test.mjs",
   "src/overlays/worldOverlayBitmaps.js",
-  "src/overlays/worldOverlayBitmaps.test.mjs"
+  "src/overlays/worldOverlayBitmaps.test.mjs",
+  "src/layers/firms/heatRasterClient.js",
+  "src/layers/firms/heatRasterClient.test.mjs",
+  "src/layers/firms/bitmapImageryProvider.js",
+  "src/layers/firms/markerIndex.js",
+  "src/layers/firms/markerIndex.test.mjs",
+  "src/data/firmsHeatRaster.worker.js",
+  "src/data/detectionSurfaceLook.js",
+  "src/data/detectionSurfaceLook.test.mjs"
 ]

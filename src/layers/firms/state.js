@@ -129,6 +129,20 @@ export function createFirmsState({ services, config }) {
 
   layerState._cullPositions = [];
 
+  /** Detection record -> its drawn sprite, for diffing the marker set. */
+
+  layerState._markerByFire = new Map();
+
+  /** Drawn sprites in candidate (FRP) order, aligned with _cullPositions. */
+
+  layerState._markerBillboards = [];
+
+  /** Grid index over `_markerIndexSource` (markerIndex.js), built lazily. */
+
+  layerState._markerIndex = null;
+
+  layerState._markerIndexSource = null;
+
   /**
    * gridDegrees -> heat-sorted full cell list. The full-grid aggregation is
    * viewport-independent but walks every detection (~200k live), so it is
@@ -149,6 +163,14 @@ export function createFirmsState({ services, config }) {
   /** Pending debounced heat rebuild (see HEAT_REBUILD_MS). */
 
   layerState._heatRebuildTimer = null;
+
+  /** Worker-backed raster builder (heatRasterClient.js), made on first use. */
+
+  layerState._heatRasterClient = null;
+
+  /** The shown set a raster build is running for, or null. */
+
+  layerState._heatBuildFires = null;
 
   /** Last applied hand-off fade (0 markers … 1 heatmap); -1 forces a reapply. */
 

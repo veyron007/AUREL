@@ -22,42 +22,66 @@ function harness() {
   let host = { collection, kind: 'globe' };
   const cesium = {
     Rectangle: { MAX_VALUE: { max: true } },
-    SingleTileImageryProvider: class {
+    GeographicTilingScheme: class {
       constructor(options) {
+        this.rectangle = options.rectangle;
         this.options = options;
       }
     },
+    Event: class {},
   };
-  const createCanvas = (w, h) => ({
-    width: w,
-    height: h,
-    getContext: () => ({
-      createImageData: (cw, ch) => ({
-        data: new Uint8ClampedArray(cw * ch * 4),
-      }),
-      putImageData() {},
-    }),
-    toDataURL: () => 'data:image/png;base64,AAAA',
-  });
-  const imagery = createHeatImagery({
-    cesium,
-    getHost: () => host,
-    createCanvas,
-  });
+  const imagery = createHeatImagery({ cesium, getHost: () => host });
   return { imagery, layers, removed, collection, setHost: (h) => (host = h) };
 }
 
-const raster = { width: 4, height: 2, rgba: new Uint8ClampedArray(32) };
+function image(width = 4, height = 2) {
+  return {
+    width,
+    height,
+    closed: false,
+    close() {
+      this.closed = true;
+    },
+  };
+}
+
+const raster = { width: 4, height: 2, image: image() };
 
 test('setRaster drapes one full-globe tile and replaces it on the next build', () => {
   const h = harness();
   h.imagery.setRaster(raster);
   assert.equal(h.layers.length, 1);
-  assert.deepEqual(h.layers[0].provider.options.rectangle, { max: true });
-  assert.equal(h.layers[0].provider.options.tileWidth, 4);
+  assert.deepEqual(h.layers[0].provider.rectangle, { max: true });
+  assert.equal(h.layers[0].provider.tileWidth, 4);
+  assert.equal(h.layers[0].provider.maximumLevel, 0);
   h.imagery.setRaster(raster);
   assert.equal(h.layers.length, 1, 'never two heat layers');
   assert.equal(h.removed[0].destroy, true);
+});
+
+test('the provider hands Cesium the image itself, never a PNG', async () => {
+  const h = harness();
+  const built = { width: 4, height: 2, image: image() };
+  h.imagery.setRaster(built);
+  const provider = h.layers[0].provider;
+  assert.equal(await provider.requestImage(0, 0, 0), built.image);
+  assert.equal(provider.hasAlphaChannel, true);
+  assert.equal(provider.tilingScheme.options.numberOfLevelZeroTilesX, 1);
+  assert.equal(provider.tilingScheme.options.numberOfLevelZeroTilesY, 1);
+});
+
+test('a replaced raster releases its bitmap; rehome keeps the current one', () => {
+  const h = harness();
+  const first = { width: 4, height: 2, image: image() };
+  const second = { width: 4, height: 2, image: image() };
+  h.imagery.setRaster(first);
+  h.imagery.rehome();
+  assert.equal(first.image.closed, false);
+  h.imagery.setRaster(second);
+  assert.equal(first.image.closed, true);
+  assert.equal(second.image.closed, false);
+  h.imagery.destroy();
+  assert.equal(second.image.closed, true);
 });
 
 test('setShow toggles without rebuilding', () => {

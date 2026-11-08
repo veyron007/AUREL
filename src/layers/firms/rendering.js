@@ -1,7 +1,6 @@
 import * as Cesium from 'cesium';
 import { FIRMS_OVERLAY_SOURCE_ID } from '../../data/firmsLabels.js';
 import { horizonOccluder } from '../../data/iconOrientation.js';
-import { buildHeatRaster } from '../../data/firmsHeatRaster.js';
 import {
   LOD_LEVELS,
   CONTEXT_TOP_N,
@@ -10,6 +9,8 @@ import {
   HEAT_REBUILD_MS,
 } from './policy.js';
 import { createHeatImagery } from './heatImagery.js';
+import { createHeatRasterClient } from './heatRasterClient.js';
+import { buildFireGridIndex, queryFireGridIndex } from './markerIndex.js';
 
 /** The markers drawn under the far bands' heatmap for the hand-off fade. */
 const HANDOFF_MARKER_LOD = LOD_LEVELS.find((lod) => lod.mode === 'detections');
@@ -111,9 +112,16 @@ export function createRendering({
     const billboards = layerState._billboards;
     if (!billboards) return;
     billboards.show = layerState._enabled && heat < 1;
-    const color = Cesium.Color.WHITE.withAlpha(1 - heat, fadeColor);
-    for (let i = 0; i < billboards.length; i += 1)
-      billboards.get(i).color = color;
+    Cesium.Color.WHITE.withAlpha(1 - heat, fadeColor);
+    // Only sprites on the near side are drawn; a far-side sprite takes the
+    // fade when the horizon cull shows it again (refreshHorizonCulling).
+    // Every write dirties the sprite's vertices, so equal colours are skipped.
+    const markers = layerState._markerBillboards;
+    for (let i = 0; i < markers.length; i += 1) {
+      const billboard = markers[i];
+      if (billboard.show && !Cesium.Color.equals(billboard.color, fadeColor))
+        billboard.color = fadeColor;
+    }
   }
 
   /**
@@ -191,26 +199,66 @@ export function createRendering({
     return layerState._heatImagery;
   }
 
-  /** Build the heat raster from the shown set and drape it. */
+  /** The worker-backed raster builder, created on first use. */
+
+  function heatRasterClient() {
+    if (!layerState._heatRasterClient) {
+      layerState._heatRasterClient = createHeatRasterClient({
+        onFallback: (error) =>
+          console.warn(
+            '[FIRMS] Heat raster worker unavailable; building on the main thread.',
+            error,
+          ),
+      });
+    }
+    return layerState._heatRasterClient;
+  }
+
+  /**
+   * Build the heat raster from the shown set off the main thread and drape
+   * it when it lands. A result for a set that is no longer shown (a filter
+   * change or refresh meanwhile) is dropped; the newer set builds its own.
+   */
 
   function rebuildHeatRaster() {
     clearTimeout(layerState._heatRebuildTimer);
     layerState._heatRebuildTimer = null;
     if (layerState._destroyed) return;
-    layerState._heatRaster = buildHeatRaster(layerState._fires, HEAT_RASTER);
-    heatImagery().setRaster(layerState._heatRaster);
+    const fires = layerState._fires;
+    layerState._heatBuildFires = fires;
+    heatRasterClient()
+      .build(fires, HEAT_RASTER)
+      .then((raster) => {
+        if (!raster) return;
+        if (layerState._heatBuildFires === fires)
+          layerState._heatBuildFires = null;
+        if (layerState._destroyed || layerState._fires !== fires) {
+          raster.image?.close?.();
+          return;
+        }
+        layerState._heatRaster = raster;
+        heatImagery().setRaster(raster);
+        services.render?.governorRequestRender?.('firms-heat-raster');
+      })
+      .catch((error) => {
+        if (layerState._heatBuildFires === fires)
+          layerState._heatBuildFires = null;
+        console.error('[FIRMS] Heat raster build failed.', error);
+      });
   }
 
   /**
-   * Make sure the draped heatmap matches the shown set. The first paint in a
-   * far band is immediate; other builds (filter drags, refreshes, the
+   * Make sure the draped heatmap matches the shown set. The first build in a
+   * far band starts at once; other builds (filter drags, refreshes, the
    * preload under the markers) trail by HEAT_REBUILD_MS and keep the
-   * previous heatmap on screen meanwhile.
+   * previous heatmap on screen meanwhile. A build already running for the
+   * shown set is not started again.
    * @param {boolean} now Build at once when nothing is draped yet.
    */
 
   function ensureHeatRaster(now) {
     if (layerState._heatRaster) return;
+    if (layerState._heatBuildFires === layerState._fires) return;
     if (now && !heatImagery().hasRaster()) {
       rebuildHeatRaster();
       return;
@@ -332,59 +380,102 @@ export function createRendering({
     ensureDetectionCollections();
     layerState._dataSource.entities.removeAll();
     if (!layerState._billboards) return null;
-    layerState._billboards.removeAll();
-    layerState._pickIndexById.clear();
-    layerState._cullPositions.length = 0;
-
-    let candidates;
-    if (bounds) {
-      // Walk the pre-sorted FRP index and early-exit at the cap — the old
-      // collect-then-sort touched and sorted every in-view detection per
-      // rebuild (tens of thousands mid-zoom; field-test round 1 chug).
-      candidates = [];
-      for (const fire of layerState._firesByFrp) {
-        if (!components.model.boundsContainPoint(bounds, fire.lat, fire.lon))
-          continue;
-        candidates.push(fire);
-        if (candidates.length >= lod.maxDetections) break;
-      }
-    } else {
-      // Sky/horizon view: fall back to the globally strongest detections.
-      candidates = layerState._firesByFrp.slice(0, lod.maxDetections);
-    }
-
-    const markers = [];
+    const candidates = markerCandidates(lod, bounds);
     // Only the close band warms terrain floors (renderDetections).
     const anchor =
       lod.id === 'close'
         ? components.model.firePosition
         : components.model.fireBuiltPosition;
+    const markers = [];
+    const next = new Map();
+    const billboards = [];
+    layerState._cullPositions.length = 0;
     for (const fire of candidates) {
-      const coreSize = components.model.frpPixelSize(fire.frp);
       const position = anchor(fire);
       const cullPosition = components.model.fireCullPosition(fire, position);
-      const pickId = `firms-${fire.index}`;
-      layerState._pickIndexById.set(pickId, fire);
+      const billboard = keepOrAddMarker(fire, position);
+      next.set(fire, billboard);
+      billboards.push(billboard);
       layerState._cullPositions.push(cullPosition);
       markers.push({ position, cullPosition, fire, cell: null });
-      layerState._billboards.add({
-        id: pickId,
-        position,
-        image: components.model.glowSprite(
-          components.model.detectionColorStop(fire),
-          components.model.sizeBucket(coreSize),
-        ),
-        verticalOrigin: Cesium.VerticalOrigin.CENTER,
-        horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
-      });
     }
+    for (const [fire, billboard] of layerState._markerByFire) {
+      if (next.has(fire)) continue;
+      layerState._pickIndexById.delete(billboard.id);
+      layerState._billboards.remove(billboard);
+    }
+    layerState._markerByFire = next;
+    layerState._markerBillboards = billboards;
 
     // Freshly-added sprites default to show=true; cull the far side now so a
     // rebuild never flashes through-the-planet detections while the camera
     // sits still (the moveEnd/preRender hooks only fire on camera motion).
     refreshHorizonCulling();
     return markers;
+  }
+
+  /**
+   * The strongest detections in view for a marker band, strongest first:
+   * the grid index walks only the cells the padded view touches and returns
+   * what a scan of the FRP-sorted set would (markerIndex.js).
+   * @param {Object} lod - Detections band descriptor.
+   * @param {?Object} bounds - Padded view bounds in degrees, or null.
+   * @returns {Array<Object>}
+   */
+
+  function markerCandidates(lod, bounds) {
+    const firesByFrp = layerState._firesByFrp;
+    // Sky/horizon view: fall back to the globally strongest detections.
+    if (!bounds) return firesByFrp.slice(0, lod.maxDetections);
+    if (layerState._markerIndexSource !== firesByFrp) {
+      layerState._markerIndex = buildFireGridIndex(firesByFrp);
+      layerState._markerIndexSource = firesByFrp;
+    }
+    return queryFireGridIndex(
+      layerState._markerIndex,
+      firesByFrp,
+      bounds,
+      lod.maxDetections,
+      components.model.boundsContainPoint,
+    );
+  }
+
+  /**
+   * The sprite for one detection: the one already drawn when it stays in
+   * the set (its image depends only on the detection; its anchor moves only
+   * when a terrain floor lands), else a new one carrying the current
+   * hand-off fade. Diffing replaces the old clear-and-refill of up to 40,000
+   * sprites on every rebuild.
+   */
+
+  function keepOrAddMarker(fire, position) {
+    const kept = layerState._markerByFire.get(fire);
+    if (kept) {
+      if (kept.position !== position) kept.position = position;
+      return kept;
+    }
+    const pickId = `firms-${fire.index}`;
+    layerState._pickIndexById.set(pickId, fire);
+    const coreSize = components.model.frpPixelSize(fire.frp);
+    return layerState._billboards.add({
+      id: pickId,
+      position,
+      color: currentFadeColor(),
+      image: components.model.glowSprite(
+        components.model.detectionColorStop(fire),
+        components.model.sizeBucket(coreSize),
+      ),
+      verticalOrigin: Cesium.VerticalOrigin.CENTER,
+      horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    });
+  }
+
+  /** The marker colour for the last applied hand-off fade. */
+
+  function currentFadeColor() {
+    const heat = Math.max(0, layerState._handoffHeat);
+    return Cesium.Color.WHITE.withAlpha(1 - heat, fadeColor);
   }
 
   function ensureDetectionCollections() {
@@ -411,6 +502,9 @@ export function createRendering({
       }
     }
     layerState._billboards = null;
+    layerState._markerByFire = new Map();
+    layerState._markerBillboards = [];
+    layerState._pickIndexById.clear();
     overlayHost.clearSource(FIRMS_OVERLAY_SOURCE_ID);
     overlayHost.setVisible(FIRMS_OVERLAY_SOURCE_ID, false);
   }
@@ -441,13 +535,25 @@ export function createRendering({
    */
 
   function refreshHorizonCulling() {
-    if (!layerState._billboards || !layerState._billboards.length) return;
+    const markers = layerState._markerBillboards;
+    if (!layerState._billboards || !markers.length) return;
     components.model.applyHorizonCull(
-      layerState._billboards,
+      markerView,
       fireHorizonOccluder(),
       layerState._cullPositions,
+      currentFadeColor(),
     );
   }
+
+  /** The drawn markers in candidate order, index-aligned with _cullPositions. */
+  const markerView = {
+    get length() {
+      return layerState._markerBillboards.length;
+    },
+    get(i) {
+      return layerState._markerBillboards[i];
+    },
+  };
   return {
     renderCurrentLod,
     renderBand,
