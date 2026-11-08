@@ -9,6 +9,11 @@ import {
   scanlineOffsetPx,
 } from './detectionRenderDemand.js';
 import {
+  createScanlinePatternCache,
+  createSensorPalette,
+  strokeWithGlow,
+} from './detectionSurfaceLook.js';
+import {
   acquireAlpha,
   appendCornerBracket,
   appendTransitBracket,
@@ -166,8 +171,6 @@ let _debugBanner = false;
  *  Shared with the render-demand policy, which owes the scene a frame for exactly
  *  as long as this window is open (`detectionRenderDemand.js`). */
 const FADE_MS = DETECTION_ENABLE_FADE_MS;
-/** @constant {number} GLOW_PX - Soft glow radius, applied once via a CSS drop-shadow (not per-primitive). */
-const GLOW_PX = DETECTION_STYLE.glowPx;
 
 /**
  * The clock the render-demand model runs on: monotonic, and the SAME source the
@@ -253,6 +256,10 @@ let _platePaint = DETECTION_THEME_MAP._default.calloutPlate;
 let _platePaintSpace = DETECTION_THEME_MAP._default.calloutPlateSpace;
 /** @type {Object} Active theme palette from THEME_MAP */
 let _theme = THEME_MAP._default;
+/** Theme colours as the former CSS contrast/saturate filter showed them. */
+let _sensorColor = createSensorPalette(THEME_MAP._default.filter);
+/** Cached scanline tiles; the pattern replaces a fillRect per line. */
+const _scanlinePattern = createScanlinePatternCache();
 /** @type {string} Name of the active theme */
 let _themeName = 'normal';
 /** @type {number} Canonical density stop (0, 25, 50, 75, or 100). */
@@ -630,6 +637,7 @@ export function setDetectionStyle(styleName) {
   // these strings directly, so the hot path never builds a colour.
   _platePaint = _theme.calloutPlate || THEME_MAP._default.calloutPlate;
   _platePaintSpace = _theme.calloutPlateSpace || _platePaint;
+  _sensorColor = createSensorPalette(_theme.filter);
   _applySurfaceTheme();
   // Host invalidation is frame-global, so one request repaints both lanes.
   _hostLane?.requestPaint();
@@ -638,8 +646,10 @@ export function setDetectionStyle(styleName) {
 function _applySurfaceTheme() {
   if (!_hostSurface) return;
   _hostSurface.style.mixBlendMode = _theme.blend;
-  // This exact CSS chain is one compositor pass over the finished layer.
-  _hostSurface.style.filter = `${_theme.filter} drop-shadow(0 0 ${GLOW_PX}px ${_theme.glow})`;
+  // The contrast/saturate/drop-shadow look is drawn into the canvas
+  // (detectionSurfaceLook.js); a CSS filter here would re-run over the whole
+  // viewport on every rendered frame.
+  _hostSurface.style.filter = 'none';
 }
 
 function _syncSurfaceVisibility() {
@@ -869,11 +879,21 @@ function _collectDetectableObjects() {
  */
 function _drawScanlines(width, height, nowMs) {
   if (!_theme.scanline || !_ctx) return;
+  const color = _sensorColor(_theme.labelBg);
+  const pattern = _scanlinePattern(_ctx, color);
+  const offset = scanlineOffsetPx(nowMs);
   _ctx.save();
   _ctx.globalAlpha = _theme.scanline;
-  _ctx.fillStyle = _theme.labelBg;
-  for (let y = scanlineOffsetPx(nowMs); y < height; y += 4) {
-    _ctx.fillRect(0, y, width, 1);
+  if (pattern) {
+    // One fill of a 1 x 4 px tile, unsmoothed, instead of a fillRect per
+    // line; the translate puts the lit row at `offset`, as the loop did.
+    _ctx.imageSmoothingEnabled = false;
+    _ctx.fillStyle = pattern;
+    _ctx.translate(0, offset);
+    _ctx.fillRect(0, -offset, width, height);
+  } else {
+    _ctx.fillStyle = color;
+    for (let y = offset; y < height; y += 4) _ctx.fillRect(0, y, width, 1);
   }
   _ctx.restore();
 }
@@ -900,9 +920,9 @@ function _drawModeBanner(visibleCount, sampledCount) {
   const allocation =
     _allocationStrategy === ALLOCATION_ELASTIC ? 'ELASTIC' : 'WEIGHTED';
   const text = `${mode}  VIS:${visibleCount}  SRC:${sampledCount}  DENS:${_densityPct}%  ${allocation}  ${_lastRenderMs.toFixed(1)}ms${paused}`;
-  _ctx.fillStyle = _theme.labelBg;
+  _ctx.fillStyle = _sensorColor(_theme.labelBg);
   _ctx.fillRect(12, 12, Math.max(180, _ctx.measureText(text).width + 12), 16);
-  _ctx.fillStyle = _theme.label;
+  _ctx.fillStyle = _sensorColor(_theme.label);
   _ctx.fillText(text, 18, 23);
 }
 
@@ -918,12 +938,9 @@ function _drawSparseFocusRing(width, height) {
   const cy = height * 0.5;
   const r = Math.min(width, height) * SPARSE_ZONE_FRACTION;
   _ctx.save();
-  _ctx.strokeStyle = _theme.glow;
-  _ctx.globalAlpha = 0.35;
-  _ctx.lineWidth = 1;
   _ctx.beginPath();
   _ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  _ctx.stroke();
+  strokeWithGlow(_ctx, null, _sensorColor(_theme.glow), _theme.glow, 0.35, 1);
   _ctx.restore();
 }
 
@@ -1598,29 +1615,37 @@ function _drawOverlay(frame) {
   _transitBracketAlpha = fade * bracketPresentationOpacity;
 
   // Brackets — batched by tier color and linear radial-opacity band.
-  _ctx.lineWidth = bracketWidth;
+  // Each batch strokes with its glow halo (detectionSurfaceLook.js).
   for (const bands of bracketPaths.values()) {
     for (const entry of bands) {
       if (!entry) continue;
-      _ctx.globalAlpha = fade * entry.alpha * bracketPresentationOpacity;
-      _ctx.strokeStyle = entry.color;
-      _ctx.stroke(entry.path);
+      strokeWithGlow(
+        _ctx,
+        entry.path,
+        _sensorColor(entry.color),
+        _theme.glow,
+        fade * entry.alpha * bracketPresentationOpacity,
+        bracketWidth,
+      );
     }
   }
   if (echoPaths) {
-    _ctx.lineWidth = echoField.echo.lineWidth;
-    _ctx.strokeStyle = awarenessEchoColor(
-      _theme.line,
-      _theme === THEME_MAP._default,
+    const echoColor = _sensorColor(
+      awarenessEchoColor(_theme.line, _theme === THEME_MAP._default),
     );
     for (let band = 1; band <= ECHO_ALPHA_STEPS; band++) {
       if (!echoPaths[band]) continue;
-      _ctx.globalAlpha =
-        fade * (band / ECHO_ALPHA_STEPS) * bracketPresentationOpacity;
-      _ctx.stroke(echoPaths[band]);
+      strokeWithGlow(
+        _ctx,
+        echoPaths[band],
+        echoColor,
+        _theme.glow,
+        fade * (band / ECHO_ALPHA_STEPS) * bracketPresentationOpacity,
+        echoField.echo.lineWidth,
+      );
     }
-    _ctx.lineWidth = bracketWidth;
   }
+  _ctx.lineWidth = bracketWidth;
 
   const renderEntries = _labelArbiter.renderEntries(candidateMap, now);
   const fadingCount = countFadingRenderEntries(renderEntries);
