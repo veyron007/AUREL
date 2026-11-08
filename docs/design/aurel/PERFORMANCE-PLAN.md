@@ -401,7 +401,7 @@ The parallel tracks do not touch the same files: Phase 3 is mostly `server/` and
 | Phase | Status | Measured result | Commits |
 |---|---|---|---|
 | 0 Measure | not started | | |
-| 1 Delivery | not started | | |
+| 1 Delivery | WP1.1 to WP1.6 landed | Empty globe, cold cache, same probe: dev server 1,594 requests, 80.8 MB, ready 6.9 s (17.3 s at 50 Mbps); `npm run serve` 295 requests, 11.9 MB, ready 3.8 s (4.3 s at 50 Mbps). Served build before this phase: 351 requests, 14.2 MB, ready 6.1 s. About 7 MB of the remainder is remote terrain and imagery. Most of the ready gain is WP1.5: the cover waited for the start-up share flight (a fixed 1.5 s delay plus a 3 s `flyTo` no one could see), so the start-up restore now lands at once and the cover lifts when the destination's tiles report loaded (capped at 2 s, `src/app/startupView.js`); app-ready to cover-hidden fell from about 4.4 s to about 2.2 s with an identical reveal frame. | `worktree-agent-a01e7c00e67b2833d` |
 | 2 Startup bundle | not started | | |
 | 3 Data pipeline | not started | | |
 | 4 Rendering | not started | | |

@@ -1,8 +1,10 @@
 # syntax=docker/dockerfile:1
 #
-# The dev server is the whole app: Vite serves the client AND runs the API
-# proxies (ADS-B, AIS, Overpass, OpenAI Realtime, ...) as middleware, so there
-# is nothing else to containerise. See compose.yaml for the usual entry point.
+# Vite is the whole app: it serves the client AND runs the API proxies (ADS-B,
+# AIS, Overpass, OpenAI Realtime, ...) as middleware, so there is nothing else
+# to containerise. The launcher serves the built app (scripts/serve-built.mjs);
+# GEV_LAUNCH_MODE=dev serves the dev server instead. See compose.yaml for the
+# usual entry point.
 # Same Node as CI (package.json engines, .github/workflows), pinned by digest.
 FROM node:24.22.2-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c
 
@@ -32,6 +34,12 @@ RUN npm ci
 RUN mkdir -p node_modules/.vite && chmod 777 node_modules node_modules/.vite
 
 COPY --chown=node:node . .
+# Build once here so a container started from the image serves at once. The
+# compose bind mount hides this copy; the launcher then builds into the
+# checkout on first start and skips it while nothing changes. Open the output
+# to whichever user compose runs as, like the caches above.
+RUN node scripts/serve-built.mjs --build-only \
+  && chmod -R a+rwX dist node_modules/.vite-build
 
 # Bind to all interfaces, otherwise the published port hits nothing. This does
 # not widen the Host allowlist: IP addresses and localhost are accepted, other
@@ -41,10 +49,10 @@ ENV PORT=4173
 EXPOSE 4173
 # node:slim has no curl, so probe with Node's built-in fetch. 127.0.0.1 is
 # always on the Host allowlist, and the generous start period covers Vite's
-# first-run dependency optimisation.
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+# first-run build (or, with GEV_LAUNCH_MODE=dev, dependency optimisation).
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:'+(Number.parseInt(process.env.PORT,10)||4173)+'/').then((r)=>process.exit(r.ok?0:1),()=>process.exit(1))"]
-# The launcher is `npm run dev` plus one step: it trusts the container's
+# The launcher is `npm run serve` plus one step: it trusts the container's
 # gateway address for Provider Settings, because that is where Docker delivers
 # the host's own browser from (never 127.0.0.1). See scripts/docker-start.mjs.
 CMD ["node", "scripts/docker-start.mjs"]

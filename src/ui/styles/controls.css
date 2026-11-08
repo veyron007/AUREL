@@ -386,14 +386,19 @@ html:not([lang='en']):not(:lang(zh)):not(:lang(ja))
   align-items: center;
   justify-content: center;
   transition:
-    opacity 0.8s ease,
-    visibility 0.8s ease;
+    opacity 0.3s ease,
+    visibility 0.3s ease;
 }
 
 #loading-screen.hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+}
+
+/* After the fade the cover is emptied and leaves layout (startupChrome.js). */
+#loading-screen.retired {
+  display: none;
 }
 
 .loader-content {

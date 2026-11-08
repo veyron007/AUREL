@@ -1,7 +1,8 @@
 # Local typography
 
-AUREL's standalone entry now loads `/fonts/fonts.css`. Its text and icon faces
-are bundled in `public/fonts`; opening the application no longer asks Google
+AUREL's standalone entry loads its font faces from `src/ui/styles/fonts.css`,
+which `style.css` imports first, and preloads the Latin Plus Jakarta Sans and
+JetBrains Mono files. Its text and icon faces are bundled in `public/fonts`; opening the application no longer asks Google
 Fonts for stylesheets or font binaries. The local server still needs to be
 running. This does not turn remotely supplied map or data content into offline
 content.

@@ -164,6 +164,9 @@ export class ShareRestoration {
           navigationToken: generation,
           layersPromise: this._layerStateRestorePromise,
           settle: (result) => this._settleInitialShareRestore(result),
+          // The loading cover stays up until this restore settles
+          // (src/app/startupChrome.js), so a flight would be unseen.
+          instantCamera: true,
         });
       }, 1500);
     } else {
@@ -223,7 +226,13 @@ export class ShareRestoration {
    */
   async _runShareRestore(
     state,
-    { applyCamera, navigationToken, layersPromise, settle },
+    {
+      applyCamera,
+      navigationToken,
+      layersPromise,
+      settle,
+      instantCamera = false,
+    },
   ) {
     const generation = this._shareRestoreGeneration;
     const current = () =>
@@ -232,6 +241,7 @@ export class ShareRestoration {
       const share = await this.shareLinkManager.applyState(state, {
         applyCamera,
         navigationToken,
+        instantCamera,
       });
       const layers = await (layersPromise || Promise.resolve([]));
       if (!current()) return;

@@ -20,6 +20,7 @@ import { createServer } from 'node:http';
 import { connect } from 'node:net';
 const SCRIPT = fileURLToPath(import.meta.url),
   ROOT = path.resolve(path.dirname(SCRIPT), '..');
+const STARTUP_TIMEOUT_MS = 300000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const projectId = (root) => createHash('sha256').update(root).digest('hex');
 const validPort = (value) =>
@@ -239,7 +240,9 @@ export function createLocalSession({
                   `Local server startup timed out. Inspect ${path.join(directory, 'local-session.log')}.`,
                 ),
               ),
-            30000,
+            // A first start builds the app, which can take a few minutes on
+            // a slow machine.
+            STARTUP_TIMEOUT_MS,
           );
           const finish = (error, value) => {
             clearTimeout(timeout);
@@ -280,13 +283,32 @@ export function createLocalSession({
   }
   return { start, stop, status, storageDirectory: directory };
 }
+/** The launch-mode server (built app by default) in the listen/close shape. */
+async function launchServerFactory({ root, server: { host, port } }) {
+  const [vite, { startLaunchServer }] = await Promise.all([
+    import('vite'),
+    import('./launch-mode.mjs'),
+  ]);
+  let running = null;
+  return {
+    listen: async () => {
+      running = await startLaunchServer({
+        vite,
+        root,
+        host,
+        port,
+        tag: 'local',
+      });
+    },
+    close: async () => running?.close(),
+  };
+}
 /** Worker owns both listeners; a random per-launch capability authorizes only this session. */
 export async function serveOwned({
   root,
   port,
   token,
-  serverFactory = async (options) =>
-    (await import('vite')).createServer(options),
+  serverFactory = launchServerFactory,
   exit = (code) => process.exit(code),
 }) {
   root = await realpath(root);

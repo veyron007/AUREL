@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { applyPinokioEnvironment } from './pinokio-environment.mjs';
 import { isDirectInvocation } from './pinokio-install.mjs';
 import { validatePinokioSharing } from './pinokio-preflight.mjs';
+import { startLaunchServer } from './launch-mode.mjs';
 
 const MODULE_PATH = fileURLToPath(import.meta.url);
 const ROOT = realpathSync(path.resolve(path.dirname(MODULE_PATH), '..'));
@@ -38,17 +39,14 @@ async function start() {
 
   // Import Vite only after app-scoped blank fields have replaced any merged
   // Pinokio-global values. Vite snapshots process.env during configuration.
-  const { createServer } = await loadViteFromCanonicalRoot();
-  const server = await createServer({
+  const vite = await loadViteFromCanonicalRoot();
+  const server = await startLaunchServer({
+    vite,
     root: ROOT,
-    server: {
-      host: '127.0.0.1',
-      port,
-      strictPort: true,
-    },
+    host: '127.0.0.1',
+    port,
+    tag: 'Pinokio',
   });
-  await server.listen();
-  server.printUrls();
   console.log(`[Pinokio] Ready at http://127.0.0.1:${port}/`);
 
   for (const signal of ['SIGINT', 'SIGTERM']) {

@@ -6,7 +6,7 @@ import { _claimContextVisualAuthority, setContextMode } from './ui/contextAction
 import { _initGlobalContextPanel } from './ui/contextBindings.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ShareLinkManager, decodeShareCreatedAtMs } from './sharelink.js';
+import { SHARED_VIEW_FLIGHT_SECONDS, ShareLinkManager, decodeShareCreatedAtMs } from './sharelink.js';
 import { createDefaultLayerState } from './data/layerState.js';
 import { parseSharePath } from './share/shareLinkPath.js';
 import { decodeShareView } from './share/viewCodec.js';
@@ -461,6 +461,33 @@ test('share-link restore forces a final stationary render for Google 3D Tiles', 
     orientation: calls.flyTo.orientation,
   });
   assert.equal(calls.renders, 1);
+});
+
+test('the start-up restore lands at once under the cover; later shares still fly', async () => {
+  const durations = [];
+  const viewer = {
+    camera: {
+      changed: { addEventListener() {} },
+      positionCartographic: { latitude: 0, longitude: 0, height: 1000 },
+      heading: 0,
+      pitch: -Math.PI / 2,
+      roll: 0,
+      flyTo(options) {
+        durations.push(options.duration);
+        options.complete();
+      },
+      setView() {},
+    },
+    scene: { requestRender() {} },
+  };
+  const manager = new ShareLinkManager(viewer);
+  const state = { lat: 30.3, lon: 78.0, alt: 1800000, heading: 0, pitch: -90, roll: 0 };
+  const startup = await manager.applyState(state, { instantCamera: true });
+  assert.equal(startup.camera, 'applied');
+  const later = await manager.applyState(state);
+  assert.equal(later.camera, 'applied');
+  assert.deepEqual(durations, [0, SHARED_VIEW_FLIGHT_SECONDS]);
+  assert.equal(SHARED_VIEW_FLIGHT_SECONDS, 3);
 });
 
 test('newer navigation suppresses delayed share camera while non-camera state still restores', async () => {

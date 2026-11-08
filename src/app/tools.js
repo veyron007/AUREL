@@ -43,6 +43,7 @@ import {
   holdContinuousRender,
   releaseContinuousRender,
 } from '../renderGovernor.js';
+import { waitForViewTiles } from './startupView.js';
 
 /** Attach scene tools, rendering listeners and the application debug handle. */
 export function createApplicationTools({
@@ -267,7 +268,16 @@ export function createApplicationTools({
   });
   defer(() => workspaceStore.detach(sessionToken));
   if (startChrome)
-    defer(startChrome({ loadingScreen, styleManager, dataManager, signal }));
+    defer(
+      startChrome({
+        loadingScreen,
+        styleManager,
+        dataManager,
+        signal,
+        // The start-up view lands under the cover; let its tiles arrive.
+        waitForView: () => waitForViewTiles({ scene: viewer.scene, signal }),
+      }),
+    );
   // Idle render governor: flips the scene into requestRenderMode whenever
   // nothing animates per frame. Installed AFTER every module above has had
   // its chance to register pre-install holds. (perf wave 2)

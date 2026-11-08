@@ -1,4 +1,6 @@
 /* Preserve component and responsive rule order in one stylesheet entry. */
+/* Local type and icon faces first, so no second blocking stylesheet is needed. */
+@import './src/ui/styles/fonts.css';
 @import './src/ui/styles/foundation.css';
 @import './src/ui/styles/action-button.css';
 @import './src/ui/styles/form-field.css';

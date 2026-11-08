@@ -18,9 +18,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="AUREL" />
+  <!-- Local open-license type and icons (src/ui/styles/fonts.css, imported by
+       style.css; see public/fonts/manifest.json). The Latin faces the loading
+       screen and the Spatial chrome draw first start downloading at once:
+       Plus Jakarta Sans (one variable file covers 400 to 700) and JetBrains
+       Mono. -->
+  <link rel="preload" href="/fonts/plus-jakarta-sans-4.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/jetbrains-mono-6.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/style.css" />
-  <!-- Local open-license type and icons; see public/fonts/manifest.json. -->
-  <link rel="stylesheet" href="/fonts/fonts.css" />
 </head>
 <body>
   <div class="gev-view" data-gev-view="scene-chrome"></div>

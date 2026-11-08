@@ -32,8 +32,10 @@ test('explicit build inputs preserve browser-only defines, plugin order and loop
   assert.equal(config.plugins[0].enforce, 'pre');
   assert.equal(config.plugins[1].name, 'host-check');
   assert.equal(config.plugins[1].enforce, 'pre');
-  assert.equal(config.plugins[3].name, 'vite:vue');
-  assert.equal(config.plugins[4], plugin);
+  assert.equal(config.plugins[2].name, 'vite-plugin-cesium');
+  assert.equal(config.plugins[3].name, 'gev-cesium-script');
+  assert.equal(config.plugins[4].name, 'vite:vue');
+  assert.equal(config.plugins[5], plugin);
   assert.equal(config.server.host, 'localhost');
   assert.equal(config.server.port, 4173);
   assert.deepEqual(config.server.allowedHosts, ['localhost', '127.0.0.1']);
@@ -131,7 +133,7 @@ test('build helper does not discover environment values or construct local provi
       undefined,
     );
     assert.deepEqual(
-      config.plugins.slice(4).map((plugin) => plugin.name),
+      config.plugins.slice(5).map((plugin) => plugin.name),
       ['embed-framing', 'panel-build'],
     );
   } finally {
@@ -145,10 +147,15 @@ test('root config retains named exports and admits free-only providers in order'
     assert.equal(compatibility[name], value, name);
   const config = standaloneConfig({ mode: 'test' }, { nominatimStorageDir });
   const standaloneProviders = config.plugins
-    .slice(5, -7)
+    .slice(8, -7)
     .map((plugin) => plugin.name);
-  assert.equal(config.plugins[4].name, 'standalone-free-only');
-  assert.equal(config.plugins[4].enforce, 'pre');
+  assert.equal(config.plugins[5].name, 'standalone-free-only');
+  assert.equal(config.plugins[5].enforce, 'pre');
+  // Compression and cache headers run ahead of every provider route.
+  assert.equal(config.plugins[6].name, 'gev-compression');
+  assert.equal(config.plugins[6].enforce, 'pre');
+  assert.equal(config.plugins[7].name, 'gev-cache-headers');
+  assert.equal(config.plugins[7].enforce, 'pre');
   for (const paused of [
     'gemini-live-proxy',
     'openai-realtime-proxy',

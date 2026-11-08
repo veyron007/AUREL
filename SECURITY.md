@@ -112,6 +112,14 @@ The dev server is a **key broker**: every server-side key above is spendable by 
   `none` when widening the publish: it becomes an explicit empty list before
   Vite loads configuration, so the gateway cannot regain Provider Settings
   access. Unset or blank values preserve automatic gateway discovery.
+- **The served build keeps the same guards.** `npm run serve` and the
+  launchers that use it (local:start, Docker, Pinokio) serve the built app
+  through `vite preview` with the same provider middleware, Host check, CSP and
+  API headers as the dev server. Provider Settings runs there only because
+  `scripts/serve-built.mjs` sets `GEV_SERVED_BUILD=1` before Vite loads the
+  configuration (read once, so a dotenv line cannot enable it) and supplies the
+  restart a save needs; a plain `vite preview` still has no Provider Settings.
+  Its loopback-only admission is unchanged.
 - **Provider-side budgets are the real backstop.** For hard spend protection, configure limits where the money is: OpenAI platform usage limits, Google Cloud budget alerts + per-API quotas, and equivalent controls for any other keyed provider.
 - **Pinokio LAN and Cloudflare sharing are refused.** The current supported
   Pinokio release re-reads sharing state when an app registers its Open URL and
