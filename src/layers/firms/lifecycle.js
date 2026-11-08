@@ -79,6 +79,9 @@ export function createLifecycle({
       layerState.request = null;
       layerState._loading = false;
       layerState._enabled = false;
+      // Disable clears the label overlay; the first poll after enable redraws
+      // it even when the snapshot is unchanged (304).
+      layerState._redrawOnNextPoll = true;
       components.selection.clearFireSelection();
       if (layerState._dataSource) layerState._dataSource.show = false;
       if (layerState._billboards) layerState._billboards.show = false;
@@ -127,6 +130,7 @@ export function createLifecycle({
       layerState._rowControlsListener = null;
       layerState._cellCount = 0;
       layerState._lastUpdate = null;
+      layerState._snapshotEtag = null;
       layerState._keyRequired = false;
       layerState._stale = false;
       layerState._error = null;

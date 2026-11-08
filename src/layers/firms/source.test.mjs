@@ -43,3 +43,31 @@ test('response-body completion honors cancellation without replacing records', a
     name: 'AbortError',
   });
 });
+test('a repeat poll sends the held validator and returns notModified on 304', async () => {
+  const seen = [];
+  const source = createFirmsSource({
+    fetchImpl: async (_url, init) => {
+      seen.push(init.headers?.['If-None-Match'] ?? null);
+      if (seen.length === 2)
+        return {
+          ok: false,
+          status: 304,
+          headers: new Headers(),
+          json: async () => {
+            throw new Error('a 304 has no body');
+          },
+        };
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers({ ETag: 'W/"firms-1-f-1"' }),
+        json: async () => ({ fetchedAt: 1, fires: [] }),
+      };
+    },
+  });
+  const first = await source.getSnapshot();
+  assert.equal(first.etag, 'W/"firms-1-f-1"');
+  const second = await source.getSnapshot({ etag: first.etag });
+  assert.deepEqual(second, { notModified: true });
+  assert.deepEqual(seen, [null, 'W/"firms-1-f-1"']);
+});
