@@ -163,6 +163,41 @@ export function apiResponseHeadersPlugin() {
   };
 }
 
+/** The script tag vite-plugin-cesium injects for the prebuilt Cesium bundle. */
+const CESIUM_SCRIPT_TAG = /<script src="(\/cesium\/Cesium\.js)"><\/script>/;
+
+/**
+ * Deferred, versioned Cesium script. A deferred classic script still runs
+ * before module scripts, in document order, so `window.Cesium` exists when the
+ * module entry runs; meanwhile the loading screen can paint while Cesium
+ * downloads. The version query lets the server cache the file for a year.
+ * A document without the tag (the dev server imports Cesium as a module) is
+ * returned unchanged; a tag placed after the module entry fails the build.
+ */
+export function deferCesiumScript(html, cesiumVersion) {
+  const match = CESIUM_SCRIPT_TAG.exec(html);
+  if (!match) return html;
+  const query = cesiumVersion ? `?v=${encodeURIComponent(cesiumVersion)}` : '';
+  const entry = html.search(/<script type="module"/);
+  if (entry !== -1 && entry < match.index)
+    throw new Error('The Cesium script must come before the module entry.');
+  return html.replace(
+    match[0],
+    `<script defer src="${match[1]}${query}"></script>`,
+  );
+}
+
+/** Vite plugin running deferCesiumScript after the Cesium plugin's tags land. */
+export function cesiumScriptPlugin({ cesiumVersion } = {}) {
+  return {
+    name: 'gev-cesium-script',
+    transformIndexHtml: {
+      order: 'post',
+      handler: (html) => deferCesiumScript(html, cesiumVersion),
+    },
+  };
+}
+
 /** Build browser assets with explicit inputs; never load environment or providers. */
 export function createBrowserViteConfig({
   plugins = [],
@@ -175,6 +210,9 @@ export function createBrowserViteConfig({
   port = 4173,
   allowedHosts = DEFAULT_ALLOWED_HOSTS,
   command,
+  cesiumVersion,
+  // Dev serves Cesium's minified workers and assets unless asked not to.
+  cesiumUnminified = false,
 } = {}) {
   const photonSetting = photonEndpointSetting(photonUrl);
   return {
@@ -183,7 +221,8 @@ export function createBrowserViteConfig({
       apiResponseHeadersPlugin(),
       // Next, so no provider route answers a Host the server does not allow.
       hostCheckPlugin(),
-      cesium(),
+      cesium({ devMinifyCesium: !cesiumUnminified }),
+      cesiumScriptPlugin({ cesiumVersion }),
       // Application views are Vue single-file components.
       vue(VUE_PLUGIN_OPTIONS),
       ...plugins,
