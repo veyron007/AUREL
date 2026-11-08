@@ -15,6 +15,9 @@
  */
 
 import { filterTrailing24h } from '../../src/data/firmsCsv.js';
+import { ifNoneMatchHits, snapshotCacheControl } from './common/etag.js';
+
+export { ifNoneMatchHits };
 
 /**
  * The time the body's trailing-24 h clamp is evaluated at.
@@ -40,26 +43,6 @@ export function firmsEtag(at, stale, cutoff) {
   return `W/"firms-${at}-${stale ? 's' : 'f'}-${cutoff}"`;
 }
 
-/** Strip the weak prefix: If-None-Match uses the weak comparison. */
-function opaqueTag(tag) {
-  const trimmed = String(tag).trim();
-  return trimmed.startsWith('W/') ? trimmed.slice(2) : trimmed;
-}
-
-/**
- * Whether an If-None-Match header matches the current validator.
- * @param {string|string[]|undefined} header
- * @param {string} etag
- * @returns {boolean}
- */
-export function ifNoneMatchHits(header, etag) {
-  const value = Array.isArray(header) ? header.join(',') : header;
-  if (typeof value !== 'string' || !value.trim()) return false;
-  if (value.trim() === '*') return true;
-  const wanted = opaqueTag(etag);
-  return value.split(',').some((tag) => opaqueTag(tag) === wanted);
-}
-
 /**
  * Cache-Control for a FIRMS body: a fresh body may be reused until the proxy
  * would refresh upstream, never longer; a stale one must always revalidate.
@@ -70,9 +53,7 @@ export function ifNoneMatchHits(header, etag) {
  * @returns {string}
  */
 export function firmsCacheControl(entry, stale, now, ttlMs) {
-  if (stale) return 'no-cache';
-  const seconds = Math.max(0, Math.floor((entry.at + ttlMs - now) / 1000));
-  return `private, max-age=${seconds}`;
+  return snapshotCacheControl(entry.at, ttlMs, now, stale);
 }
 
 /**

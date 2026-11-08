@@ -119,3 +119,105 @@ test('a satellite with a blank designator keeps matching by name', async (t) => 
     69728,
   );
 });
+
+/** An ingestion whose source answers per group from a script of replies. */
+function versionedIngestion(replyFor) {
+  const { state } = ingestionFor('');
+  const calls = { removeAll: 0, parse: 0, etags: [] };
+  state._pointCollection = {
+    removeAll: () => calls.removeAll++,
+    add: (point) => point,
+  };
+  const parts = {
+    orbits: {
+      parseTLE: (text) => {
+        calls.parse++;
+        return parseTleText(text);
+      },
+      propagatePosition: () => ({ longitude: 0, latitude: 0, altitude: 4e5 }),
+    },
+    labels: { _syncIssOverlay() {} },
+    controls: { _pointStyleFor: () => ({}) },
+    rendering: { _showOrbitPath() {} },
+    tracking: {
+      async _reconcileTrackedSubjectContext() {},
+      _applyPendingTrackingRestore() {},
+    },
+    catalog: {},
+  };
+  const source = {
+    async readGroup(group, { etag } = {}) {
+      calls.etags.push([group, etag ?? null]);
+      return replyFor(group, etag);
+    },
+  };
+  const { methods } = createIngestion({ state, services: {}, parts, source });
+  return { state, calls, update: () => methods.update({ scene: {} }) };
+}
+
+const GROUP_FIELD = {
+  stations: '00001',
+  visual: '00002',
+  'gps-ops': '00003',
+  'glo-ops': '00004',
+  galileo: '00005',
+  geo: '00006',
+};
+
+test('a refresh where every group answers 304 keeps the catalog without a rebuild', async (t) => {
+  t.mock.method(console, 'log', () => {});
+  t.mock.method(console, 'warn', () => {});
+  const { state, calls, update } = versionedIngestion((group, etag) =>
+    etag
+      ? { ok: true, notModified: true, text: '', stale: false, etag }
+      : {
+          ok: true,
+          text: tleSet(group.toUpperCase(), GROUP_FIELD[group]),
+          stale: false,
+          etag: `W/"tle-${group}-1"`,
+        },
+  );
+  await update();
+  const catalog = [...state._catalog];
+  const revision = state._catalogRevision;
+  state._lastUpdate = 0;
+  await update();
+  assert.equal(calls.removeAll, 1);
+  assert.equal(calls.parse, 6);
+  assert.equal(state._catalogRevision, revision);
+  assert.deepEqual([...state._catalog], catalog);
+  assert.ok(state._lastUpdate > 0, 'a confirmed refresh still stamps its time');
+  assert.deepEqual(
+    calls.etags.slice(6).map(([, etag]) => etag),
+    Object.keys(GROUP_FIELD).map((group) => `W/"tle-${group}-1"`),
+  );
+});
+
+test('one changed group rebuilds the same catalog a cold load would, reusing parsed groups', async (t) => {
+  t.mock.method(console, 'log', () => {});
+  t.mock.method(console, 'warn', () => {});
+  let round = 0;
+  const reply = (group, etag) => {
+    if (etag && group !== 'geo')
+      return { ok: true, notModified: true, text: '', stale: false, etag };
+    const name = round > 0 && group === 'geo' ? 'GEO-NEW' : group.toUpperCase();
+    return {
+      ok: true,
+      text: tleSet(name, GROUP_FIELD[group]),
+      stale: false,
+      etag: `W/"tle-${group}-${round}"`,
+    };
+  };
+  const warm = versionedIngestion(reply);
+  await warm.update();
+  round = 1;
+  await warm.update();
+  assert.equal(warm.calls.removeAll, 2);
+  assert.equal(warm.calls.parse, 7, 'only the changed group is parsed again');
+  const cold = versionedIngestion((group) => reply(group, null));
+  await cold.update();
+  assert.deepEqual(
+    [...warm.state._catalog].map(([id, entry]) => [id, entry.name, entry.group]),
+    [...cold.state._catalog].map(([id, entry]) => [id, entry.name, entry.group]),
+  );
+});

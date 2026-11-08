@@ -98,8 +98,10 @@ export function createControls({ state: layerState, services, parts, source }) {
     source: 'CelesTrak',
 
     updateInterval: 0,
-    // We use preRender for real-time updates, not interval polling
-    refreshInterval: 5 * 60 * 1000,
+    // We use preRender for real-time updates, not interval polling. The proxy
+    // caches elements for 6 h and answers unchanged groups with 304, so an
+    // hourly check keeps the catalog current without rebuilding it.
+    refreshInterval: 60 * 60 * 1000,
 
     getDetectableObjects(options = {}) {
       if (!layerState._pointCollection || !layerState._pointCollection.show)

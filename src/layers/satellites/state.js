@@ -16,6 +16,7 @@ export function createState({ services }) {
   // Satellite catalog: { noradId → { name, satrec, group } }
 
   state._catalog = new Map();
+  state._groupSnapshots = new Map();
 
   state._pointCollection = null;
 

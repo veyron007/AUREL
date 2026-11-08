@@ -104,6 +104,42 @@ test('compatibility exports retain the same LL2 header helper and TTL', () => {
   assert.equal(compatibility.LL2_CACHE_TTL_MS, LL2_CACHE_TTL_MS);
 });
 
+test('CelesTrak groups carry an ETag that answers 304 until the group is refreshed', async (t) => {
+  isolateDisk(t);
+  let now = Date.now();
+  t.mock.method(Date, 'now', () => now);
+  t.mock.method(console, 'warn', () => {});
+  let tle = 'ISS\n1 25544U fixture\n2 25544 fixture';
+  t.mock.method(globalThis, 'fetch', async () => new Response(tle));
+  const request = install(celestrakProxy());
+  const first = await request('/api/celestrak', '/stations');
+  const etag = first.headers.ETag;
+  assert.match(etag, /^W\/"tle-stations-\d+-f"$/);
+  assert.equal(first.headers['Cache-Control'], 'private, max-age=21600');
+  const repeat = await request('/api/celestrak', '/stations', 'GET', {
+    'if-none-match': etag,
+  });
+  assert.equal(repeat.status, 304);
+  assert.equal(repeat.body, undefined);
+  assert.equal(repeat.headers.ETag, etag);
+  now += 6 * 3600_000;
+  tle = 'ISS\n1 25544U changed\n2 25544 changed';
+  const refreshed = await request('/api/celestrak', '/stations', 'GET', {
+    'if-none-match': etag,
+  });
+  assert.equal(refreshed.status, 200);
+  assert.equal(refreshed.body, tle);
+  assert.notEqual(refreshed.headers.ETag, etag);
+  now += 6 * 3600_000;
+  t.mock.method(globalThis, 'fetch', async () => new Response('not a TLE'));
+  const stale = await request('/api/celestrak', '/stations', 'GET', {
+    'if-none-match': refreshed.headers.ETag,
+  });
+  assert.equal(stale.status, 200, 'a stale copy is a different validator');
+  assert.equal(stale.headers['Cache-Control'], 'no-cache');
+  assert.match(stale.headers.ETag, /-s"$/);
+});
+
 test('exported CelesTrak plugin coalesces refreshes, retains stale TLEs, and reads disk in a new instance', async (t) => {
   isolateDisk(t);
   let now = Date.now();

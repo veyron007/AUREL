@@ -19,6 +19,7 @@ export function createLifecycle({
       clearFocusTarget('satellites');
       layerState._viewer = viewer;
       layerState._catalog = new Map();
+      layerState._groupSnapshots = new Map();
       layerState._points = new Map();
       layerState._detectionObjects = new Map();
       layerState._orbitPaths = new Map();
@@ -155,6 +156,7 @@ export function createLifecycle({
       layerState._detectionObjects.clear();
       layerState._orbitPaths.clear();
       layerState._catalog.clear();
+      layerState._groupSnapshots = new Map();
       layerState._denseIds = [];
       layerState._denseCursor = 0;
       layerState._denseLoadToken++;

@@ -10,6 +10,56 @@ export function createIngestion({
   parts,
   source,
 }) {
+  /**
+   * Fetch one catalog group, sending the validator of the copy the current
+   * catalog was built from. Never throws except on abort.
+   */
+  async function readCatalogGroup(groupDef, signal) {
+    const held = layerState._groupSnapshots?.get(groupDef.path) || null;
+    try {
+      const res = await source.readGroup(groupDef.path, {
+        signal,
+        ...(held?.etag ? { etag: held.etag } : {}),
+      });
+      if (res.notModified && held)
+        return { ...groupDef, ...held, ok: true, unchanged: true };
+      if (!res.ok) return { ...groupDef, entries: [], ok: false };
+      const entries = parts.orbits.parseTLE(res.text);
+      signal.throwIfAborted();
+      return {
+        ...groupDef,
+        entries,
+        ok: entries.length > 0,
+        stale: Boolean(res.stale),
+        etag: res.etag || null,
+        unchanged: false,
+      };
+    } catch (error) {
+      if (signal.aborted || error?.name === 'AbortError') throw error;
+      return { ...groupDef, entries: [], ok: false };
+    }
+  }
+
+  /** Whether every group answered 304 for the copy the catalog holds. */
+  function isUnchangedCatalog(results) {
+    return (
+      layerState._catalog.size > 0 &&
+      results.every((result) => result.ok && result.unchanged)
+    );
+  }
+
+  /** Validators and parses the rebuilt catalog came from, per group. */
+  function snapshotsFrom(results) {
+    return new Map(
+      results
+        .filter((result) => result.ok && result.etag)
+        .map(({ path, etag, entries, stale }) => [
+          path,
+          { etag, entries, stale },
+        ]),
+    );
+  }
+
   const methods = {
     async update(viewer, { signal = null } = {}) {
       const trackingRefreshEpoch = ++layerState._trackingRefreshEpoch;
@@ -26,28 +76,12 @@ export function createIngestion({
       try {
         updateSignal.throwIfAborted();
         // Load all core groups in parallel; a failed/empty group degrades
-        // gracefully (parseTLE of an upstream error body yields []).
+        // gracefully (parseTLE of an upstream error body yields []). A group
+        // whose validator still matches answers 304 and reuses its parse.
         const results = await Promise.all(
-          CATALOG_GROUPS.map(async (groupDef) => {
-            try {
-              const res = await source.readGroup(groupDef.path, {
-                signal: updateSignal,
-              });
-              if (!res.ok) return { ...groupDef, entries: [], ok: false };
-              const entries = parts.orbits.parseTLE(res.text);
-              updateSignal.throwIfAborted();
-              return {
-                ...groupDef,
-                entries,
-                ok: entries.length > 0,
-                stale: Boolean(res.stale),
-              };
-            } catch (error) {
-              if (updateSignal.aborted || error?.name === 'AbortError')
-                throw error;
-              return { ...groupDef, entries: [], ok: false };
-            }
-          }),
+          CATALOG_GROUPS.map((groupDef) =>
+            readCatalogGroup(groupDef, updateSignal),
+          ),
         );
         updateSignal.throwIfAborted();
 
@@ -72,6 +106,20 @@ export function createIngestion({
             '[Data:Satellites] All CelesTrak groups failed — keeping existing catalog, surfacing outage',
           );
           // Re-apply dense mode is skipped (no fresh core catalog); tracking untouched.
+          return;
+        }
+
+        // Every group confirmed unchanged: the catalog on screen IS the newest
+        // data, so keep its points, orbit paths and detection labels as they
+        // are and only record that the refresh succeeded.
+        if (isUnchangedCatalog(results)) {
+          layerState._lastError = null;
+          layerState._lastUpdate = Date.now();
+          layerState._lastTrackingRefreshOutcome = {
+            epoch: trackingRefreshEpoch,
+            status: 'accepted',
+            failedGroups: [],
+          };
           return;
         }
 
@@ -174,6 +222,7 @@ export function createIngestion({
         layerState._catalogRevision++;
         layerState._lastUpdate = Date.now();
         layerState._lastPropagation = Date.now();
+        layerState._groupSnapshots = snapshotsFrom(results);
         layerState._lastTrackingRefreshOutcome = {
           epoch: trackingRefreshEpoch,
           status: failed.length ? 'partial' : 'accepted',

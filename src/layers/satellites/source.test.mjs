@@ -32,6 +32,30 @@ test('satellite sources confine catalog groups and reject a cancelled body', asy
   );
 });
 
+test('a group read with a held validator reports notModified on 304', async () => {
+  const seen = [];
+  const source = createSatelliteSource({
+    fetchImpl: async (_url, init = {}) => {
+      seen.push([init.headers?.['If-None-Match'] ?? null, init.cache ?? null]);
+      if (init.headers)
+        return { ok: false, status: 304, headers: new Headers() };
+      return new Response('ISS\n1 x\n2 x', {
+        headers: { ETag: 'W/"tle-stations-1-f"', 'x-tle-cache': 'HIT' },
+      });
+    },
+  });
+  const first = await source.readGroup('stations');
+  assert.equal(first.etag, 'W/"tle-stations-1-f"');
+  assert.equal(first.notModified, false);
+  const second = await source.readGroup('stations', { etag: first.etag });
+  assert.equal(second.notModified, true);
+  assert.equal(second.ok, true);
+  assert.deepEqual(seen, [
+    [null, null],
+    ['W/"tle-stations-1-f"', 'no-store'],
+  ]);
+});
+
 test('satellite factories keep control state separate and construct without requests', () => {
   const source = {
     readGroup() {
