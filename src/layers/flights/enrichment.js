@@ -9,6 +9,7 @@ import {
   ENRICH_AMBIENT_REFILL_WINDOW_MS,
   ENRICH_AMBIENT_PER_SWEEP,
 } from './policy.js';
+import { createTypeBatcher } from './typeBatch.js';
 
 export function createEnrichment({
   flightState,
@@ -75,35 +76,51 @@ export function createEnrichment({
     }
   }
 
+  /** Apply an adsbdb type answer to a live aircraft record. */
+  function _applyTypeData(icao24, data) {
+    const meta = flightState.records.data.get(icao24);
+    if (!meta) return; // evicted while the lookup was in flight
+    meta.typeCode = data.typeCode || meta.typeCode;
+    meta.typeName = data.typeName || meta.typeName;
+    meta.registration = data.registration || meta.registration;
+    if (meta.typeCode) {
+      const klass = classifyAircraft({
+        typeCode: meta.typeCode,
+        category: meta.category,
+      });
+      if (klass !== meta.klass) {
+        meta.klass = klass;
+        const bb = flightState._billboards.get(icao24);
+        if (bb) parts.rendering._applyFleetBillboardPresentation(icao24, bb);
+        // Hangar fleet: the class's GLB/scale may have changed — resync the
+        // live model, any in-flight load, and the tracked standalone model.
+        parts.rendering._syncModelToClass(icao24);
+      }
+    }
+    if (icao24 === flightState._trackedIcao && flightState._trackedEntity)
+      parts.tracking._updateTrackedLabelModel(icao24);
+  }
+
+  const typeBatcher = createTypeBatcher({
+    flightState,
+    onData: _applyTypeData,
+  });
+  flightState._typeBatcher = typeBatcher;
+
   function _requestTypeEnrichment(icao24, priority = false) {
     if (!/^[0-9a-f]{6}$/i.test(icao24)) return;
+    const key = `t:${icao24}`;
+    if (typeBatcher.available()) {
+      if (flightState.lifetime.signal.aborted) return;
+      if (flightState._enrichSeen.has(key)) return;
+      flightState._enrichSeen.add(key);
+      typeBatcher.request(icao24.toLowerCase(), priority);
+      return;
+    }
     _enqueueEnrich(
-      `t:${icao24}`,
+      key,
       { kind: 'type', id: icao24.toLowerCase() },
-      (data) => {
-        const meta = flightState.records.data.get(icao24);
-        if (!meta) return; // evicted while the lookup was in flight
-        meta.typeCode = data.typeCode || meta.typeCode;
-        meta.typeName = data.typeName || meta.typeName;
-        meta.registration = data.registration || meta.registration;
-        if (meta.typeCode) {
-          const klass = classifyAircraft({
-            typeCode: meta.typeCode,
-            category: meta.category,
-          });
-          if (klass !== meta.klass) {
-            meta.klass = klass;
-            const bb = flightState._billboards.get(icao24);
-            if (bb)
-              parts.rendering._applyFleetBillboardPresentation(icao24, bb);
-            // Hangar fleet: the class's GLB/scale may have changed — resync the
-            // live model, any in-flight load, and the tracked standalone model.
-            parts.rendering._syncModelToClass(icao24);
-          }
-        }
-        if (icao24 === flightState._trackedIcao && flightState._trackedEntity)
-          parts.tracking._updateTrackedLabelModel(icao24);
-      },
+      (data) => _applyTypeData(icao24, data),
       priority,
     );
   }

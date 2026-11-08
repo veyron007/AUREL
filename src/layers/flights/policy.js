@@ -223,6 +223,26 @@ export const ENRICH_MAX_INFLIGHT = 4;
 
 export const ENRICH_DISPATCH_GAP_MS = 200;
 
+// Type lookups go out in batches (`POST /api/adsbdb/types`, typeBatch.js);
+// the server applies the upstream drip above to every tab at once. Routes and
+// transports without the batch route keep the per-key queue.
+
+/** Codes per batch request (the server's limit). */
+
+export const TYPE_BATCH_MAX = 100;
+
+/** How long ambient requests collect before a batch goes out. */
+
+export const TYPE_BATCH_COLLECT_MS = 150;
+
+/** Delay before asking again about codes the server is still fetching. */
+
+export const TYPE_BATCH_RETRY_MS = 3_000;
+
+/** Asks per code before giving up for the session (about 1.5 min of retries). */
+
+export const TYPE_BATCH_MAX_ATTEMPTS = 30;
+
 // ---------------------------------------------------------------------------
 // Ambient fleet type enrichment (2026-07-02 field data: OpenSky's live
 // category field is 0/"no info" for ~94% of planes, so ambient classification
