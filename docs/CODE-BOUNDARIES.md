@@ -56,6 +56,13 @@ See [application construction](APPLICATION.md) and the
    dependencies. Unused imports still count. Node exports have only a `node`
    condition; browser groups cannot use build-only dependency exceptions.
 
+Layers built on first use (`src/app/deferredLayer.js`, descriptors in
+`src/app/layers/deferredDescriptors.js`) are imported by
+`src/app/constructCatalog.js` with literal `import()`. The direction check
+fails when the startup graph (static imports from `src/main.js`) reaches any
+module that catalog loads on demand, because that edge would put the layer
+back in the startup bundle.
+
 Portable source graphs cannot reach application/rendering, Node, Cesium or
 browser globals. This includes `sources/*`, dedicated `layers/*/source` exports,
 flight/military/vessel record and ingestion exports, action schemas, the session

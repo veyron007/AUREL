@@ -402,7 +402,7 @@ The parallel tracks do not touch the same files: Phase 3 is mostly `server/` and
 |---|---|---|---|
 | 0 Measure | not started | | |
 | 1 Delivery | WP1.1 to WP1.6 landed | Empty globe, cold cache, same probe: dev server 1,594 requests, 80.8 MB, ready 6.9 s (17.3 s at 50 Mbps); `npm run serve` 295 requests, 11.9 MB, ready 3.8 s (4.3 s at 50 Mbps). Served build before this phase: 351 requests, 14.2 MB, ready 6.1 s. About 7 MB of the remainder is remote terrain and imagery. Most of the ready gain is WP1.5: the cover waited for the start-up share flight (a fixed 1.5 s delay plus a 3 s `flyTo` no one could see), so the start-up restore now lands at once and the cover lifts when the destination's tiles report loaded (capped at 2 s, `src/app/startupView.js`); app-ready to cover-hidden fell from about 4.4 s to about 2.2 s with an identical reveal frame. | `worktree-agent-a01e7c00e67b2833d` |
-| 2 Startup bundle | not started | | |
+| 2 Startup bundle | WP2.1, WP2.2 (10 of 35 layers), WP2.5, WP2.6 landed; WP2.3 and WP2.4 not started | Entry JS 8,053 KB → 4,186 KB (2,624 → 1,319 KB gzip), plus a 110 KB vendor chunk; entry CSS 605 KB → 532 KB. Same probe, main and branch back to back on a loaded machine: empty globe ready 3.6 s → 3.7 s (loopback ready is dominated by the cover's tile wait), transfer 11.9 → 11.2 MB, heap 75 → 67 MB. WP2.3 needs facades for the voice session adapter and the Director, which are built synchronously at start-up; WP2.4 was not attempted: start-up wiring that reads panel markup by id must be ruled out first (**verify**). | `worktree-agent-a57f2250d14c79336` |
 | 3 Data pipeline | not started | | |
 | 4 Rendering | not started | | |
 | 5 Interface | not started | | |

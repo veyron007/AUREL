@@ -4425,5 +4425,7 @@
   "Ctrl": "Ctrl",
   "Open command palette": "Apri la tavolozza dei comandi",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Fonti"
+  "Sources": "Fonti",
+  "Could not load that language. Try again.": "Impossibile caricare questa lingua. Riprova.",
+  "{name} could not be loaded. Check the connection and try again.": "Impossibile caricare {name}. Controlla la connessione e riprova."
 }

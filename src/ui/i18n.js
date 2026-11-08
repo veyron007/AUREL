@@ -6,7 +6,7 @@ import {
   getLocale,
   notifyLocaleChange,
 } from '../i18n/index.js';
-import { DEFAULT_LOCALE, LOCALES } from '../i18n/locale.js';
+import { DEFAULT_LOCALE } from '../i18n/locale.js';
 
 let pageI18n = null;
 
@@ -25,9 +25,12 @@ const resolveFlat = (messages, key) =>
  */
 export function applicationI18n() {
   if (pageI18n) return pageI18n;
-  const messages = {};
-  for (const locale of LOCALES)
-    if (locale !== DEFAULT_LOCALE) messages[locale] = getCatalog(locale);
+  // Views translate through Core's t(), which reads the loaded catalogs
+  // itself. vue-i18n keeps messages in a deep reactive ref, so it is given
+  // only the catalog active at creation, not every language.
+  const active = getLocale();
+  const catalog = active === DEFAULT_LOCALE ? null : getCatalog(active);
+  const messages = catalog ? { [active]: catalog } : {};
   pageI18n = createI18n({
     legacy: false,
     globalInjection: false,

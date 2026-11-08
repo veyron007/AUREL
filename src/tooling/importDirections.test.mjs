@@ -34,7 +34,11 @@ test('module analysis parses dependencies and platform references without readin
     analyzeModule(
       "// import('node:fs'); document\nimport x from 'one'; export { x } from 'two'; export * from 'three'; import('four'); const data = { document: 1 }; data.window;",
     ),
-    { imports: ['one', 'two', 'three', 'four'], browser: [] },
+    {
+      imports: ['one', 'two', 'three', 'four'],
+      dynamicImports: ['four'],
+      browser: [],
+    },
   );
   assert.deepEqual(
     analyzeModule(
@@ -148,6 +152,26 @@ for (const [name, files, pattern] of [
     assert.throws(() => checkImportDirections(root), pattern);
   });
 }
+
+test('a layer the catalog loads on demand stays out of the startup graph', (t) => {
+  const { root, write } = fixture(t);
+  write('src/main.js', "import './app/constructCatalog.js';");
+  write(
+    'src/app/constructCatalog.js',
+    "export const load = () => import('./layers/demo.js');",
+  );
+  write('src/app/layers/demo.js', '');
+  write('src/legacy.js', "import './app/layers/demo.js';");
+  assert.equal(checkImportDirections(root).modules, 5);
+  write(
+    'src/main.js',
+    "import './app/constructCatalog.js'; import './legacy.js';",
+  );
+  assert.throws(
+    () => checkImportDirections(root),
+    /src\/app\/layers\/demo\.js: Loaded on demand but imported statically by src\/legacy\.js/,
+  );
+});
 
 test('self package imports cannot evade portable ownership', (t) => {
   const { root, write } = fixture(t, { './view': './src/ui/view.js' });

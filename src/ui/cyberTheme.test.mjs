@@ -662,7 +662,10 @@ test('the Display selector, voice schema and final stylesheet expose Cyber', () 
   );
   assert.match(display, /id="cyber-sonar-sector"/);
   assert.deepEqual(setHud.parameters.properties.layout.enum, HUD_LAYOUTS);
-  assert.match(stylesheet, /@import '\.\/src\/ui\/styles\/cyber\.css';\s*$/);
+  // Cyber loads on demand, after the startup stylesheet, so it stays last in
+  // the cascade (cyberStylesheet.js appends its link to <head>).
+  assert.doesNotMatch(stylesheet, /cyber\.css/);
+  assert.match(read('./cyberStylesheet.js'), /doc\.head\.append\(link\)/);
   assert.match(cyberStyles, /:root\[data-ui-theme='cyber'\]/);
   assert.match(cyberStyles, /\.material-symbols-outlined/);
   assert.match(cyberStyles, /\.pp-label/);

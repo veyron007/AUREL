@@ -28,6 +28,7 @@ export function createStandaloneApplication({
   sources = {},
   streetLevelProviders,
   allowQaRegistration = false,
+  locale = resolveLocale(),
 }) {
   if (constructed)
     throw new Error('The standalone application already owns this page');
@@ -37,8 +38,8 @@ export function createStandaloneApplication({
   // scripts execute after parsing, so the DOM is ready here: the views
   // translate as they render, and the page's static data-i18n* markup (the
   // loading screen) is translated here and after every language switch.
-  const activeLocale = resolveLocale();
-  setLocale(activeLocale);
+  // main.js loads the locale's catalog first (loadLocale), so it applies now.
+  const activeLocale = setLocale(locale);
   applyDocumentLanguage(document, activeLocale);
   // Views render the page's markup; wiring reads it.
   mountApplicationViews(document);

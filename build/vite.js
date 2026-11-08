@@ -297,6 +297,23 @@ export function createBrowserViteConfig({
         mapillaryToken ?? '',
       ),
     },
-    build: { chunkSizeWarningLimit: 1500, manifest: true },
+    build: {
+      chunkSizeWarningLimit: 1500,
+      manifest: true,
+      rollupOptions: { output: { manualChunks: vendorChunk } },
+    },
   };
+}
+
+/** Packages that change rarely: kept in one chunk that caches across releases. */
+const VENDOR_PACKAGE =
+  /[\\/]node_modules[\\/](?:vue|@vue|pinia|vue-i18n|@intlify)[\\/]/;
+
+/**
+ * Rollup `manualChunks`: Vue, Pinia and vue-i18n form the `vendor` chunk.
+ * @param {string} id Module id.
+ * @returns {'vendor'|undefined}
+ */
+export function vendorChunk(id) {
+  return VENDOR_PACKAGE.test(id) ? 'vendor' : undefined;
 }

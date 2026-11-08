@@ -4650,5 +4650,7 @@
   "Ctrl": "Ctrl",
   "Open command palette": "فتح لوحة الأوامر",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "المصادر"
+  "Sources": "المصادر",
+  "Could not load that language. Try again.": "تعذّر تحميل هذه اللغة. حاول مرة أخرى.",
+  "{name} could not be loaded. Check the connection and try again.": "تعذّر تحميل {name}. تحقّق من الاتصال وحاول مرة أخرى."
 }

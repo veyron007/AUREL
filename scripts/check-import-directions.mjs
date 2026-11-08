@@ -28,6 +28,11 @@ const renderer = (file) =>
 const compatibilityEdge = (from, to) =>
   from === 'server/providers/local.js' &&
   to === 'server/standalone/key-setup.js';
+// Modules these owners load with import() must not be reached by static
+// imports from the startup entry: the static edge would put them back in the
+// startup bundle (layers built on first use, docs/design/aurel/PERFORMANCE-PLAN.md WP2.2).
+const ON_DEMAND_OWNERS = Object.freeze(['src/app/constructCatalog.js']);
+const STARTUP_ENTRY = 'src/main.js';
 const portableExport = (key) =>
   key.startsWith('./sources/') ||
   /\/source$/.test(key) ||
@@ -92,7 +97,7 @@ export function checkImportDirections(root) {
       report(file, error.message);
       return null;
     }
-    const record = { ...analysis, edges: [], external: [] };
+    const record = { ...analysis, edges: [], staticEdges: [], external: [] };
     modules.set(file, record);
     for (const specifier of analysis.imports) {
       let target;
@@ -131,6 +136,8 @@ export function checkImportDirections(root) {
         continue;
       }
       record.edges.push(to);
+      if (!analysis.dynamicImports.includes(specifier))
+        record.staticEdges.push(to);
       if (file.startsWith('src/') && to.startsWith('server/'))
         report(file, `Browser imports server: ${to}`);
       if (
@@ -157,6 +164,7 @@ export function checkImportDirections(root) {
     return record;
   }
   for (const file of files) load(file);
+  checkOnDemandModules(new Set(files), load, report);
   // A helper outside src must not smuggle Node or server code into a browser graph.
   const browserSeen = new Set();
   function browser(file) {
@@ -248,5 +256,34 @@ if (
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;
+  }
+}
+
+/**
+ * Report an on-demand module that the startup graph (static imports from
+ * src/main.js) still reaches, with the static path that reaches it.
+ */
+function checkOnDemandModules(files, load, report) {
+  if (!files.has(STARTUP_ENTRY)) return;
+  const onDemand = new Set();
+  for (const owner of ON_DEMAND_OWNERS) {
+    if (!files.has(owner)) continue;
+    const info = load(owner);
+    for (const to of info?.edges ?? [])
+      if (!info.staticEdges.includes(to)) onDemand.add(to);
+  }
+  const via = new Map([[STARTUP_ENTRY, null]]);
+  const pending = [STARTUP_ENTRY];
+  while (pending.length) {
+    const file = pending.shift();
+    for (const to of load(file)?.staticEdges ?? []) {
+      // Single-file components are not parsed here; their scripts import
+      // only shared modules, not layer constructors.
+      if (via.has(to) || !code.test(to)) continue;
+      via.set(to, file);
+      if (onDemand.has(to))
+        report(to, `Loaded on demand but imported statically by ${file}`);
+      else pending.push(to);
+    }
   }
 }

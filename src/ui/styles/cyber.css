@@ -1,5 +1,8 @@
 /* Cyber is selected from DISPLAY > HUD > Layout. It skins the application
-   shell while map imagery and source media retain their original colours. */
+   shell while map imagery and source media retain their original colours.
+   Not part of the startup stylesheet: src/ui/cyberStylesheet.js loads it on
+   demand, so every rule here must be scoped to :root[data-ui-theme='cyber']
+   or #intel-hud[data-variant='cyber'] (cyberStylesheet.test.mjs). */
 
 /* Radio retains Context's nested player and disclosure geometry in Cyber. */
 :root[data-ui-theme='cyber'] #radio-panel.collapsed .radio-panel-inner {
@@ -1555,10 +1558,6 @@
   }
 }
 
-#cyber-sonar-status:empty {
-  display: none;
-}
-
 :root[data-ui-theme='cyber'] body.cockpit-mode .hud-sonar {
   display: none;
 }
@@ -2007,12 +2006,6 @@
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-visor-shell::before,
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-visor-shell::after {
-  display: none;
-}
-
-/* Native instrument geometry is hidden in every other HUD theme. */
-.cockpit-scan-array,
-.cockpit-frame-lines {
   display: none;
 }
 
