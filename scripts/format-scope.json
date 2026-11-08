@@ -1200,6 +1200,8 @@
   "src/ui/stores/celestialRing.js",
   "src/celestialRingView.test.mjs",
   "src/ui/stores/screenAnnotations.js",
+  "src/annotations/screenAnnotationCallouts.js",
+  "src/annotations/screenAnnotationDom.js",
   "src/ui/stores/worldOverlayActions.js",
   "src/overlays/worldOverlayActionsView.test.mjs",
   "src/ui/stores/awarenessDirection.js",

@@ -575,3 +575,141 @@ test('a mark hidden from Draw is not drawn or placed, and comes back when shown'
   await settle();
   assert.equal(drawn(), true, 'shown again, it is drawn');
 });
+
+// ── Geometry without Vue (WP5.2) ──────────────────────────────────────────────
+//
+// A camera move re-projects every mark each frame. The board's structure goes
+// through the store (and Vue) only when it changes; the frame's geometry is
+// written straight onto the elements the view handed back.
+
+/** A renderer whose postRender listener the test drives as `frame()`. */
+function drivenRenderer(t, store, options = {}) {
+  const camera = cameraOver(0, 0);
+  let frame = null;
+  const renderer = createScreenAnnotationRenderer(
+    {
+      scene: sceneFor(camera, {
+        postRender: {
+          addEventListener: (listener) => (frame = listener),
+          removeEventListener() {},
+        },
+      }),
+      camera,
+      trackedEntity: null,
+    },
+    { store, activeTrackedReadoutId: () => null, ...options },
+  );
+  t.after(() => renderer.destroy());
+  return { renderer, frame: () => frame() };
+}
+
+/** Project longitude 0.001° to 60 px across, shifted by `pan.x` px. */
+function pannedProjection(t, pan) {
+  projectTo(t, (_scene, world) => {
+    const lon = Cesium.Math.toDegrees(Cesium.Cartographic.fromCartesian(world).longitude);
+    return { x: 40 + lon * 6e4 + pan.x, y: 300 };
+  });
+}
+
+const tenMarks = () =>
+  Array.from({ length: 10 }, (_, index) => ({
+    id: `mark-${index}`,
+    type: index % 2 ? 'label' : 'pin',
+    color: 'primary',
+    label: `Mark ${index}`,
+    alpha: 1,
+    anchor: { lon: index * 0.001, lat: 0, height: 0 },
+  }));
+
+test('camera-only frames with ten marks write the elements but never publish the board', async (t) => {
+  const { store, frames, groups } = board(t);
+  const pan = { x: 0 };
+  pannedProjection(t, pan);
+  const { renderer, frame } = drivenRenderer(t, store);
+  for (const anno of tenMarks()) renderer.add(anno);
+  await settle();
+  frames();
+  await settle();
+  assert.equal(groups().length, 10);
+  const dots = () => groups().map((group) => group.querySelector('.gev-anno-dot').getAttribute('cx'));
+  const callouts = () => groups().map((group) => group.querySelector('.gev-anno-callout').getAttribute('transform'));
+  const before = { dots: dots(), callouts: callouts() };
+  assert.equal(before.dots[3], (40 + 3 * 60).toFixed(1));
+
+  const publish = t.mock.method(store, 'publish');
+  for (let step = 1; step <= 12; step += 1) {
+    pan.x = step * 7;
+    frame();
+  }
+  assert.equal(publish.mock.callCount(), 0, 'no structural change, no publish');
+  // Written synchronously, without waiting for Vue.
+  assert.equal(dots()[3], (40 + 3 * 60 + 84).toFixed(1));
+  assert.notDeepEqual(callouts(), before.callouts);
+  await settle();
+  assert.equal(publish.mock.callCount(), 0);
+  assert.equal(dots()[3], (40 + 3 * 60 + 84).toFixed(1));
+});
+
+test('the tracked fade measures marks from their projected geometry, not getBBox', async (t) => {
+  const { store, frames, groups } = board(t);
+  const pan = { x: 0 };
+  pannedProjection(t, pan);
+  // The tracked card covers the first mark only.
+  const { renderer, frame } = drivenRenderer(t, store, {
+    activeTrackedReadoutId: () => 'installations:test',
+    overlayPaintRect: () => ({ x: 20, y: 280, w: 30, h: 30 }),
+  });
+  for (const anno of tenMarks()) renderer.add(anno);
+  await settle();
+  frames();
+  await settle();
+
+  let measured = 0;
+  const types = [globalThis.SVGElement, globalThis.SVGGraphicsElement].filter(Boolean);
+  const originals = types.map((type) => type.prototype.getBBox);
+  types.forEach((type, index) => {
+    type.prototype.getBBox = function (...args) {
+      measured += 1;
+      return originals[index].apply(this, args);
+    };
+  });
+  t.after(() => types.forEach((type, index) => (type.prototype.getBBox = originals[index])));
+  for (let step = 0; step < 20; step += 1) frame();
+  await settle();
+  assert.equal(measured, 0, 'no layout read per frame');
+  const opacity = (index) => Number(groups()[index].getAttribute('opacity'));
+  assert.equal(opacity(0), 0, 'the mark under the tracked card has eased out');
+  assert.equal(opacity(9), 1, 'a mark clear of it stays');
+});
+
+test('a mark projected before its view mounts shows the current geometry once attached', async (t) => {
+  document.body.replaceChildren();
+  const pinia = createPinia();
+  const store = useScreenAnnotationsStore(pinia);
+  const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+  globalThis.requestAnimationFrame = () => 0;
+  t.after(() => {
+    globalThis.requestAnimationFrame = originalRequestAnimationFrame;
+  });
+  const pan = { x: 0 };
+  pannedProjection(t, pan);
+  const { renderer, frame } = drivenRenderer(t, store);
+  renderer.add({ id: 'early', type: 'pin', color: 'amber', label: 'Capitol', alpha: 1, anchor: { lon: 0, lat: 0 } });
+  for (let step = 1; step <= 5; step += 1) {
+    pan.x = step * 10;
+    frame();
+  }
+  const app = createApp(ScreenAnnotations).use(pinia);
+  t.after(() => app.unmount());
+  app.mount(document.body.appendChild(document.createElement('div')));
+  await settle();
+  const group = document.querySelector('g.gev-anno');
+  assert.equal(group.getAttribute('opacity'), '1');
+  assert.equal(group.querySelector('.gev-anno-ring').getAttribute('cx'), '90.0');
+  assert.equal(group.querySelector('.gev-anno-dot').getAttribute('cy'), '300.0');
+  assert.equal(group.querySelector('.gev-anno-leader').getAttribute('x1'), '90.0');
+  // Sized once its text attached, the card and its accent follow the text.
+  assert.equal(group.querySelector('.gev-anno-card').getAttribute('width'), '58');
+  assert.equal(group.querySelector('.gev-anno-accent').getAttribute('height'), '18');
+  assert.equal(group.querySelector('.gev-anno-callout').getAttribute('transform'), 'translate(108.0, 266.0)');
+});

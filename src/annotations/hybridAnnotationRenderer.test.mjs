@@ -264,9 +264,13 @@ test('hybrid outline upgrade preserves the screen group and adds world geometry'
     ['dot', 'leader', 'callout'],
     'the dot, leader and callout are retained',
   );
-  const dot = after.children.find((child) => child.key === 'dot');
-  assert.equal(dot.attrs.cx, expectedWindow.x.toFixed(1));
-  assert.equal(dot.attrs.cy, expectedWindow.y.toFixed(1));
+  // Geometry is not on the board: the renderer writes it onto the element the
+  // view hands back, as soon as that element attaches.
+  const written = {};
+  const dotElement = { setAttribute: (name, value) => (written[name] = value), style: {} };
+  store.controls.attach(store.board.owner, after.key, 'part:dot', dotElement);
+  assert.equal(written.cx, expectedWindow.x.toFixed(1));
+  assert.equal(written.cy, expectedWindow.y.toFixed(1));
   assert.deepEqual(centroid, { lon: -100.8, lat: 29.4, height: 0 }, 'closed-ring vertex mean stays pinned');
   assert.equal(dataSources[0].entities.values.length, 2, 'world area adds one fill and one outline');
   assert.equal(dataSources[0].entities.values.filter((entity) => entity.polygon).length, 1);

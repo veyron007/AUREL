@@ -2397,6 +2397,8 @@
       "src/annotations/index.js",
       "src/annotations/resolver.js",
       "src/annotations/screenAnnotationRenderer.js",
+      "src/annotations/screenAnnotationCallouts.js",
+      "src/annotations/screenAnnotationDom.js",
       "src/annotations/worldAnnotationRenderer.js",
       "src/app/catalog.js",
       "src/app/constructCatalog.js",
