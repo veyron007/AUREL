@@ -1538,5 +1538,18 @@
   "src/app/paletteTools.js",
   "src/app/paletteTools.test.mjs",
   "scripts/qa-aurel-spatial.mjs",
-  "docs/design/aurel/spatial/README.md"
+  "docs/design/aurel/spatial/README.md",
+  "scripts/perf-probe.mjs",
+  "scripts/perf-probe-core.mjs",
+  "scripts/perf-scenes.json",
+  "src/tooling/perfProbe.test.mjs",
+  "scripts/check-bundle-budget.mjs",
+  "scripts/bundle-budget.json",
+  "src/tooling/bundleBudget.test.mjs",
+  "src/app/startupMarks.test.mjs",
+  "src/testSupport/perfBench.mjs",
+  "src/data/firmsHeatRaster.perf.test.mjs",
+  "src/layers/vessels/records.perf.test.mjs",
+  "src/overlays/worldOverlayDraw.perf.test.mjs",
+  "src/data/localGeojsonCore.perf.test.mjs"
 ]

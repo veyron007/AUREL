@@ -1,0 +1,19 @@
+{
+  "scenes": [
+    {
+      "id": "empty-dehradun",
+      "label": "Empty globe over Dehradun",
+      "hash": "lat=30.3258&lon=78.0438&alt=1800000&map=esri-imagery&l="
+    },
+    {
+      "id": "flights-quakes-sats",
+      "label": "Flights, earthquakes, satellites",
+      "hash": "lat=30.3258&lon=78.0438&alt=1800000&map=esri-imagery&l=f.e.s"
+    },
+    {
+      "id": "cables-datacenters-fires",
+      "label": "Cables, datacenters, fires (world view)",
+      "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=u.d.w"
+    }
+  ]
+}

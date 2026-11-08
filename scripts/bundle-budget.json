@@ -1,0 +1,6 @@
+{
+  "description": "Startup bundle budget in bytes, checked by npm run check:bundle after npm run build. Set 2026-11-08 to measured sizes plus about 3% (entry JS 6,239,766 raw / 2,030,049 gzip; no static imports; entry CSS 396,694 raw / 69,080 gzip). Lower each limit when a work package shrinks the bundle; never raise one to land a change.",
+  "entryJs": { "bytes": 6427648, "gzipBytes": 2091008 },
+  "staticImportsJs": { "bytes": 1024, "gzipBytes": 1024 },
+  "entryCss": { "bytes": 409600, "gzipBytes": 71680 }
+}

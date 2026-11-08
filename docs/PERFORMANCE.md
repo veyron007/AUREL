@@ -136,6 +136,19 @@ Use the same controls before attributing a difference to the application:
    Do not compare embedded-view and external-browser measurements directly;
    compare the reported GPU renderer and matched scene settings first.
 
+## Running the probe and gates
+
+`npm run perf:probe -- --base http://localhost:4181` applies controls 1 to 4
+to every scene in `scripts/perf-scenes.json` against a running app (for example
+`npx vite preview --port 4181`). It prints one JSON line per scene with the
+medians of three runs, then Markdown tables, including the gaps between the
+startup marks named in `src/app/startupMarks.js`. Options: `--scenes`, `--runs`,
+`--throttle 50mbps` and `--allow-software`.
+
+`npm run check:bundle`, after `npm run build`, fails when the entry chunk, its
+static imports or the entry CSS exceed `scripts/bundle-budget.json`.
+`npm run test:perf` runs the `*.perf.test.mjs` timing budgets.
+
 ## What is not established yet
 
 - This report does not establish Windows performance.

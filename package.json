@@ -51,6 +51,8 @@
     "preview": "vite preview",
     "test": "node scripts/run-unit-tests.mjs",
     "test:perf": "node scripts/run-perf-tests.mjs",
+    "perf:probe": "node scripts/perf-probe.mjs",
+    "check:bundle": "node scripts/check-bundle-budget.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
     "qa:street-level": "node scripts/qa-street-level.mjs",
