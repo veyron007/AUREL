@@ -10,10 +10,68 @@ import {
 } from './model.js';
 export * from './model.js';
 export { createUsgsEarthquakeSource } from './source.js';
+import { planKeyedUpdate, snapshotSignature } from '../../data/snapshotDiff.js';
 
 // A portable package (no i18n): the error stays English data and the layer
 // panel shows it translated.
 const msg = (text) => text;
+
+const quakeKey = (row) => row.stableId;
+
+/** One event's disc entity, picking record and overlay label. */
+function buildQuakeItem({
+  stableId,
+  usgsId,
+  lon,
+  lat,
+  depthKm,
+  mag,
+  place,
+  time,
+}) {
+  const baseRadius = Math.pow(2, mag) * 1000;
+  const color = depthColor(depthKm || 0);
+  const isSignificant = mag >= 5.0;
+  const fillAlpha = isSignificant ? 0.4 : 0.3;
+  const outlineAlpha = isSignificant ? 1.0 : 0.8;
+  const position = Cesium.Cartesian3.fromDegrees(lon, lat);
+  const entity = new Cesium.Entity({
+    id: 'earthquake:' + stableId,
+    position,
+    ellipse: {
+      // Static axes — see the module header. A CallbackProperty here
+      // re-tessellates the clamped ground geometry every frame.
+      semiMajorAxis: baseRadius,
+      semiMinorAxis: baseRadius,
+      material: new Cesium.ColorMaterialProperty(color.withAlpha(fillAlpha)),
+      outline: true,
+      outlineColor: color.withAlpha(outlineAlpha),
+      outlineWidth: isSignificant ? 3 : 2,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+    },
+    properties: {
+      // Analyst seam (additive): the USGS event id (e.g. "us7000abcd").
+      usgsId,
+      mag,
+      place,
+      time,
+      depth: depthKm,
+    },
+  });
+  return {
+    entity,
+    selectable: {
+      entity,
+      row: { stableId, usgsId, lon, lat, depthKm, mag, place, time },
+    },
+    overlayEntry: createEarthquakeOverlayEntry({
+      id: String(stableId),
+      position,
+      magnitude: mag,
+      accent: color.toCssColorString(),
+    }),
+  };
+}
 
 /** Own one earthquake display and its refresh lifecycle. */
 export function createEarthquakesLayer({
@@ -31,6 +89,66 @@ export function createEarthquakesLayer({
   let _lastUpdate = null;
   let _lastError = null;
   let _enabled = false;
+  /** stableId -> {signature, entity, selectable, overlayEntry}, as drawn. */
+  let _drawn = new Map();
+  /** The drawn items in feed order (analyst records keep that order). */
+  let _order = [];
+  let _signature = null;
+  /** Set by disable: labels and picking must be republished on next poll. */
+  let _republish = false;
+
+  /** Swap in a changed snapshot, touching only events that changed. */
+  function applyRows(rows, signature) {
+    const plan = planKeyedUpdate(_drawn, rows, quakeKey);
+    const items = plan.order.map(
+      (step) =>
+        step.previous || {
+          signature: step.signature,
+          ...buildQuakeItem(step.row),
+        },
+    );
+    const entities = _dataSource.entities;
+    entities.suspendEvents();
+    try {
+      for (const old of plan.drop) entities.remove(old.entity);
+      plan.order.forEach((step, index) => {
+        if (!step.previous) entities.add(items[index].entity);
+      });
+    } finally {
+      entities.resumeEvents();
+    }
+    _drawn = new Map(plan.order.map((step, index) => [step.key, items[index]]));
+    _order = items;
+    _signature = signature;
+    publish();
+  }
+
+  /** Register picking and publish overlay labels for the drawn events. */
+  function publish() {
+    selection?.register(
+      _order.map((item) => item.selectable),
+      _dataSource,
+    );
+    if (_enabled) {
+      overlayHost.setEntries(
+        EARTHQUAKE_OVERLAY_SOURCE_ID,
+        selectEarthquakeOverlayCohort(_order.map((item) => item.overlayEntry)),
+        {
+          cohortLimit: EARTHQUAKE_OVERLAY_COHORT_LIMIT,
+          collisionCapacity: EARTHQUAKE_OVERLAY_COLLISION_CAPACITY,
+          moving: false,
+        },
+      );
+    }
+    _republish = false;
+  }
+
+  function resetDrawn() {
+    _drawn = new Map();
+    _order = [];
+    _signature = null;
+    _republish = false;
+  }
 
   const layer = {
     id: 'earthquakes',
@@ -66,6 +184,7 @@ export function createEarthquakesLayer({
       _request?.abort();
       _request = null;
       _enabled = false;
+      _republish = true;
       selection?.uninstall();
       selection?.clear();
       if (_dataSource) _dataSource.show = false;
@@ -83,83 +202,12 @@ export function createEarthquakesLayer({
         if (request.signal.aborted || _request !== request || !_enabled)
           return false;
 
-        const nextEntities = [];
-        const selectable = [];
-        let count = 0;
-        const overlayEntries = [];
-
-        for (const {
-          stableId,
-          usgsId,
-          lon,
-          lat,
-          depthKm,
-          mag,
-          place,
-          time,
-        } of rows) {
-          count++;
-          const baseRadius = Math.pow(2, mag) * 1000;
-          const color = depthColor(depthKm || 0);
-          const isSignificant = mag >= 5.0;
-          const fillAlpha = isSignificant ? 0.4 : 0.3;
-          const outlineAlpha = isSignificant ? 1.0 : 0.8;
-
-          const position = Cesium.Cartesian3.fromDegrees(lon, lat);
-          const entity = new Cesium.Entity({
-            id: `earthquake:${stableId}`,
-            position,
-            ellipse: {
-              // Static axes — see the module header. A CallbackProperty here
-              // re-tessellates the clamped ground geometry every frame.
-              semiMajorAxis: baseRadius,
-              semiMinorAxis: baseRadius,
-              material: new Cesium.ColorMaterialProperty(
-                color.withAlpha(fillAlpha),
-              ),
-              outline: true,
-              outlineColor: color.withAlpha(outlineAlpha),
-              outlineWidth: isSignificant ? 3 : 2,
-              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-            },
-            properties: {
-              // Analyst seam (additive): the USGS event id (e.g. "us7000abcd").
-              usgsId,
-              mag,
-              place,
-              time,
-              depth: depthKm,
-            },
-          });
-          nextEntities.push(entity);
-          selectable.push({
-            entity,
-            row: { stableId, usgsId, lon, lat, depthKm, mag, place, time },
-          });
-          overlayEntries.push(
-            createEarthquakeOverlayEntry({
-              id: String(stableId),
-              position,
-              magnitude: mag,
-              accent: color.toCssColorString(),
-            }),
-          );
-        }
-
-        _dataSource.entities.removeAll();
-        for (const entity of nextEntities) _dataSource.entities.add(entity);
-        selection?.register(selectable, _dataSource);
-        if (_enabled) {
-          overlayHost.setEntries(
-            EARTHQUAKE_OVERLAY_SOURCE_ID,
-            selectEarthquakeOverlayCohort(overlayEntries),
-            {
-              cohortLimit: EARTHQUAKE_OVERLAY_COHORT_LIMIT,
-              collisionCapacity: EARTHQUAKE_OVERLAY_COLLISION_CAPACITY,
-              moving: false,
-            },
-          );
-        }
+        // An unchanged poll does no scene work (the perimeters pattern); a
+        // changed one rebuilds only the events that changed.
+        const signature = snapshotSignature(rows, quakeKey);
+        if (signature !== _signature) applyRows(rows, signature);
+        else if (_republish) publish();
+        const count = rows.length;
 
         _count = count;
         _lastUpdate = Date.now();
@@ -193,6 +241,7 @@ export function createEarthquakesLayer({
       _count = 0;
       _lastUpdate = null;
       _lastError = null;
+      resetDrawn();
     },
 
     /**
@@ -205,7 +254,8 @@ export function createEarthquakesLayer({
      */
     getAnalystRecords(maxCount = 2000) {
       if (!_dataSource || !_dataSource.show) return [];
-      const entities = _dataSource.entities.values;
+      // Feed order, as a cold rebuild would have added them.
+      const entities = _order.map((item) => item.entity);
       if (!entities.length) return [];
       const limit = Number.isFinite(maxCount)
         ? Math.max(1, Math.floor(maxCount))

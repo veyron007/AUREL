@@ -98,6 +98,12 @@ export function createState({ services }) {
 
   state._renderedTleText = null;
 
+  /** Signature of the launches last drawn; an equal poll skips the rebuild. */
+  state._launchSignature = null;
+
+  /** Set by disable (overlays cleared): the next poll must rebuild. */
+  state._launchRebuildRequired = false;
+
   state._focusAfterActiveLookup = false;
 
   state._satelliteStateBeforeMission = null;

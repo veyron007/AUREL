@@ -1,4 +1,5 @@
 import { MAX_POST_TLE_RETRIES, POST_TLE_RETRY_DELAY_MS } from './policy.js';
+import { snapshotSignature } from '../../data/snapshotDiff.js';
 
 export function createIngestion({
   state: layerState,
@@ -186,6 +187,19 @@ export function createIngestion({
       )
         return;
       const activeTleText = layerState._activeTleText;
+      // An unchanged poll keeps the drawn missions, orbits and any replay in
+      // progress; it only records that the feed answered.
+      const signature = snapshotSignature(launches, (launch) => launch.id);
+      if (
+        !layerState._launchRebuildRequired &&
+        signature === layerState._launchSignature &&
+        activeTleText === layerState._renderedTleText
+      ) {
+        layerState._lastUpdate = Date.now();
+        layerState._lastError = null;
+        layerState._stale = stale === true;
+        return;
+      }
       if (layerState._replayCameraLaunchId) parts.replay.stopMissionReplay();
       layerState._launches = launches;
       parts.orbitRendering.removeMissionOrbitPrimitives();
@@ -198,6 +212,8 @@ export function createIngestion({
         parts.rendering.addLaunchEntity(launch, activeTleText),
       );
       layerState._renderedTleText = activeTleText;
+      layerState._launchSignature = signature;
+      layerState._launchRebuildRequired = false;
       if (layerState._renderedTleText === layerState._activeTleText)
         clearPostTleRetry();
       layerState._count = launches.length;

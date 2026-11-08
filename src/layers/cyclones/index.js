@@ -23,6 +23,7 @@ import {
   translateKnown,
 } from '../../i18n/index.js';
 import { formatQuantity } from '../../ui/unitLabels.js';
+import { snapshotSignature } from '../../data/snapshotDiff.js';
 
 // "10-12 15:00 UTC" never breaks across lines: no-break spaces, and a word
 // joiner after the hyphen (JetBrains Mono has no U+2011 non-breaking hyphen).
@@ -61,6 +62,13 @@ const classificationName = (code) =>
     : code;
 const number = (value, unit) =>
   value === null ? t('Unavailable') : formatQuantity(value, unit);
+
+/** Whether two drawable snapshots carry the same storms, field for field. */
+const sameStorms = (drawn, next) =>
+  Boolean(drawn) &&
+  !drawn.unavailable &&
+  snapshotSignature(drawn.storms, (storm) => storm.id) ===
+    snapshotSignature(next.storms, (storm) => storm.id);
 
 /** Advisory status and coherent forecast geometry; selected through the shared row list. */
 export function createCyclonesLayer({
@@ -260,6 +268,13 @@ export function createCyclonesLayer({
           selectedId = null;
           ++navigationGeneration;
           error = next.reason || ADVISORIES_UNAVAILABLE;
+          return true;
+        }
+        // An unchanged advisory set keeps the drawn tracks, cones and labels;
+        // only the snapshot (its fetch time) is replaced.
+        if (sameStorms(snapshot, next)) {
+          snapshot = next;
+          error = null;
           return true;
         }
         const applied = await rendering.setSnapshot(next, {

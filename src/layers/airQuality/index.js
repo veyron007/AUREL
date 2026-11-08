@@ -16,11 +16,56 @@ import {
 } from './model.js';
 export * from './model.js';
 export { createEcccAirQualitySource } from './source.js';
+import { planKeyedUpdate, snapshotSignature } from '../../data/snapshotDiff.js';
 
 /** Station markers are a point reading, not an extent. */
 const STATION_MARKER_RADIUS_M = 6_000;
 /** Readings listed in the readout card. */
 const READOUT_LIMIT = 5;
+
+const readingKey = (reading) => reading.id;
+
+/** One station's marker entity and overlay label. */
+function buildReadingItem(reading) {
+  const position = Cesium.Cartesian3.fromDegrees(reading.lon, reading.lat);
+  const color = Cesium.Color.fromCssColorString(reading.color);
+  const entity = new Cesium.Entity({
+    id: 'air-quality:' + reading.id,
+    position,
+    ellipse: {
+      // Static axes, as in the earthquake layer: a per-frame axis
+      // re-tessellates the clamped ground primitive every frame.
+      semiMajorAxis: STATION_MARKER_RADIUS_M,
+      semiMinorAxis: STATION_MARKER_RADIUS_M,
+      material: new Cesium.ColorMaterialProperty(color.withAlpha(0.35)),
+      outline: true,
+      outlineColor: color.withAlpha(0.9),
+      outlineWidth: 2,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+    },
+    properties: {
+      provider: reading.provider,
+      scale: reading.scale,
+      value: reading.value,
+      band: reading.band,
+      name: reading.name,
+      zone: reading.zone,
+      risk: reading.risk,
+      observedMs: reading.observedMs,
+      note: reading.note,
+      lat: reading.lat,
+      lon: reading.lon,
+    },
+  });
+  const overlayEntry = createAirQualityOverlayEntry({
+    id: reading.id,
+    position,
+    title: reading.name + ' ' + reading.label,
+    accent: reading.color,
+    value: reading.value,
+  });
+  return { entity, overlayEntry };
+}
 
 /** Own one air-quality display, its refresh lifecycle, and its readout card. */
 export function createAirQualityLayer({ source, overlayHost } = {}) {
@@ -36,6 +81,28 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
   let _lastError = null;
   let _enabled = false;
   let rowControlsListener = null;
+  /** reading id -> {signature, entity, overlayEntry}, as drawn. */
+  let _drawn = new Map();
+  let _drawnOrder = [];
+  let _signature = null;
+  /** Set by disable: overlay labels must be republished on the next poll. */
+  let _republish = false;
+
+  function publishOverlay() {
+    _republish = false;
+    if (!_enabled) return;
+    overlayHost.setEntries(
+      AIR_QUALITY_OVERLAY_SOURCE_ID,
+      selectAirQualityOverlayCohort(
+        _drawnOrder.map((item) => item.overlayEntry),
+      ),
+      {
+        cohortLimit: AIR_QUALITY_OVERLAY_COHORT_LIMIT,
+        collisionCapacity: AIR_QUALITY_OVERLAY_COLLISION_CAPACITY,
+        moving: false,
+      },
+    );
+  }
 
   const notify = () => rowControlsListener?.();
 
@@ -85,6 +152,7 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
       _request?.abort();
       _request = null;
       _enabled = false;
+      _republish = true;
       if (_dataSource) _dataSource.show = false;
       overlayHost.clearSource(AIR_QUALITY_OVERLAY_SOURCE_ID);
       overlayHost.setVisible(AIR_QUALITY_OVERLAY_SOURCE_ID, false);
@@ -108,7 +176,11 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
         if (request.signal.aborted || _request !== request || !_enabled)
           return false;
         _readings = readings;
-        this._render();
+        // An unchanged poll does no scene work; a changed one swaps only the
+        // stations that changed (the perimeters pattern).
+        if (snapshotSignature(_readings, readingKey) !== _signature)
+          this._render();
+        else if (_republish) publishOverlay();
         _count = _readings.length;
         _lastUpdate = Date.now();
         _lastError = null;
@@ -125,68 +197,33 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
       }
     },
 
-    /** Rebuild entities and overlay labels from the current readings. */
+    /** Draw the current readings, rebuilding only stations that changed. */
     _render() {
       if (!_dataSource) return;
-      _dataSource.entities.removeAll();
-      const overlayEntries = [];
-      for (const reading of _readings) {
-        const position = Cesium.Cartesian3.fromDegrees(
-          reading.lon,
-          reading.lat,
-        );
-        const color = Cesium.Color.fromCssColorString(reading.color);
-        _dataSource.entities.add(
-          new Cesium.Entity({
-            id: `air-quality:${reading.id}`,
-            position,
-            ellipse: {
-              // Static axes, as in the earthquake layer: a per-frame axis
-              // re-tessellates the clamped ground primitive every frame.
-              semiMajorAxis: STATION_MARKER_RADIUS_M,
-              semiMinorAxis: STATION_MARKER_RADIUS_M,
-              material: new Cesium.ColorMaterialProperty(color.withAlpha(0.35)),
-              outline: true,
-              outlineColor: color.withAlpha(0.9),
-              outlineWidth: 2,
-              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-            },
-            properties: {
-              provider: reading.provider,
-              scale: reading.scale,
-              value: reading.value,
-              band: reading.band,
-              name: reading.name,
-              zone: reading.zone,
-              risk: reading.risk,
-              observedMs: reading.observedMs,
-              note: reading.note,
-              lat: reading.lat,
-              lon: reading.lon,
-            },
-          }),
-        );
-        overlayEntries.push(
-          createAirQualityOverlayEntry({
-            id: reading.id,
-            position,
-            title: `${reading.name} ${reading.label}`,
-            accent: reading.color,
-            value: reading.value,
-          }),
-        );
-      }
-      if (_enabled) {
-        overlayHost.setEntries(
-          AIR_QUALITY_OVERLAY_SOURCE_ID,
-          selectAirQualityOverlayCohort(overlayEntries),
-          {
-            cohortLimit: AIR_QUALITY_OVERLAY_COHORT_LIMIT,
-            collisionCapacity: AIR_QUALITY_OVERLAY_COLLISION_CAPACITY,
-            moving: false,
+      const plan = planKeyedUpdate(_drawn, _readings, readingKey);
+      const items = plan.order.map(
+        (step) =>
+          step.previous || {
+            signature: step.signature,
+            ...buildReadingItem(step.row),
           },
-        );
+      );
+      const entities = _dataSource.entities;
+      entities.suspendEvents();
+      try {
+        for (const old of plan.drop) entities.remove(old.entity);
+        plan.order.forEach((step, index) => {
+          if (!step.previous) entities.add(items[index].entity);
+        });
+      } finally {
+        entities.resumeEvents();
       }
+      _drawn = new Map(
+        plan.order.map((step, index) => [step.key, items[index]]),
+      );
+      _drawnOrder = items;
+      _signature = snapshotSignature(_readings, readingKey);
+      publishOverlay();
     },
 
     destroy(viewer = _viewer) {
@@ -201,6 +238,10 @@ export function createAirQualityLayer({ source, overlayHost } = {}) {
       }
       _viewer = null;
       _readings = [];
+      _drawn = new Map();
+      _drawnOrder = [];
+      _signature = null;
+      _republish = false;
       _count = 0;
       _lastUpdate = null;
       _lastError = null;
