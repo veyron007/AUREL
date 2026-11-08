@@ -1644,5 +1644,7 @@
   "src/data/localGeojsonParse.test.mjs",
   "src/data/localGeojsonPrimitives.test.mjs",
   "scripts/qa-local-geojson-shot.mjs",
-  "scripts/qa-phase4a-smoke.mjs"
+  "scripts/qa-phase4a-smoke.mjs",
+  "src/data/firmsColumns.js",
+  "src/data/firmsColumns.test.mjs"
 ]

@@ -8,6 +8,7 @@ import { readResponseTextCapped } from './common/http.js';
 import {
   createFirmsBodyCache,
   firmsCacheControl,
+  firmsRequestFormat,
   ifNoneMatchHits,
 } from './firmsBody.js';
 
@@ -149,6 +150,9 @@ export async function fetchFirms(
  * Routes:
  *   GET /api/firms        → {fetchedAt, stale, ttlMs, sources, count, fires},
  *                           with an ETag; If-None-Match answers 304
+ *   GET /api/firms?format=columns → the same with `fires` replaced by
+ *                           {format, fields, columns, dictionaries}
+ *                           (src/data/firmsColumns.js), its own ETag
  *   GET /api/firms/status → {hasKey, lastFetch, count, stale, ttlMs, transactions}
  *
  * Keyless (no FIRMS_MAP_KEY): /api/firms → 503 {error:'no_key'}; status →
@@ -273,7 +277,8 @@ export function firmsProxy() {
   function sendSnapshot(req, res, entry, stale) {
     if (res.headersSent) return;
     const now = Date.now();
-    const { etag, body } = bodyCache.get(entry, stale, now);
+    const format = firmsRequestFormat(req.url);
+    const { etag, body } = bodyCache.get(entry, stale, now, format);
     const headers = {
       ETag: etag,
       'Cache-Control': firmsCacheControl(entry, stale, now, TTL_MS),

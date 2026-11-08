@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { filterTrailing24h } from '../../src/data/firmsCsv.js';
+import { decodeFirmsColumns } from '../../src/data/firmsColumns.js';
 import {
   createFirmsBodyCache,
+  firmsRequestFormat,
   firmsCacheControl,
   firmsFilterCutoff,
   ifNoneMatchHits,
@@ -168,4 +170,43 @@ test('the /api/firms middleware answers a repeat poll with a bodyless 304', asyn
   assert.equal(repeat.status, 304);
   assert.equal(repeat.body, undefined);
   assert.equal(repeat.head.ETag, first.head.ETag);
+});
+
+test('the columnar body decodes to the same fires as the row body', () => {
+  const cache = createFirmsBodyCache({ ttlMs: TTL_MS });
+  const now = AT + 60_000;
+  const rowsSlot = cache.get(ENTRY, false, now);
+  const columnar = cache.get(ENTRY, false, now, 'columns');
+  const { fires, ...rowMeta } = JSON.parse(rowsSlot.body);
+  const parsed = JSON.parse(columnar.body);
+  const { format, fields, columns, dictionaries, ...columnMeta } = parsed;
+  assert.equal(format, 'columns');
+  assert.ok(Array.isArray(fields) && columns && dictionaries);
+  assert.deepStrictEqual(columnMeta, rowMeta);
+  assert.deepStrictEqual(decodeFirmsColumns(parsed), fires);
+  assert.notEqual(columnar.etag, rowsSlot.etag);
+});
+
+test('each format keeps its own serialized body', () => {
+  let stringifyCalls = 0;
+  const cache = createFirmsBodyCache({
+    ttlMs: TTL_MS,
+    stringify: (value) => {
+      stringifyCalls++;
+      return JSON.stringify(value);
+    },
+  });
+  cache.get(ENTRY, false, AT, 'columns');
+  cache.get(ENTRY, false, AT);
+  cache.get(ENTRY, false, AT, 'columns');
+  cache.get(ENTRY, false, AT);
+  assert.equal(stringifyCalls, 2);
+});
+
+test('only an explicit format=columns opts into the columnar body', () => {
+  assert.equal(firmsRequestFormat('/?format=columns'), 'columns');
+  assert.equal(firmsRequestFormat('/?x=1&format=columns'), 'columns');
+  assert.equal(firmsRequestFormat('/'), 'rows');
+  assert.equal(firmsRequestFormat('/?format=csv'), 'rows');
+  assert.equal(firmsRequestFormat(undefined), 'rows');
 });
