@@ -1,4 +1,5 @@
 import { msg } from '../i18n/marker.js';
+import { createSeparableStyleStage } from './separableStages.js';
 
 /**
  * FLIR — Forward Looking Infrared
@@ -22,6 +23,21 @@ export const thermalShader = {
     pixelation: { default: 1.5, min: 1, max: 6, label: msg('Pixelation') },
     palette: { default: 0.0, min: 0, max: 1, label: msg('Ironbow') },
   },
+  /** Half-resolution separable blur passes feeding `thermalBlur`. */
+  blurPasses: () => THERMAL_BLUR_PASSES,
+  /** Build the composite stage (see separableStages.js). */
+  buildStage: ({ name, uniforms, createStage, createComposite }) =>
+    createSeparableStyleStage({
+      name,
+      passes: THERMAL_BLUR_PASSES,
+      main: {
+        fragmentShader: thermalShader.fragmentShader,
+        samplers: { thermalBlur: 'blurV' },
+      },
+      uniforms,
+      createStage,
+      createComposite,
+    }),
   fragmentShader: /* glsl */ `
     uniform sampler2D colorTexture;
     uniform vec2 colorTextureDimensions;
@@ -32,6 +48,7 @@ export const thermalShader = {
     uniform float mode;
     uniform float pixelation;
     uniform float palette;
+    uniform sampler2D thermalBlur;
     in vec2 v_textureCoordinates;
 
     // ── Ironbow "Predator" thermal palette ────────────────
@@ -168,16 +185,10 @@ export const thermalShader = {
       uv = mix(uv, snappedUV, intensity);
 
       // ── Soft IR blur (thermal cameras have lower resolution / diffraction) ──
-      vec3 blurred = vec3(0.0);
-      float totalWeight = 0.0;
-      for (int y = -2; y <= 2; y++) {
-        for (int x = -2; x <= 2; x++) {
-          float w = exp(-0.5 * float(x * x + y * y) / 2.0);
-          blurred += texture(colorTexture, uv + vec2(float(x), float(y)) * texel * 1.5).rgb * w;
-          totalWeight += w;
-        }
-      }
-      blurred /= totalWeight;
+      // 5 x 5 Gaussian (1.5-texel taps) and the 9 x 9 hot-spot bloom below
+      // come from the separable half-resolution passes (THERMAL_BLUR_PASSES).
+      vec4 blurSample = texture(thermalBlur, uv);
+      vec3 blurred = blurSample.rgb;
       vec4 original = texture(colorTexture, uv);
 
       // Mix between sharp and blurred based on intensity
@@ -208,24 +219,8 @@ export const thermalShader = {
       vec3 thermalColor = mix(mono, iron, palette);
 
       // ── Hot-spot bloom/bleed ────────────────────────────
-      // Sample a wider area for bloom on bright spots
-      float bloomSample = 0.0;
-      float bloomWeight = 0.0;
-      for (int y = -4; y <= 4; y++) {
-        for (int x = -4; x <= 4; x++) {
-          vec2 offset = vec2(float(x), float(y)) * texel * 3.0;
-          float sLuma = dot(texture(colorTexture, uv + offset).rgb, vec3(0.299, 0.587, 0.114));
-          float sMapped = clamp((sLuma - (0.5 - sens * 0.5)) / sens, 0.0, 1.0);
-          float sFinal = mix(sMapped, 1.0 - sMapped, isBlackHot);
-          float w = exp(-0.5 * float(x * x + y * y) / 8.0);
-          // Only bloom the "hot" pixels (bright in WHOT, dark values in BHOT...
-          // but since we already inverted, just bloom high values)
-          float hotness = smoothstep(0.6, 1.0, sFinal);
-          bloomSample += hotness * w;
-          bloomWeight += w;
-        }
-      }
-      bloomSample /= bloomWeight;
+      // 9 x 9 Gaussian of hot-spot strength at 3-texel taps, precomputed.
+      float bloomSample = blurSample.a;
       thermalColor += bloomSample * bloom * 0.8;
 
       // ── Coherent temporal noise (slowly drifting, cloud-like) ──
@@ -340,3 +335,89 @@ export const thermalShader = {
     }
   `,
 };
+
+/**
+ * The former in-shader loops, split. IR blur: weight exp(-(x^2 + y^2) / 4)
+ * over 5 x 5 taps 1.5 texels apart. Bloom: weight exp(-(x^2 + y^2) / 16)
+ * over 9 x 9 taps 3 texels apart, of each tap's hot-spot strength. Both
+ * weights are a product of one-dimensional factors, so a horizontal pass
+ * and a vertical pass give the same normalized sums. Offsets stay in
+ * full-resolution texels. Output: rgb = IR blur, a = bloom.
+ */
+const THERMAL_BLUR_COMMON = /* glsl */ `
+    uniform vec2 colorTextureDimensions;
+    in vec2 v_textureCoordinates;
+    // exp(-x^2 / 4), x = 0..2; exp(-x^2 / 16), x = 0..4.
+    const float IR_W[3] = float[3](1.0, 0.7788008, 0.3678794);
+    const float BLOOM_W[5] = float[5](1.0, 0.9394131, 0.7788008, 0.5697828, 0.3678794);
+`;
+
+const THERMAL_BLUR_H = /* glsl */ `
+    uniform sampler2D colorTexture;
+    uniform float sensitivity;
+    uniform float mode;
+    ${THERMAL_BLUR_COMMON}
+    float hotness(vec3 rgb) {
+      float sens = mix(0.25, 1.0, sensitivity);
+      float sLuma = dot(rgb, vec3(0.299, 0.587, 0.114));
+      float sMapped = clamp((sLuma - (0.5 - sens * 0.5)) / sens, 0.0, 1.0);
+      float sFinal = mix(sMapped, 1.0 - sMapped, step(0.5, mode));
+      return smoothstep(0.6, 1.0, sFinal);
+    }
+    void main() {
+      vec2 uv = v_textureCoordinates;
+      float texelX = 1.0 / colorTextureDimensions.x;
+      vec3 ir = vec3(0.0);
+      float irW = 0.0;
+      for (int x = -2; x <= 2; x++) {
+        float w = IR_W[abs(x)];
+        ir += texture(colorTexture, uv + vec2(float(x) * 1.5 * texelX, 0.0)).rgb * w;
+        irW += w;
+      }
+      float hot = 0.0;
+      float hotW = 0.0;
+      for (int x = -4; x <= 4; x++) {
+        float w = BLOOM_W[abs(x)];
+        hot += hotness(texture(colorTexture, uv + vec2(float(x) * 3.0 * texelX, 0.0)).rgb) * w;
+        hotW += w;
+      }
+      out_FragColor = vec4(ir / irW, hot / hotW);
+    }
+`;
+
+const THERMAL_BLUR_V = /* glsl */ `
+    uniform sampler2D thermalBlurH;
+    ${THERMAL_BLUR_COMMON}
+    void main() {
+      vec2 uv = v_textureCoordinates;
+      float texelY = 1.0 / colorTextureDimensions.y;
+      vec3 ir = vec3(0.0);
+      float irW = 0.0;
+      for (int y = -2; y <= 2; y++) {
+        float w = IR_W[abs(y)];
+        ir += texture(thermalBlurH, uv + vec2(0.0, float(y) * 1.5 * texelY)).rgb * w;
+        irW += w;
+      }
+      float hot = 0.0;
+      float hotW = 0.0;
+      for (int y = -4; y <= 4; y++) {
+        float w = BLOOM_W[abs(y)];
+        hot += texture(thermalBlurH, uv + vec2(0.0, float(y) * 3.0 * texelY)).a * w;
+        hotW += w;
+      }
+      out_FragColor = vec4(ir / irW, hot / hotW);
+    }
+`;
+
+const THERMAL_BLUR_PASSES = Object.freeze([
+  Object.freeze({
+    id: 'blurH',
+    fragmentShader: THERMAL_BLUR_H,
+    uniformNames: Object.freeze(['sensitivity', 'mode']),
+  }),
+  Object.freeze({
+    id: 'blurV',
+    fragmentShader: THERMAL_BLUR_V,
+    samplers: Object.freeze({ thermalBlurH: 'blurH' }),
+  }),
+]);

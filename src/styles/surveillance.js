@@ -1,4 +1,5 @@
 import { msg } from '../i18n/marker.js';
+import { createSeparableStyleStage } from './separableStages.js';
 
 /**
  * Night Vision / NVG — PVS-14 Image Intensifier Emulation
@@ -19,6 +20,21 @@ export const nightVisionShader = {
     scanlineStr: { default: 1.0, min: 0, max: 1, label: msg('Scanlines') },
     pixelation: { default: 2.5, min: 1, max: 6, label: msg('Pixelation') },
   },
+  /** Half-resolution separable bloom passes feeding `nvgBloom`. */
+  blurPasses: () => NVG_BLOOM_PASSES,
+  /** Build the composite stage (see separableStages.js). */
+  buildStage: ({ name, uniforms, createStage, createComposite }) =>
+    createSeparableStyleStage({
+      name,
+      passes: NVG_BLOOM_PASSES,
+      main: {
+        fragmentShader: nightVisionShader.fragmentShader,
+        samplers: { nvgBloom: 'bloomV' },
+      },
+      uniforms,
+      createStage,
+      createComposite,
+    }),
   fragmentShader: /* glsl */ `
     uniform sampler2D colorTexture;
     uniform vec2 colorTextureDimensions;
@@ -28,6 +44,7 @@ export const nightVisionShader = {
     uniform float bloom;
     uniform float scanlineStr;
     uniform float pixelation;
+    uniform sampler2D nvgBloom;
     in vec2 v_textureCoordinates;
 
     // ── Noise functions ───────────────────────────────────
@@ -189,19 +206,9 @@ export const nightVisionShader = {
 
       // ── Intensifier tube bloom (THE key NVG visual) ─────
       // Bloom around bright sources — wider kernel for realistic halos
-      float bloomAccum = 0.0;
-      float bloomW = 0.0;
-      for (int y = -5; y <= 5; y++) {
-        for (int x = -5; x <= 5; x++) {
-          vec2 offset = vec2(float(x), float(y)) * texel * 4.0;
-          float sLuma = dot(texture(colorTexture, distUV + offset).rgb, vec3(0.299, 0.587, 0.114));
-          float bright = smoothstep(0.4, 0.9, sLuma * gainLevel);
-          float w = exp(-float(x * x + y * y) / 18.0);
-          bloomAccum += bright * w;
-          bloomW += w;
-        }
-      }
-      bloomAccum /= bloomW;
+      // 11 x 11 Gaussian of bright-source strength at 4-texel taps, from
+      // the separable half-resolution passes (NVG_BLOOM_PASSES).
+      float bloomAccum = texture(nvgBloom, distUV).r;
 
       // Edge glow / corona on bright objects
       float corona = bloomAccum * bloom * 1.5;
@@ -279,3 +286,67 @@ export const nightVisionShader = {
     }
   `,
 };
+
+/**
+ * The former 11 x 11 bloom loop, split: weight exp(-(x^2 + y^2) / 18) over
+ * taps 4 full-resolution texels apart, of each tap's bright-source strength
+ * smoothstep(0.4, 0.9, luma * gainLevel). The weight is a product of
+ * one-dimensional factors, so horizontal then vertical gives the same
+ * normalized sum.
+ */
+const NVG_BLOOM_COMMON = /* glsl */ `
+    uniform vec2 colorTextureDimensions;
+    in vec2 v_textureCoordinates;
+    // exp(-x^2 / 18), x = 0..5.
+    const float BLOOM_W[6] = float[6](1.0, 0.9459595, 0.8007374, 0.6065307, 0.4111123, 0.2493522);
+`;
+
+const NVG_BLOOM_H = /* glsl */ `
+    uniform sampler2D colorTexture;
+    uniform float gain;
+    ${NVG_BLOOM_COMMON}
+    void main() {
+      vec2 uv = v_textureCoordinates;
+      float texelX = 1.0 / colorTextureDimensions.x;
+      float gainLevel = mix(0.8, 2.5, gain);
+      float sum = 0.0;
+      float total = 0.0;
+      for (int x = -5; x <= 5; x++) {
+        float w = BLOOM_W[abs(x)];
+        float sLuma = dot(texture(colorTexture, uv + vec2(float(x) * 4.0 * texelX, 0.0)).rgb, vec3(0.299, 0.587, 0.114));
+        sum += smoothstep(0.4, 0.9, sLuma * gainLevel) * w;
+        total += w;
+      }
+      out_FragColor = vec4(vec3(sum / total), 1.0);
+    }
+`;
+
+const NVG_BLOOM_V = /* glsl */ `
+    uniform sampler2D nvgBloomH;
+    ${NVG_BLOOM_COMMON}
+    void main() {
+      vec2 uv = v_textureCoordinates;
+      float texelY = 1.0 / colorTextureDimensions.y;
+      float sum = 0.0;
+      float total = 0.0;
+      for (int y = -5; y <= 5; y++) {
+        float w = BLOOM_W[abs(y)];
+        sum += texture(nvgBloomH, uv + vec2(0.0, float(y) * 4.0 * texelY)).r * w;
+        total += w;
+      }
+      out_FragColor = vec4(vec3(sum / total), 1.0);
+    }
+`;
+
+const NVG_BLOOM_PASSES = Object.freeze([
+  Object.freeze({
+    id: 'bloomH',
+    fragmentShader: NVG_BLOOM_H,
+    uniformNames: Object.freeze(['gain']),
+  }),
+  Object.freeze({
+    id: 'bloomV',
+    fragmentShader: NVG_BLOOM_V,
+    samplers: Object.freeze({ nvgBloomH: 'bloomH' }),
+  }),
+]);
