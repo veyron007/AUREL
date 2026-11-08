@@ -57,6 +57,22 @@ function feedSource(response, fallback) {
     : fallback;
 }
 
+/** Validate a `POST /api/adsbdb/types` reply; malformed parts become empty. */
+function typeBatchReply(payload) {
+  const results =
+    payload?.results && typeof payload.results === 'object'
+      ? Object.fromEntries(
+          Object.entries(payload.results).filter(
+            ([, value]) => typeof value?.found === 'boolean',
+          ),
+        )
+      : {};
+  const pending = Array.isArray(payload?.pending)
+    ? payload.pending.filter((hex) => typeof hex === 'string')
+    : [];
+  return { results, pending };
+}
+
 /** The flights feed (/api/flights); no request starts during construction. */
 export function createFlightSource({
   fetchImpl = defaultFetch,
@@ -116,6 +132,29 @@ export function createFlightSource({
       );
       if (!response.ok) throw httpError(response, 'adsbdb');
       return payload;
+    },
+    /**
+     * Aircraft types for up to 100 ICAO24 codes in one request. Returns the
+     * answers the proxy has (`results`, keyed by code, `{found}` as the
+     * per-aircraft route) and the codes it is still fetching (`pending`).
+     * @param {string[]} hexes
+     * @param {{signal?: AbortSignal}} [options]
+     * @returns {Promise<{results: Record<string, {found: boolean}>, pending: string[]}>}
+     */
+    async getTypeBatch(hexes, { signal } = {}) {
+      const { response, payload } = await readResponse(
+        fetchImpl,
+        '/api/adsbdb/types',
+        {
+          signal,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hexes }),
+        },
+        'adsbdb',
+      );
+      if (!response.ok) throw httpError(response, 'adsbdb');
+      return typeBatchReply(payload);
     },
   };
 }

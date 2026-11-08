@@ -254,3 +254,37 @@ test('stop() aborts the request in flight so start() is never blocked by it', as
   feeds.destroy();
   assert.equal(signals[2].aborted, true);
 });
+
+test('polling pauses while the page is hidden and resumes at once when shown', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { calls, fetchImpl } = route([payload([aircraft()])]);
+  const page = Object.assign(new EventTarget(), { hidden: false });
+  const feeds = createLocalReceiverFeeds({
+    fetchImpl,
+    intervalMs: 1_000,
+    visibility: page,
+  });
+  feeds.start();
+  await flush();
+  assert.equal(calls.length, 1);
+  page.hidden = true;
+  page.dispatchEvent(new Event('visibilitychange'));
+  t.mock.timers.tick(10_000);
+  await flush();
+  assert.equal(calls.length, 1, 'no requests while hidden');
+  assert.equal(feeds.getState().polling, true, 'still a polling session');
+  page.hidden = false;
+  page.dispatchEvent(new Event('visibilitychange'));
+  await flush();
+  assert.equal(calls.length, 2, 'shown again: polled at once');
+  t.mock.timers.tick(1_000);
+  await flush();
+  assert.equal(calls.length, 3);
+  feeds.stop();
+  page.hidden = true;
+  page.dispatchEvent(new Event('visibilitychange'));
+  page.hidden = false;
+  page.dispatchEvent(new Event('visibilitychange'));
+  await flush();
+  assert.equal(calls.length, 3, 'a stopped session stays stopped');
+});

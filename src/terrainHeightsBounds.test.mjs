@@ -17,6 +17,11 @@ import path from 'node:path';
 import { parseTerrainPoints } from './data/terrainHeightsProxy.js';
 import { terrainHeightsProxy } from '../server/providers/terrain.js';
 import { admitSameSite } from '../server/providers/common/same-site.js';
+import {
+  openTerrainStore,
+  terrainStorePath,
+} from '../server/providers/terrainStore.js';
+import { existsSync } from 'node:fs';
 
 test('explicit profile reads refresh old cache metadata without changing ordinary renderer reads', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'aurel-profile-'));
@@ -492,4 +497,44 @@ test('one 64-point chunk is accepted; larger batches fail before cache or upstre
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.results.length, 64);
   assert.equal(asked.length, 64);
+});
+
+test('the legacy JSON cache migrates into the sqlite store and new points are written there', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const asked = stubTerrainUpstream(t);
+  const cachePath = await isolatedCachePath(t);
+  const cached = '-97.74000,30.26000';
+  const fresh = '-97.75000,30.26000';
+  await writeFile(
+    cachePath,
+    JSON.stringify({
+      version: 2,
+      points: { [cached]: { at: Date.now(), result: { ellipsoid: 123 } } },
+    }),
+  );
+  const route = install(terrainHeightsProxy({ cachePath })).get(
+    '/api/terrain/heights',
+  );
+  const first = await request(route, { url: `/?points=${cached};${fresh}` });
+  assert.deepEqual(
+    first.body.results.map((r) => r.ellipsoid),
+    [123, 150],
+  );
+  assert.deepEqual(asked, [fresh]);
+  t.mock.timers.tick(15_000);
+  for (let i = 0; i < 20 && existsSync(cachePath); i += 1)
+    await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(existsSync(cachePath), false, 'the legacy file is retired');
+  const store = openTerrainStore(terrainStorePath(cachePath));
+  t.after(() => store.close());
+  assert.equal(store.count(), 2);
+  const reopened = install(terrainHeightsProxy({ cachePath })).get(
+    '/api/terrain/heights',
+  );
+  const again = await request(reopened, { url: `/?points=${fresh};${cached}` });
+  assert.deepEqual(
+    again.body.results.map((r) => r.ellipsoid),
+    [150, 123],
+  );
+  assert.deepEqual(asked, [fresh], 'both points came from the store');
 });

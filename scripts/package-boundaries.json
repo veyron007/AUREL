@@ -245,6 +245,7 @@
     "runtime": "node",
     "exports": ["./server/providers/live"],
     "modules": [
+      "server/providers/common/geo.js",
       "src/sources/adsbFields.js",
       "server/providers/live.js",
       "server/providers/common/http.js",
@@ -252,8 +253,10 @@
       "server/providers/aircraft/opensky.js",
       "server/providers/aircraft/adsb-lol.js",
       "server/providers/aircraft/enrichment.js",
+      "server/providers/aircraft/adsbdbStore.js",
       "server/providers/aircraft/tracks.js",
       "server/providers/vessels/ais-store.js",
+      "server/providers/vessels/ais-snapshot.js",
       "server/providers/vessels/ais-live.js",
       "src/data/adsbLolFallback.js",
       "src/data/aisStreamAdapter.js",
@@ -317,6 +320,7 @@
     "modules": [
       "server/providers/space.js",
       "server/providers/space/celestrak.js",
+      "server/providers/common/etag.js",
       "server/providers/common/same-site.js",
       "src/localRequestGate.mjs",
       "server/providers/space/cooldown.js",
@@ -337,6 +341,7 @@
     "runtime": "node",
     "exports": ["./server/providers/terrain"],
     "modules": [
+      "server/providers/terrainStore.js",
       "server/providers/terrain.js",
       "src/data/terrainHeightsProxy.js",
       "server/providers/common/rate-limit.js",
@@ -379,7 +384,9 @@
     "runtime": "node",
     "exports": ["./server/providers/firms"],
     "modules": [
+      "server/providers/common/etag.js",
       "server/providers/firms.js",
+      "server/providers/firmsBody.js",
       "server/providers/common/http.js",
       "src/sources/httpBody.js",
       "src/i18n/marker.js",
@@ -410,6 +417,8 @@
     "runtime": "node",
     "exports": ["./server/providers/cctv"],
     "modules": [
+      "server/providers/cctv/serving.js",
+      "server/providers/common/etag.js",
       "server/providers/cctv.js",
       "server/providers/common/same-site.js",
       "src/localRequestGate.mjs",
@@ -1402,6 +1411,7 @@
   "civil-flights": {
     "exports": ["./layers/flights"],
     "modules": [
+      "src/layers/flights/typeBatch.js",
       "src/data/headingDegrees.js",
       "src/i18n/marker.js",
       "src/cyberSonar.js",
@@ -1599,7 +1609,8 @@
       "src/layers/earthquakes/selection.js",
       "src/layers/earthquakes/model.js",
       "src/layers/earthquakes/source.js",
-      "src/layers/earthquakes/records.js"
+      "src/layers/earthquakes/records.js",
+      "src/data/snapshotDiff.js"
     ],
     "external": ["cesium"]
   },
@@ -1637,6 +1648,7 @@
   "fire-layer": {
     "exports": ["./layers/firms"],
     "modules": [
+      "src/data/firmsCsv.js",
       "src/data/firmsAdapt.js",
       "src/data/firmsIntensity.js",
       "src/data/firmsHeatRaster.js",
@@ -1715,6 +1727,7 @@
   "launches-layer": {
     "exports": ["./layers/launches"],
     "modules": [
+      "src/data/snapshotDiff.js",
       "src/cyberSonar.js",
       "src/layers/launches/camera.js",
       "src/layers/launches/controls.js",
@@ -1951,6 +1964,7 @@
   "cctv-layer": {
     "exports": ["./layers/cctv"],
     "modules": [
+      "src/layers/cctv/activation.js",
       "src/data/headingDegrees.js",
       "src/data/cctvCards.js",
       "src/data/cctvGizmo.js",
@@ -2370,6 +2384,11 @@
       "./standalone/catalog"
     ],
     "modules": [
+      "src/data/sharedTicker.js",
+      "src/layers/cctv/activation.js",
+      "src/layers/flights/typeBatch.js",
+      "src/data/firmsCsv.js",
+      "src/data/snapshotDiff.js",
       "src/sources/adsbFields.js",
       "src/data/headingDegrees.js",
       "src/data/distanceFormat.js",
@@ -3581,6 +3600,11 @@
   "application-layer-construction": {
     "exports": ["./application/layers"],
     "modules": [
+      "src/data/sharedTicker.js",
+      "src/layers/cctv/activation.js",
+      "src/layers/flights/typeBatch.js",
+      "src/data/firmsCsv.js",
+      "src/data/snapshotDiff.js",
       "src/data/feedState.js",
       "src/loadingFeedback.js",
       "src/sources/adsbFields.js",
@@ -4314,7 +4338,11 @@
   },
   "layer-lifecycle": {
     "exports": ["./data/lifecycle"],
-    "modules": ["src/data/lifecycle.js", "src/data/cameraArrival.js"],
+    "modules": [
+      "src/data/sharedTicker.js",
+      "src/data/lifecycle.js",
+      "src/data/cameraArrival.js"
+    ],
     "external": []
   },
   "ui-navigation": {
@@ -5390,6 +5418,7 @@
   "air-quality": {
     "exports": ["./layers/air-quality"],
     "modules": [
+      "src/data/snapshotDiff.js",
       "src/layers/airQuality/index.js",
       "src/layers/airQuality/model.js",
       "src/layers/airQuality/source.js",

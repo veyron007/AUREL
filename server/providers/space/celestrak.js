@@ -4,6 +4,7 @@ import { celestrakTleUrl } from '../../../src/data/spaceProviderRequests.js';
 import { providerCooldownMs } from './cooldown.js';
 import { admitSameSiteKeyless } from '../common/same-site.js';
 import { readResponseTextCapped } from '../common/http.js';
+import { ifNoneMatchHits, snapshotCacheControl } from '../common/etag.js';
 
 /**
  * Vite plugin: CelesTrak TLE proxy.
@@ -20,7 +21,9 @@ import { readResponseTextCapped } from '../common/http.js';
  * CelesTrak asks clients not to re-fetch GP data more than ~every 2 h and
  * throttles offenders; every dev reload used to refetch every group. Cache TTL
  * 6 h; on upstream failure the freshest stale copy is served (a stale TLE
- * beats an empty satellites layer). Pattern mirrors openSkyProxy's
+ * beats an empty satellites layer). Each group carries a weak ETag named after
+ * its fetch time, and a matching If-None-Match answers 304 without a body.
+ * Pattern mirrors openSkyProxy's
  * cache+serve-stale. Adapted from skylight's TleStore (MIT).
  */
 export function celestrakProxy() {
@@ -121,10 +124,23 @@ export function celestrakProxy() {
         // went out routing into the catch's send): writeHead after headersSent
         // throws "Cannot set headers after they are sent".
         if (res.headersSent) return;
-        res.writeHead(status, {
+        const stale = cacheStatus === 'STALE-ERROR';
+        // The body is the group's text as fetched at `entry.at`; the stale
+        // marker travels in a header, so it is part of the validator too.
+        const etag = entry
+          ? `W/"tle-${group}-${entry.at}-${stale ? 's' : 'f'}"`
+          : null;
+        const notModified =
+          status === 200 &&
+          ifNoneMatchHits(req.headers?.['if-none-match'], etag);
+        res.writeHead(notModified ? 304 : status, {
           'Content-Type': 'text/plain',
           'x-tle-cache': cacheStatus,
-          'Cache-Control': 'no-store',
+          'Cache-Control':
+            status === 200 && entry
+              ? snapshotCacheControl(entry.at, TLE_TTL_MS, Date.now(), stale)
+              : 'no-store',
+          ...(etag && status === 200 ? { ETag: etag } : {}),
           ...(entry
             ? { 'X-TLE-Cached-At': new Date(entry.at).toISOString() }
             : {}),
@@ -136,7 +152,7 @@ export function celestrakProxy() {
               }
             : {}),
         });
-        res.end(body);
+        res.end(notModified ? undefined : body);
       };
       try {
         const now = Date.now();

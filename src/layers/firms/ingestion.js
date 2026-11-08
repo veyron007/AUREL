@@ -1,7 +1,19 @@
 import { adaptFirmsRecords } from '../../data/firmsAdapt.js';
+import { filterTrailing24h } from '../../data/firmsCsv.js';
 import { fireDetectionKey } from '../../data/firmsLabels.js';
 import { filterFires } from '../../data/firmsIntensity.js';
 import { msg } from '../../i18n/index.js';
+
+const DAY_MS = 24 * 3_600_000;
+
+/** Earliest acquisition time in a loaded set (Infinity when none parse). */
+function oldestAcquisitionMs(fires) {
+  let oldest = Infinity;
+  for (const fire of fires) {
+    if (Number.isFinite(fire.acqMs) && fire.acqMs < oldest) oldest = fire.acqMs;
+  }
+  return oldest;
+}
 
 export function createIngestion({
   layerState,
@@ -23,13 +35,22 @@ export function createIngestion({
     layerState._loading = true;
 
     try {
-      const payload = await feed.getSnapshot({ signal: request.signal });
+      const payload = await feed.getSnapshot({
+        signal: request.signal,
+        etag: layerState._snapshotEtag,
+      });
       if (
         request.signal.aborted ||
         layerState.request !== request ||
         !layerState._enabled
       )
         return;
+      // Unchanged since the last body: nothing to adapt or sort, and nothing
+      // to draw unless the layer was re-enabled since the last draw.
+      if (payload.notModified) {
+        redrawIfRequested();
+        return;
+      }
       if (payload.keyRequired) {
         layerState._keyRequired = true;
         layerState._error = null;
@@ -39,9 +60,20 @@ export function createIngestion({
       layerState._keyRequired = false;
       layerState._error = null;
       layerState._stale = Boolean(payload?.stale);
+      layerState._snapshotEtag = payload?.etag || null;
+      if (isSameSnapshot(payload)) {
+        redrawIfRequested();
+        return;
+      }
+      layerState._redrawOnNextPoll = false;
       const previousSelection = layerState._selectedFire;
       layerState._selectedFire = null;
-      layerState._allFires = adaptFirmsRecords(payload?.fires);
+      // The proxy clamps a body to the trailing 24 h when it builds it, which
+      // can be up to one proxy TTL ago; clamp again now so the map holds the
+      // same set the old per-request filter served.
+      layerState._allFires = adaptFirmsRecords(
+        filterTrailing24h(payload?.fires, Date.now()),
+      );
       // Sorted once per payload; applyFilter only filters, so a slider drag
       // over 200k detections never re-sorts.
       layerState._allFiresByFrp = [...layerState._allFires].sort(
@@ -84,6 +116,27 @@ export function createIngestion({
         layerState._loading = false;
       }
     }
+  }
+
+  /** The redraw the full ingest would have done, once, after a re-enable. */
+  function redrawIfRequested() {
+    if (!layerState._redrawOnNextPoll) return;
+    layerState._redrawOnNextPoll = false;
+    components.rendering.renderCurrentLod(true);
+    layerState._rowControlsListener?.();
+  }
+
+  /**
+   * Whether a body re-states the snapshot already on the map: same upstream
+   * fetch, and nothing loaded since then has aged out of the 24 h window.
+   * @param {{fetchedAt?: number}} payload
+   * @returns {boolean}
+   */
+  function isSameSnapshot(payload) {
+    if (!Number.isFinite(payload?.fetchedAt)) return false;
+    if (payload.fetchedAt !== layerState._lastUpdate) return false;
+    if (!layerState._allFires.length) return false;
+    return oldestAcquisitionMs(layerState._allFires) >= Date.now() - DAY_MS;
   }
 
   /**

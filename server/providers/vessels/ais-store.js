@@ -1,6 +1,9 @@
 import { isRecognizedAisEnvelope } from '../../../src/data/aisStreamAdapter.js';
+import { createSortedSnapshot } from './ais-snapshot.js';
 export const AISSTREAM_CACHE_MAX = 50000;
 export const AISSTREAM_STALE_MS = 30 * 60 * 1000;
+/** How long one newest-first sort is shared by every `/api/vessels` request. */
+export const AISSTREAM_SNAPSHOT_TTL_MS = 2000;
 // Per-MMSI recent-path ring buffers (PRD WS-F F3). Float32 lat/lon (~1m
 // precision, fine for 25m thinning) + Uint32 epoch seconds ≈ 12B/sample;
 // 64 samples × 50k MMSIs worst case ≈ 38MB. Tracks exist only while the dev
@@ -12,6 +15,26 @@ const AIS_TRACK_MIN_MOVE_M = 25;
 const _aisStreamVessels = new Map();
 /** @type {Map<string,object>} */
 const _aisStreamStatic = new Map();
+const _aisSnapshot = createSortedSnapshot({
+  entries: () => _aisStreamVessels.values(),
+  lookup: (mmsi) => _aisStreamVessels.get(mmsi),
+  staleMs: AISSTREAM_STALE_MS,
+  ttlMs: AISSTREAM_SNAPSHOT_TTL_MS,
+});
+
+/** Every change to the vessel map goes through these two, so the shared
+ * snapshot always knows which rows to merge in. */
+function putVessel(mmsi, row) {
+  _aisStreamVessels.set(mmsi, row);
+  _aisSnapshot.markChanged(mmsi);
+}
+
+function dropVessel(mmsi) {
+  _aisStreamVessels.delete(mmsi);
+  _aisSnapshot.markChanged(mmsi);
+  _aisStreamTracks.delete(mmsi);
+  _aisStreamTrackPending.delete(mmsi);
+}
 /** @type {Map<string,{lats:Float32Array,lons:Float32Array,times:Uint32Array,head:number,len:number}>} mmsi -> track ring buffer */
 const _aisStreamTracks = new Map();
 /** @type {Map<string,{lat:number,lon:number,epochSec:number}>} mmsi -> first fix awaiting second (lazy buffer allocation) */
@@ -105,7 +128,7 @@ export function ingestAisStreamEnvelope(envelope) {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return true;
 
   const staticData = _aisStreamStatic.get(mmsi) || {};
-  _aisStreamVessels.set(mmsi, {
+  putVessel(mmsi, {
     lat,
     lon,
     name: vesselNameFromAis(metadata, message, staticData) || `MMSI ${mmsi}`,
@@ -257,24 +280,20 @@ function vesselTypeFromAis(message, staticData = {}) {
   );
 }
 
-export function aisStreamRows(maxRows) {
-  const cutoff = Date.now() - AISSTREAM_STALE_MS;
-  const rows = [];
-  for (const row of _aisStreamVessels.values()) {
-    if (row._updatedAt >= cutoff) rows.push(row);
-  }
-  rows.sort((a, b) => b._updatedAt - a._updatedAt);
-  return rows.slice(0, maxRows).map(({ _updatedAt, ...row }) => row);
+/**
+ * Live vessel rows, newest first, at most `maxRows`, optionally only those
+ * within `area` (great-circle radius). Shares one sort across requests.
+ * @param {number} maxRows
+ * @param {?{lat: number, lon: number, radiusKm: number}} [area]
+ */
+export function aisStreamRows(maxRows, area = null) {
+  return _aisSnapshot.rows(maxRows, area);
 }
 
 function pruneAisStreamCache() {
   const cutoff = Date.now() - AISSTREAM_STALE_MS;
   for (const [mmsi, row] of _aisStreamVessels) {
-    if (row._updatedAt < cutoff) {
-      _aisStreamVessels.delete(mmsi);
-      _aisStreamTracks.delete(mmsi);
-      _aisStreamTrackPending.delete(mmsi);
-    }
+    if (row._updatedAt < cutoff) dropVessel(mmsi);
   }
   // Pending single-fix entries for vessels never seen again must not leak
   const pendingCutoffSec = Math.floor(cutoff / 1000);
@@ -289,11 +308,8 @@ function pruneAisStreamCache() {
   for (const [mmsi] of ordered.slice(
     0,
     _aisStreamVessels.size - AISSTREAM_CACHE_MAX,
-  )) {
-    _aisStreamVessels.delete(mmsi);
-    _aisStreamTracks.delete(mmsi);
-    _aisStreamTrackPending.delete(mmsi);
-  }
+  ))
+    dropVessel(mmsi);
 }
 
 export function newestAisPositionAt(rows) {

@@ -5,6 +5,11 @@ import { Readable } from 'node:stream';
 
 import { filterTrailing24h, parseFirmsCsv } from '../../src/data/firmsCsv.js';
 import { readResponseTextCapped } from './common/http.js';
+import {
+  createFirmsBodyCache,
+  firmsCacheControl,
+  ifNoneMatchHits,
+} from './firmsBody.js';
 
 const NULL_BODY_STATUSES = new Set([204, 205, 304]);
 
@@ -142,7 +147,8 @@ export async function fetchFirms(
  * fetch across dev-server restarts. Pattern mirrors celestrakProxy.
  *
  * Routes:
- *   GET /api/firms        → {fetchedAt, stale, ttlMs, sources, count, fires}
+ *   GET /api/firms        → {fetchedAt, stale, ttlMs, sources, count, fires},
+ *                           with an ETag; If-None-Match answers 304
  *   GET /api/firms/status → {hasKey, lastFetch, count, stale, ttlMs, transactions}
  *
  * Keyless (no FIRMS_MAP_KEY): /api/firms → 503 {error:'no_key'}; status →
@@ -258,19 +264,27 @@ export function firmsProxy() {
   }
 
   /**
-   * Cache entry → response payload. Fires are RE-filtered to the trailing
-   * 24 h at serve time so a stale cache never serves >24h-old detections.
+   * Serialized once per (entry, stale, cutoff); see firmsBody.js for why the
+   * trailing-24 h clamp is evaluated at refresh time and again on the client.
    */
-  function buildPayload(entry, stale) {
-    const fires = filterTrailing24h(entry.fires, Date.now());
-    return {
-      fetchedAt: entry.at,
-      stale,
-      ttlMs: TTL_MS,
-      sources: entry.sources,
-      count: fires.length,
-      fires,
+  const bodyCache = createFirmsBodyCache({ ttlMs: TTL_MS });
+
+  /** Send the cached body, or a 304 when the client already holds it. */
+  function sendSnapshot(req, res, entry, stale) {
+    if (res.headersSent) return;
+    const now = Date.now();
+    const { etag, body } = bodyCache.get(entry, stale, now);
+    const headers = {
+      ETag: etag,
+      'Cache-Control': firmsCacheControl(entry, stale, now, TTL_MS),
     };
+    if (ifNoneMatchHits(req.headers?.['if-none-match'], etag)) {
+      res.writeHead(304, headers);
+      res.end();
+      return;
+    }
+    res.writeHead(200, { ...headers, 'Content-Type': 'application/json' });
+    res.end(body);
   }
 
   /** mapkey_status transactions, cached 5 min, best-effort (null on failure). */
@@ -361,7 +375,7 @@ export function firmsProxy() {
 
         const entry = mem;
         if (entry && Date.now() - entry.at < TTL_MS) {
-          sendJson(200, buildPayload(entry, false));
+          sendSnapshot(req, res, entry, false);
           return;
         }
         // Stale or missing → refresh, single-flight (concurrent requests
@@ -387,9 +401,9 @@ export function firmsProxy() {
         const pending = inflight;
         const fresh = await pending;
         if (fresh) {
-          sendJson(200, buildPayload(fresh, false));
+          sendSnapshot(req, res, fresh, false);
         } else if (entry) {
-          sendJson(200, buildPayload(entry, true)); // upstream down — stale beats empty
+          sendSnapshot(req, res, entry, true); // upstream down — stale beats empty
         } else {
           sendJson(502, {
             error: 'firms fetch failed and no cache available',

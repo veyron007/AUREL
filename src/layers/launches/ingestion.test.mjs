@@ -314,3 +314,30 @@ test('destroy followed by actual init starts a clean instance with owned handler
     await f.close();
   }
 });
+
+test('an unchanged launch poll keeps the drawn missions without a rebuild', async () => {
+  const f = await fixture();
+  try {
+    await f.update();
+    const entities = f.state._dataSource.entities;
+    let removeAll = 0;
+    const original = entities.removeAll.bind(entities);
+    entities.removeAll = () => {
+      removeAll++;
+      return original();
+    };
+    const first = f.current().stats.lastUpdate;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await f.update();
+    assert.equal(removeAll, 0);
+    assert.ok(f.current().stats.lastUpdate > first);
+    assert.deepEqual(f.current().rendered, ['owned-launch']);
+    f.mode.results = [
+      { ...f.mode.results[0], name: 'Renamed mission fixture' },
+    ];
+    await f.update();
+    assert.equal(removeAll, 1, 'a changed launch still rebuilds');
+  } finally {
+    await f.close();
+  }
+});

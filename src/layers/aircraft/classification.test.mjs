@@ -43,7 +43,12 @@ test('classification uses normalized identities and respects its polling interva
   await registry.refreshMilitaryRegistryIfStale();
   assert.equal(calls, 1);
   assert.equal(registry.isMilitaryIcao('abc123'), true);
+  // With the military layer off the registry is only a classifier for the
+  // flights layer: it refreshes every 5 minutes, not every minute.
   time += 60000;
+  await registry.refreshMilitaryRegistryIfStale();
+  assert.equal(calls, 1);
+  time += 4 * 60000;
   registry.setMilitaryLayerActive(true);
   await registry.refreshMilitaryRegistryIfStale();
   assert.equal(calls, 1);
@@ -107,7 +112,7 @@ test('a failed classification source preserves known identities and makes no fal
     },
   });
   registry.registerMilitaryIcaos(['abc123']);
-  time += 60000;
+  time += 5 * 60000;
   await assert.doesNotReject(registry.refreshMilitaryRegistryIfStale());
   assert.equal(calls, 1);
   assert.equal(registry.isMilitaryIcao('abc123'), true);

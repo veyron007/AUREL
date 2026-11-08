@@ -16,6 +16,10 @@ import { promises as fsp } from 'node:fs';
  * @param {number} [options.maxDiskEntries]
  * @param {number} [options.maxDiskBytes]
  * @param {() => number} [options.now]
+ * @param {number} [options.minPruneIntervalMs] Background prunes (after a
+ *   write) run at most this often; a write inside the interval arms one
+ *   deferred prune. `prune()` always runs at once.
+ * @param {(fn: () => void, ms: number) => void} [options.setTimer]
  */
 export function createBoundedCache({
   dir,
@@ -24,10 +28,34 @@ export function createBoundedCache({
   maxDiskEntries = 400,
   maxDiskBytes = 256 * 1024 * 1024,
   now = () => Date.now(),
+  minPruneIntervalMs = 60_000,
+  setTimer = (fn, ms) => setTimeout(fn, ms).unref?.(),
 }) {
   const memory = new Map();
   let pruning = null;
   let prunePending = false;
+  let lastBackgroundPruneAt = -Infinity;
+  let deferredPrune = false;
+
+  /**
+   * A write's prune: at once if none ran in the last interval, else one
+   * deferred prune at the end of it. A directory scan per write was the cost.
+   */
+  function scheduleBackgroundPrune() {
+    if (deferredPrune) return;
+    const wait = lastBackgroundPruneAt + minPruneIntervalMs - now();
+    if (wait <= 0) {
+      lastBackgroundPruneAt = now();
+      schedulePrune();
+      return;
+    }
+    deferredPrune = true;
+    setTimer(() => {
+      deferredPrune = false;
+      lastBackgroundPruneAt = now();
+      schedulePrune();
+    }, wait);
+  }
 
   const fileFor = (key) =>
     path.join(dir, `${createHash('sha1').update(key).digest('hex')}.json`);
@@ -121,9 +149,10 @@ export function createBoundedCache({
       } catch {
         return;
       }
-      // In the background: an answer never waits on a 400-file directory scan.
-      // `prune()` returns the pending pass for callers that need it done.
-      schedulePrune();
+      // In the background, at most once a minute: an answer never waits on a
+      // 400-file directory scan. `prune()` runs one at once for callers that
+      // need it done.
+      scheduleBackgroundPrune();
     },
     /** Run a prune and wait until no pass is running or queued. */
     async prune() {

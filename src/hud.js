@@ -259,7 +259,8 @@ export class IntelHUD {
     this._recBlinkInterval = null;
     this._timestampInterval = null;
     this._summaryInterval = null;
-    this._summaryTypingInterval = null;
+    /** Epoch ms the typewriter reveal of the current summary ends (0: none). */
+    this._summaryTypingUntil = 0;
     this._latestMetrics = null;
     this._dataManager = null;
     this._dataManagerUnsubscribe = null;
@@ -300,7 +301,7 @@ export class IntelHUD {
     // the camera has moved to.
     this._onCameraMoveStart = () => {
       this._markSummaryDirty();
-      const typing = Boolean(this._summaryTypingInterval);
+      const typing = this._summaryTyping();
       if (this._summaryRequest || typing) {
         // Cancelled requests and partially typed replies are not reusable answers.
         this._lastSummarySignature = null;
@@ -347,7 +348,44 @@ export class IntelHUD {
     this.viewer.camera.moveStart.addEventListener(this._onCameraMoveStart);
     this.viewer.camera.moveEnd.addEventListener(this._onCameraMoveEnd);
     this._offLocale = onLocaleChange(() => this._relocalize());
-    this._startTimers();
+    // Timers run only while the HUD is shown on a visible page (an inline
+    // panel counts as visible; see keepPanelRendering in app/embed.js).
+    this._onPageVisibility = () => this._syncTimers();
+    globalThis.document?.addEventListener?.(
+      'visibilitychange',
+      this._onPageVisibility,
+    );
+    this._syncTimers();
+  }
+
+  /** Whether the periodic readouts have anyone to show them to. */
+  _timersWanted() {
+    const hidden = globalThis.document?.hidden && !isEmbeddedInline();
+    return this._visible && !hidden;
+  }
+
+  /** Start or stop the periodic timers to match {@link _timersWanted}. */
+  _syncTimers() {
+    const running = this._timestampInterval !== null;
+    if (this._timersWanted() === running) return;
+    if (running) this._stopTimers();
+    else {
+      this._present({ timestamp: this._formatUTC() });
+      this._startTimers();
+    }
+  }
+
+  /** Clear the periodic timers (not a typewriter in progress). */
+  _stopTimers() {
+    for (const name of [
+      '_updateInterval',
+      '_recBlinkInterval',
+      '_timestampInterval',
+      '_summaryInterval',
+    ]) {
+      clearInterval(this[name]);
+      this[name] = null;
+    }
   }
 
   /** Show the HUD's words in the new locale; drop AI text in the old one. */
@@ -862,29 +900,30 @@ export class IntelHUD {
 
   /** Stop a summary still typing out, leaving what it has typed so far. */
   _stopSummaryTyping() {
-    clearInterval(this._summaryTypingInterval);
-    this._summaryTypingInterval = null;
+    this._summaryTypingUntil = 0;
+    if (this._view?.summaryTyping) this._present({ summaryTyping: null });
+  }
+
+  /** Whether a reply is still being revealed (a partial line on screen). */
+  _summaryTyping() {
+    return this._summaryTypingUntil > Date.now();
   }
 
   /**
-   * Animate the summary text into the DOM using a typewriter effect
-   * (2 characters every 24ms).
-   * @param {string} text - Full summary string to type out.
+   * Show the summary with a typewriter reveal at the old pace (2 characters
+   * every 24 ms). The full text is published once; the reveal is a CSS
+   * animation (overlays.css `.hud-summary.typing`), so no timer publishes
+   * every 24 ms and readers of the view always see the whole line.
+   * @param {string} text - Full summary string to show.
    */
   _typeSummary(text) {
-    clearInterval(this._summaryTypingInterval);
-    let index = 0;
-    this._present({ summary: '' });
-    this._summaryTypingInterval = setInterval(() => {
-      index += 2;
-      if (index >= text.length) {
-        this._present({ summary: text });
-        clearInterval(this._summaryTypingInterval);
-        this._summaryTypingInterval = null;
-        return;
-      }
-      this._present({ summary: text.slice(0, index) });
-    }, 24);
+    const steps = Math.max(1, Math.ceil(text.length / 2));
+    this._summaryTypingUntil = Date.now() + steps * 24;
+    this._summaryTypingSeq = (this._summaryTypingSeq || 0) + 1;
+    this._present({
+      summary: text,
+      summaryTyping: { key: this._summaryTypingSeq, steps, ms: steps * 24 },
+    });
   }
 
   /**
@@ -1144,6 +1183,7 @@ export class IntelHUD {
   show() {
     this._visible = true;
     this._present({ active: true });
+    this._syncTimers();
     this._updateCameraData(); // immediate update
     this._markSummaryDirty();
     void this._updateSummary(false, true);
@@ -1153,6 +1193,7 @@ export class IntelHUD {
   hide() {
     this._visible = false;
     this._present({ active: false });
+    this._syncTimers();
   }
 
   /** Toggle HUD visibility and disable auto-mode (user override). */
@@ -1237,11 +1278,11 @@ export class IntelHUD {
 
   /** Tear down all running intervals. Call when discarding the HUD instance. */
   destroy() {
-    clearInterval(this._updateInterval);
-    clearInterval(this._recBlinkInterval);
-    clearInterval(this._timestampInterval);
-    clearInterval(this._summaryInterval);
-    clearInterval(this._summaryTypingInterval);
+    this._stopTimers();
+    globalThis.document?.removeEventListener?.(
+      'visibilitychange',
+      this._onPageVisibility,
+    );
     this.viewer.camera.moveStart.removeEventListener(this._onCameraMoveStart);
     this.viewer.camera.moveEnd.removeEventListener(this._onCameraMoveEnd);
     this._dataManagerUnsubscribe?.();

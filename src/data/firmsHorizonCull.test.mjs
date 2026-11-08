@@ -318,6 +318,9 @@ function canvasStub() {
   };
 }
 
+/** An acquisition one hour ago: the client clamps to the trailing 24 h. */
+const RECENT_ACQ = new Date(Date.now() - 3_600_000).toISOString();
+
 /** Proxy-shaped FIRMS record (firmsCsv shape) for the fetch stub. */
 function rawFire(lat, lon, frp) {
   return {
@@ -327,8 +330,8 @@ function rawFire(lat, lon, frp) {
     confidence: 'h',
     brightness: 340,
     daynight: 'D',
-    acqDate: '2026-08-03',
-    acqTime: '0412',
+    acqDate: RECENT_ACQ.slice(0, 10),
+    acqTime: RECENT_ACQ.slice(11, 16).replace(':', ''),
     instrument: 'VIIRS',
     satellite: 'N20',
   };

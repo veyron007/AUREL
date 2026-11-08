@@ -273,3 +273,38 @@ test('a failed refresh over good readings reports degraded, not nominal', async 
     'showing old data after a failure is degraded',
   );
 });
+
+test('an unchanged poll does no entity or overlay work; a changed one swaps only the changed station', async () => {
+  const polls = [
+    [reading('a', 2), reading('b', 3)],
+    [reading('a', 2), reading('b', 3)],
+    [reading('a', 2), reading('b', 5), reading('c', 1)],
+  ];
+  const { layer, viewer, sources, events } = harness({
+    getSnapshot: async () => polls.shift(),
+  });
+  const entities = sources[0].entities;
+  const work = { add: 0, remove: 0 };
+  for (const name of Object.keys(work)) {
+    const original = entities[name].bind(entities);
+    entities[name] = (...args) => {
+      work[name]++;
+      return original(...args);
+    };
+  }
+  await layer.update(viewer);
+  const kept = entities.getById('air-quality:eccc:a');
+  await layer.update(viewer);
+  assert.deepEqual(work, { add: 2, remove: 0 });
+  assert.equal(events.length, 1);
+  await layer.update(viewer);
+  assert.deepEqual(work, { add: 4, remove: 1 });
+  assert.equal(entities.getById('air-quality:eccc:a'), kept);
+  assert.equal(entities.values.length, 3);
+  assert.equal(layer.getStats().count, 3);
+  layer.disable(viewer);
+  layer.enable(viewer);
+  polls.push([reading('a', 2), reading('b', 5), reading('c', 1)]);
+  await layer.update(viewer);
+  assert.equal(events.length, 3, 're-enable republishes labels');
+});

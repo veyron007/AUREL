@@ -77,6 +77,14 @@ export function createFirmsState({ services, config }) {
 
   layerState._lastUpdate = null;
 
+  /** Validator of the snapshot on the map; a repeat poll sends it back. */
+
+  layerState._snapshotEtag = null;
+
+  /** Set by disable: the next poll redraws even if the snapshot is unchanged. */
+
+  layerState._redrawOnNextPoll = false;
+
   layerState._currentLodId = null;
 
   layerState._currentLodIndex = -1;

@@ -214,6 +214,7 @@ export function createLifecycle({
       hover?.reset();
       layerState._sourceController.abort();
       layerState._enabled = false;
+      layerState._launchRebuildRequired = true;
       releaseContinuousRender('rocket-launches');
       layerState._lifecycleToken++;
       layerState._updateDirty = false;
@@ -274,6 +275,8 @@ export function createLifecycle({
       layerState._activeTlePromise = null;
       layerState._activeTlePromiseToken = 0;
       layerState._renderedTleText = null;
+      layerState._launchSignature = null;
+      layerState._launchRebuildRequired = false;
       layerState._postTleRetryCount = 0;
       layerState._satelliteStateBeforeMission = null;
       layerState._satelliteActivationPromise = null;

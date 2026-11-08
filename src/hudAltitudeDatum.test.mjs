@@ -543,14 +543,16 @@ test('a summary interrupted while typing can retry unchanged context', async (t)
     await hud._updateSummary(true);
     t.mock.timers.tick(48);
     const element = env.elements.get('hud-summary');
-    assert.notEqual(element.textContent, text, 'the answer is still typing');
+    // The reveal is a CSS animation now: the line is published whole, and the
+    // HUD knows it is still being revealed.
+    assert.equal(hud._summaryTyping(), true, 'the answer is still typing');
     assert.equal(
       hud._summaryRequest,
       null,
       'the network request already finished',
     );
     env.cameraListeners.moveStart();
-    assert.equal(hud._summaryTypingInterval, null);
+    assert.equal(hud._summaryTyping(), false);
     await hud._updateSummary(false);
     assert.equal(
       calls,

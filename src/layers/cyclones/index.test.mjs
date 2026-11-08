@@ -444,8 +444,13 @@ test('clearing while a refreshed data source is staging cannot reselect a storm'
   const staged = deferred();
   const staging = deferred();
   let calls = 0;
+  let polls = 0;
   const layer = createCyclonesLayer({
-    feed: { getSnapshot: async () => snapshot() },
+    // Each poll is a new advisory: an unchanged one would not stage at all.
+    feed: {
+      getSnapshot: async () =>
+        snapshot([{ ...storm(), advisoryNumber: String(10 + polls++) }]),
+    },
     createRendering: () => ({
       setSnapshot() {
         if (++calls === 1) return true;
@@ -673,4 +678,43 @@ test('external cancellation and acquisition failure cannot install or retain unl
   assert.match(h.layer.getStats().error, /Network/);
   assert.ok(h.cleared > 0);
   h.layer.destroy();
+});
+
+test('an unchanged advisory poll keeps the drawn geometry and refreshes the age', async () => {
+  let applied = 0;
+  const rendering = {
+    setSnapshot: async () => {
+      applied++;
+      return true;
+    },
+    setSelection() {},
+    clear() {},
+    destroy() {},
+    pickStorm: () => null,
+    ownsPickId: () => false,
+    getDiagnostics: () => ({}),
+  };
+  const polls = [
+    snapshot([storm()]),
+    { ...snapshot([storm()]), fetchedAt: Date.parse(time) + 60_000 },
+    snapshot([{ ...storm(), advisoryNumber: '11' }]),
+  ];
+  const layer = createCyclonesLayer({
+    feed: { getSnapshot: async () => polls.shift() },
+    cesium: {},
+    createRendering: () => rendering,
+  });
+  layer.init({ scene: { canvas: new EventTarget() } });
+  layer.enable();
+  assert.equal(await layer.update(), true);
+  assert.equal(await layer.update(), true);
+  assert.equal(applied, 1);
+  assert.equal(await layer.update(), true);
+  assert.equal(applied, 2);
+  layer.disable();
+  layer.enable();
+  polls.push(snapshot([{ ...storm(), advisoryNumber: '11' }]));
+  assert.equal(await layer.update(), true);
+  assert.equal(applied, 3, 'disable cleared the drawing, so it is redrawn');
+  layer.destroy();
 });

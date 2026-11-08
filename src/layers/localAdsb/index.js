@@ -35,6 +35,7 @@ import {
   LOCAL_ADSB_UAT_RING_COLOR,
 } from './policy.js';
 import { localAdsbStatus } from './status.js';
+import { createSharedTicker } from '../../data/sharedTicker.js';
 
 export { HEARD_BY_RECEIVER } from './policy.js';
 export { localAdsbCardModel, localAdsbReceiverLine } from './card.js';
@@ -89,6 +90,8 @@ const DEFAULT_DISPLAY = Object.freeze({
  * @param {(options: object) => Promise<object>} [options.loadModel] Model
  *   loader, injectable for tests.
  * @param {(canvas: HTMLCanvasElement) => object} [options.createInputHandler]
+ * @param {{subscribe: (fn: () => void) => () => void}} [options.ticker]
+ *   The once-a-second scene sync; it pauses while the page is hidden.
  *   Click-handler factory, injectable for tests.
  * @returns {object} Data-layer module.
  */
@@ -100,6 +103,10 @@ export function createLocalAdsbLayer({
   resolveAsset = (url) => url,
   loadModel,
   createInputHandler = (canvas) => new Cesium.ScreenSpaceEventHandler(canvas),
+  ticker = createSharedTicker({
+    intervalMs: LOCAL_ADSB_TICK_MS,
+    visibility: globalThis.document,
+  }),
 }) {
   if (typeof receiver?.getState !== 'function')
     throw new TypeError('Local ADS-B requires a receiver session');
@@ -126,7 +133,8 @@ export function createLocalAdsbLayer({
   let enabled = false;
   let unsubscribe = null;
   let unsubscribeFeeds = null;
-  let tickTimer = null;
+  /** Unsubscribe from the shared second ticker (paused while hidden). */
+  let stopTick = null;
   let syncTimer = null;
   let clickHandler = null;
   let removePreRender = null;
@@ -723,8 +731,8 @@ export function createLocalAdsbLayer({
       registerPickOwner(LAYER_ID, (pickedValue) => markers.has(pickedValue));
       installInteraction();
       installFrame();
-      clearInterval(tickTimer);
-      tickTimer = setInterval(sync, LOCAL_ADSB_TICK_MS);
+      stopTick?.();
+      stopTick = ticker.subscribe(sync);
       feeds?.start?.();
       // The layer asks the shared tuner for 1090 MHz. Disabling it leaves the
       // receiver in whatever mode the Radio card shows, so turning the layer
@@ -738,8 +746,8 @@ export function createLocalAdsbLayer({
     async disable() {
       enabled = false;
       feeds?.stop?.();
-      clearInterval(tickTimer);
-      tickTimer = null;
+      stopTick?.();
+      stopTick = null;
       releaseInteraction();
       releaseFrame();
       unregisterPickOwner(LAYER_ID);
@@ -759,9 +767,9 @@ export function createLocalAdsbLayer({
 
     destroy() {
       enabled = false;
-      clearInterval(tickTimer);
+      stopTick?.();
       clearTimeout(syncTimer);
-      tickTimer = null;
+      stopTick = null;
       syncTimer = null;
       releaseInteraction();
       releaseFrame();

@@ -2765,3 +2765,52 @@ test('periodic polls realign to the deadline after a between-ticks resume', asyn
 test('periodic polls realign to the deadline after a failed resume refresh', async (t) => {
   await resumeBetweenTicks(t, { failResume: true });
 });
+
+test('status-only layers share one timer that pauses while the page is hidden', async (t) => {
+  const listeners = new Set();
+  const doc = {
+    hidden: false,
+    addEventListener: (_name, fn) => listeners.add(fn),
+    removeEventListener: (_name, fn) => listeners.delete(fn),
+  };
+  t.mock.timers.enable({ apis: ['setInterval', 'Date'], now: 1000 });
+  // Count intervals by wrapping the mocked setInterval; restored before the
+  // mock timers are reset (t.mock.method would restore the fake afterwards).
+  const fakeSetInterval = globalThis.setInterval;
+  let intervalCount = 0;
+  globalThis.setInterval = (...args) => {
+    intervalCount++;
+    return fakeSetInterval(...args);
+  };
+  t.after(() => {
+    globalThis.setInterval = fakeSetInterval;
+  });
+  const intervals = { mock: { callCount: () => intervalCount } };
+  const { LayerLifecycle } = await import('./lifecycle.js');
+  const manager = new LayerLifecycle({}, { visibilityTarget: doc });
+  for (const id of ['status-a', 'status-b']) {
+    manager.register(makeSlowLayer(id, { updateInterval: 0 }).module);
+    await manager.setEnabled(id, true);
+  }
+  assert.equal(intervals.mock.callCount(), 1, 'one shared interval');
+  let statuses = 0;
+  manager.subscribeActivity((change) => {
+    if (change.type === 'status') statuses++;
+  });
+  t.mock.timers.tick(1000);
+  assert.equal(statuses, 2, 'each enabled layer still publishes its status');
+  doc.hidden = true;
+  for (const fn of [...listeners]) fn();
+  t.mock.timers.tick(60_000);
+  assert.equal(statuses, 2, 'nothing ticks while hidden');
+  doc.hidden = false;
+  for (const fn of [...listeners]) fn();
+  assert.equal(statuses, 4, 'one catch-up tick on return');
+  await manager.setEnabled('status-a', false);
+  await manager.setEnabled('status-b', false);
+  const before = statuses;
+  t.mock.timers.tick(5_000);
+  assert.equal(statuses, before, 'disabled layers stop ticking');
+  await manager.destroyAll();
+  assert.equal(listeners.size, 0);
+});

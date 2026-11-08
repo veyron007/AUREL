@@ -67,6 +67,9 @@ test('the HUD readout pauses in a hidden page but keeps updating in an inline pa
   try {
     hud = new IntelHUD(page.viewer, { publish: page.publish });
     hud._visible = true;
+    // The HUD's timers follow its visibility and the page's (show() and
+    // visibilitychange both resync them).
+    hud._syncTimers();
 
     t.mock.timers.tick(250);
     assert.equal(
@@ -76,6 +79,7 @@ test('the HUD readout pauses in a hidden page but keeps updating in an inline pa
     );
 
     globalThis.GEV_EMBED_INLINE = true;
+    hud._syncTimers();
     t.mock.timers.tick(250);
     assert.match(
       page.alt(),
@@ -84,6 +88,50 @@ test('the HUD readout pauses in a hidden page but keeps updating in an inline pa
     );
   } finally {
     delete globalThis.GEV_EMBED_INLINE;
+    hud?.destroy();
+    page.restore();
+  }
+});
+
+test('the HUD runs no timers while it is hidden or the page is hidden', (t) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const page = installHiddenPage();
+  const listeners = new Set();
+  globalThis.document.addEventListener = (_name, fn) => listeners.add(fn);
+  globalThis.document.removeEventListener = (_name, fn) => listeners.delete(fn);
+  // Wrap the mocked setInterval by hand; t.mock.method would restore the
+  // fake one after the mock timers are reset.
+  const fakeSetInterval = globalThis.setInterval;
+  let intervalCount = 0;
+  globalThis.setInterval = (...args) => {
+    intervalCount++;
+    return fakeSetInterval(...args);
+  };
+  t.after(() => {
+    globalThis.setInterval = fakeSetInterval;
+  });
+  const intervals = { mock: { callCount: () => intervalCount } };
+  let hud;
+  try {
+    globalThis.document.hidden = false;
+    hud = new IntelHUD(page.viewer, { publish: page.publish });
+    assert.equal(intervals.mock.callCount(), 0, 'a hidden HUD starts nothing');
+    hud.show();
+    assert.equal(intervals.mock.callCount(), 4);
+    assert.notEqual(hud._timestampInterval, null);
+    globalThis.document.hidden = true;
+    for (const fn of listeners) fn();
+    assert.equal(hud._timestampInterval, null, 'a hidden page stops them');
+    assert.equal(hud._recBlinkInterval, null);
+    globalThis.document.hidden = false;
+    for (const fn of listeners) fn();
+    assert.notEqual(hud._timestampInterval, null, 'shown again, they resume');
+    hud.hide();
+    assert.equal(hud._updateInterval, null);
+    hud.destroy();
+    assert.equal(listeners.size, 0);
+    hud = null;
+  } finally {
     hud?.destroy();
     page.restore();
   }

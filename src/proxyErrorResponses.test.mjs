@@ -6,6 +6,8 @@ import { providerCooldownMs } from '../server/providers/space/cooldown.js';
 import { parseTerrainPoints } from './data/terrainHeightsProxy.js';
 import { readResponseTextCapped, coalesceProxyRequest } from './sources/httpBody.js';
 import { makeRateLimiter, clientKey } from '../server/providers/common/rate-limit.js';
+import { ifNoneMatchHits, snapshotCacheControl } from '../server/providers/common/etag.js';
+import * as adsbdbStore from '../server/providers/aircraft/adsbdbStore.js';
 
 const source = ['local.js', 'common/http.js', 'aircraft/enrichment.js', 'terrain.js', 'space/celestrak.js', 'space/launch-library.js', '../../src/data/spaceProviderRequests.js']
   .map(file => readFileSync(new URL(`../server/providers/${file}`, import.meta.url), 'utf8'))
@@ -31,6 +33,14 @@ function fixture(name, overrides = {}, preview = false) {
     // The rate-limited proxies reach for these; give them the real ones so a
     // fixture request is throttled exactly as production would be.
     makeRateLimiter, clientKey,
+    // Snapshot providers answer conditional requests with these.
+    ifNoneMatchHits, snapshotCacheControl,
+    // The adsbdb proxy's bounded store, pacer and batch parser.
+    ...adsbdbStore,
+    // The terrain proxy's point store; fixtures keep it in memory.
+    createTrackedPointMap: () => new Map(),
+    openTerrainStore: () => null,
+    terrainStorePath: (file) => file,
     // terrain.js gates cross-site requests first; fixture requests carry no
     // browser headers, so admit them like a loopback tool.
     admitSameSiteKeyless: () => false,
