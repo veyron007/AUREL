@@ -377,6 +377,7 @@ test('a double-clicked record locks the camera on its base, as Entities did', as
   const [record] = renderedRecords(env.viewer.scene);
   picked = { primitive: record.point, id: record.carrier };
   env.doubleClick();
+  await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(added.length, 1);
   assert.equal(env.viewer.trackedEntity, added[0]);
   assert.ok(
@@ -389,6 +390,7 @@ test('a double-clicked record locks the camera on its base, as Entities did', as
 
   picked = { id: { __localLayerId: 'someone-else' } };
   env.doubleClick();
+  await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(added.length, 1, 'a foreign pick leaves the lock alone');
 
   env.layer.disable(env.viewer);

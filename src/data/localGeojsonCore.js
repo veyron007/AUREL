@@ -368,11 +368,17 @@ export function createLocalGeoJsonLayer(
     const target = _byCarrier.get(carrier);
     const position = target?.base ?? target?.flyTarget;
     if (!position) return;
-    viewer.camera.cancelFlight?.();
     viewer.selectedEntity = carrier;
     selectEntityContext(carrier);
-    _tracker ??= createRecordTracker(viewer);
-    _tracker.track(position, String(carrier.id));
+    // Cesium's Viewer handles the same double-click (pickAndTrackObject) and
+    // untracks on any non-Entity pick. It may run after this handler, so the
+    // lock is taken on the next task, once both have seen the event.
+    setTimeout(() => {
+      if (!_enabled || _byCarrier.get(carrier) !== target) return;
+      viewer.camera.cancelFlight?.();
+      _tracker ??= createRecordTracker(viewer);
+      _tracker.track(position, String(carrier.id));
+    }, 0);
   }
 
   function installClickHandler(viewer) {
