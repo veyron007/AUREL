@@ -4501,5 +4501,6 @@
   "Open command palette": "Відкрити палітру команд",
   "{source} · {age}": "{source} · {age}",
   "Sources": "Джерела",
-  "Could not load that language. Try again.": "Не вдалося завантажити цю мову. Спробуйте ще раз."
+  "Could not load that language. Try again.": "Не вдалося завантажити цю мову. Спробуйте ще раз.",
+  "{name} could not be loaded. Check the connection and try again.": "Не вдалося завантажити {name}. Перевірте з’єднання та спробуйте ще раз."
 }

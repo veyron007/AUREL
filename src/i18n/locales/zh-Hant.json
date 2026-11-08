@@ -4276,5 +4276,6 @@
   "Open command palette": "開啟命令面板",
   "{source} · {age}": "{source} · {age}",
   "Sources": "來源",
-  "Could not load that language. Try again.": "無法載入該語言。請再試一次。"
+  "Could not load that language. Try again.": "無法載入該語言。請再試一次。",
+  "{name} could not be loaded. Check the connection and try again.": "無法載入{name}。請檢查網路連線後再試一次。"
 }

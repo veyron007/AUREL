@@ -4426,5 +4426,6 @@
   "Open command palette": "Abrir a paleta de comandos",
   "{source} · {age}": "{source} · {age}",
   "Sources": "Fontes",
-  "Could not load that language. Try again.": "Não foi possível carregar esse idioma. Tente novamente."
+  "Could not load that language. Try again.": "Não foi possível carregar esse idioma. Tente novamente.",
+  "{name} could not be loaded. Check the connection and try again.": "Não foi possível carregar {name}. Verifique a conexão e tente novamente."
 }

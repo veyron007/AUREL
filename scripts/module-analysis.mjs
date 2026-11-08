@@ -18,6 +18,7 @@ const browserGlobals = new Set([
 /** Inspect literal module dependencies and browser-platform references without executing code. */
 export function analyzeModule(source) {
   const imports = [];
+  const dynamicImports = [];
   const browser = new Set();
   function walk(node, parent, field) {
     if (!node || typeof node !== 'object') return;
@@ -35,6 +36,8 @@ export function analyzeModule(source) {
           'Computed module imports are not allowed in runtime code',
         );
       imports.push(node.source.value);
+      if (node.type === 'ImportExpression')
+        dynamicImports.push(node.source.value);
     }
     if (node.type === 'CallExpression' && node.callee?.name === 'require')
       throw new Error('Runtime modules must use ES imports');
@@ -71,7 +74,7 @@ export function analyzeModule(source) {
     }
   }
   walk(parsers.babel.parse(source));
-  return { imports, browser: [...browser] };
+  return { imports, dynamicImports, browser: [...browser] };
 }
 
 /** Return static imports, literal dynamic imports and re-exports. */

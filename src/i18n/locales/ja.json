@@ -4276,5 +4276,6 @@
   "Open command palette": "コマンドパレットを開く",
   "{source} · {age}": "{source} · {age}",
   "Sources": "ソース",
-  "Could not load that language. Try again.": "その言語を読み込めませんでした。もう一度お試しください。"
+  "Could not load that language. Try again.": "その言語を読み込めませんでした。もう一度お試しください。",
+  "{name} could not be loaded. Check the connection and try again.": "{name}を読み込めませんでした。接続を確認して、もう一度お試しください。"
 }

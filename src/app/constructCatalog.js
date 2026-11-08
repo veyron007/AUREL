@@ -4,6 +4,8 @@ import { createWeatherLayer } from '../layers/weather/index.js';
 import { createCyclonesLayer } from '../layers/cyclones/index.js';
 import { createWindLayer } from '../layers/wind/index.js';
 import { createLayerCatalog } from './catalog.js';
+import { createDeferredLayer } from './deferredLayer.js';
+import { DEFERRED_LAYER_DESCRIPTORS } from './layers/deferredDescriptors.js';
 import { LAYER_STATE_REGISTRY } from '../data/layerState.js';
 import { createMilitaryRegistry } from '../layers/aircraft/classification.js';
 import { createApplicationFlights } from './layers/flights.js';
@@ -11,8 +13,6 @@ import { createApplicationMilitary } from './layers/militaryFlights.js';
 import { createApplicationVessels } from './layers/aisLiveVessels.js';
 import { createApplicationCctv } from './layers/cctv.js';
 import { createApplicationRadio } from './layers/radio.js';
-import { createApplicationTraffic } from './layers/traffic.js';
-import { createApplicationBikeshare } from './layers/bikeshare.js';
 import { createApplicationDirections } from './layers/directions.js';
 import { createApplicationRecentImagery } from './layers/recentImagery.js';
 import { createApplicationOsmPlaces } from './layers/osmPlaces.js';
@@ -20,18 +20,10 @@ import { createApplicationTransit } from './layers/transit.js';
 import { createApplicationInstallations } from './layers/militaryInstallations.js';
 import { createApplicationSatellites } from './layers/satellites.js';
 import { createApplicationLaunches } from './layers/rocketLaunches.js';
-import { createApplicationAlpr } from './layers/alprCameras.js';
 import { createApplicationLocalAdsb } from './layers/localAdsb.js';
 import { createApplicationAwareness } from './layers/militaryAwareness.js';
-import { createApplicationFirms } from './layers/firms.js';
-import { createApplicationEarthquakes } from './layers/earthquakes.js';
 import { createApplicationAirQuality } from './layers/airQuality.js';
-import { createApplicationFirePerimeters } from './layers/perimeters.js';
 import { createApplicationGnssIntegrity } from './layers/gnss.js';
-import { createApplicationGhostMaps } from './layers/ghostMaps.js';
-import { createApplicationDroneAirspace } from './layers/droneAirspace.js';
-import { createApplicationWildlifeSightings } from './layers/wildlifeSightings.js';
-import { createApplicationCables } from './layers/submarineCables.js';
 import { createOsmOverlayLayers } from '../data/osmOverlays.js';
 import { createApplicationStreetLevel } from './layers/streetLevel.js';
 import { createInfrastructureLayers } from '../data/infrastructure.js';
@@ -54,6 +46,15 @@ export const APPLICATION_LAYER_METADATA = Object.freeze([
   ...LAYER_STATE_REGISTRY,
   ...LOCAL_ONLY_LAYER_METADATA,
 ]);
+
+/**
+ * A layer built on first use: its code is a separate chunk, imported when
+ * the layer is first enabled (src/app/deferredLayer.js).
+ * @param {string} id
+ * @param {() => Promise<object>} load Imports and constructs the layer.
+ */
+const deferred = (id, load) =>
+  createDeferredLayer(DEFERRED_LAYER_DESCRIPTORS[id], load);
 
 /** Construct the current catalog without choosing any source provider.
  * Scene engines remain page-owned; layers and classification have this app's lifetime.
@@ -125,24 +126,53 @@ export function createApplicationCatalog({
           displayParams: () => flights.getParams(),
           ...(resolveAsset ? { resolveAsset } : {}),
         }),
-        createApplicationEarthquakes({ source: sources.earthquakes }),
+        deferred('earthquakes', () =>
+          import('./layers/earthquakes.js').then((module) =>
+            module.createApplicationEarthquakes({
+              source: sources.earthquakes,
+            }),
+          ),
+        ),
         createApplicationAirQuality({ source: sources['air-quality'] }),
-        createApplicationFirePerimeters({
-          source: sources['fire-perimeters'],
-        }),
+        deferred('fire-perimeters', () =>
+          import('./layers/perimeters.js').then((module) =>
+            module.createApplicationFirePerimeters({
+              source: sources['fire-perimeters'],
+            }),
+          ),
+        ),
+        // Eager: its provenance and row text follow the source's window.
         createApplicationGnssIntegrity({
           source: sources['gnss-integrity'],
           windowMs: sources['gnss-integrity'].windowMs,
         }),
-        createApplicationGhostMaps({ source: sources['s2-ghostmaps'] }),
-        createApplicationDroneAirspace({
-          source: sources['drone-airspace'],
-        }),
-        createApplicationWildlifeSightings({
-          source: sources['wildlife-sightings'],
-          groundFloor: surface.groundFloor,
-        }),
-        createApplicationAlpr({ surface, source: sources.alpr }),
+        deferred('s2-ghostmaps', () =>
+          import('./layers/ghostMaps.js').then((module) =>
+            module.createApplicationGhostMaps({
+              source: sources['s2-ghostmaps'],
+            }),
+          ),
+        ),
+        deferred('drone-airspace', () =>
+          import('./layers/droneAirspace.js').then((module) =>
+            module.createApplicationDroneAirspace({
+              source: sources['drone-airspace'],
+            }),
+          ),
+        ),
+        deferred('wildlife-sightings', () =>
+          import('./layers/wildlifeSightings.js').then((module) =>
+            module.createApplicationWildlifeSightings({
+              source: sources['wildlife-sightings'],
+              groundFloor: surface.groundFloor,
+            }),
+          ),
+        ),
+        deferred('alpr-cameras', () =>
+          import('./layers/alprCameras.js').then((module) =>
+            module.createApplicationAlpr({ surface, source: sources.alpr }),
+          ),
+        ),
         createApplicationStreetLevel({
           surface,
           sources: { mapillary: sources.mapillary },
@@ -150,11 +180,22 @@ export function createApplicationCatalog({
         }),
         satellites,
         createApplicationLaunches({ source: sources.launches, satellites }),
-        createApplicationTraffic({ source: sources.traffic, surface }),
+        deferred('traffic', () =>
+          import('./layers/traffic.js').then((module) =>
+            module.createApplicationTraffic({
+              source: sources.traffic,
+              surface,
+            }),
+          ),
+        ),
         createApplicationCctv({ surface, source: sources.cctv }),
         createApplicationRadio({ surface, source: sources.radio }),
         createApplicationTransit({ surface, source: sources.transit }),
-        createApplicationBikeshare({ source: sources.bikeshare }),
+        deferred('bikeshare', () =>
+          import('./layers/bikeshare.js').then((module) =>
+            module.createApplicationBikeshare({ source: sources.bikeshare }),
+          ),
+        ),
         createApplicationDirections({ source: sources.directions }),
         createApplicationRecentImagery({ source: sources['recent-imagery'] }),
         createApplicationOsmPlaces(),
@@ -185,15 +226,23 @@ export function createApplicationCatalog({
         createCyclonesLayer({ feed: sources.cyclones }),
         ...createOsmOverlayLayers(),
         ...createInfrastructureLayers(localGeoJsonServices),
-        createApplicationCables({ source: sources.cables }),
-        createApplicationFirms({
-          surface,
-          id: 'local-firms',
-          name: 'FIRMS Active Fires',
-          icon: '▲',
-          source: 'NASA FIRMS · LIVE',
-          feed: sources.firms,
-        }),
+        deferred('telegeography-submarine-cables', () =>
+          import('./layers/submarineCables.js').then((module) =>
+            module.createApplicationCables({ source: sources.cables }),
+          ),
+        ),
+        deferred('local-firms', () =>
+          import('./layers/firms.js').then((module) =>
+            module.createApplicationFirms({
+              surface,
+              id: 'local-firms',
+              name: 'FIRMS Active Fires',
+              icon: '▲',
+              source: 'NASA FIRMS · LIVE',
+              feed: sources.firms,
+            }),
+          ),
+        ),
       ],
       metadata,
     );

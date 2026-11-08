@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { loadDeferredLayer } from './deferredLayer.js';
 import {
   resolveCatalogSources,
   CATALOG_SOURCE_CONTRACTS,
@@ -137,7 +138,8 @@ test('GhostMaps obeys source omission, replacement and explicit removal', async 
     if (previous) Object.defineProperty(globalThis, 'document', previous);
     else delete globalThis.document;
   });
-  const layer = configured.get('s2-ghostmaps');
+  // GhostMaps is built on first use; this drives the loaded layer directly.
+  const layer = await loadDeferredLayer(configured.get('s2-ghostmaps'));
   t.after(() => layer.destroy());
   layer.init({ scene: { requestRender() {} } });
   layer.enable();
