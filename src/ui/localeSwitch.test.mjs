@@ -9,7 +9,12 @@ import { StyleManager } from './applicationShell.js';
 import { UiLifetime } from './uiLifetime.js';
 import { useLocaleStore } from './stores/locale.js';
 import { applicationPinia } from './vueRuntime.js';
-import { getLocale, onLocaleChange, setLocale } from '../i18n/index.js';
+import {
+  getLocale,
+  loadLocale,
+  onLocaleChange,
+  setLocale,
+} from '../i18n/index.js';
 
 /** Wire the shell's language choice. No picker markup here: the picker's own
  * behaviour is covered by localePicker.test and localePickerView.test. */
@@ -44,6 +49,8 @@ function renderSwitch() {
     _lifetime: new UiLifetime(),
     _chooseLocale: StyleManager.prototype._chooseLocale,
     _publishLocalePicker: StyleManager.prototype._publishLocalePicker,
+    _applyLocale: StyleManager.prototype._applyLocale,
+    _showToast() {},
     _sizeDisplayLabelColumn() {},
   };
   StyleManager.prototype._initLocaleSelector.call(shell);
@@ -67,6 +74,8 @@ test('another language applies in place, is stored and leaves the address', asyn
   const off = onLocaleChange(() => heard.push(getLocale()));
   try {
     assert.equal(view.choose('es'), 'switched');
+    // The catalog loads first (already loaded under the test runner).
+    await loadLocale('es');
     assert.equal(getLocale(), 'es');
     assert.deepEqual(heard, ['es'], 'owners word their text again');
     assert.deepEqual(view.reloads, [], 'no reload');
@@ -112,6 +121,8 @@ test('a host without Core locales shows no picker; otherwise the shell publishes
     services: {},
     _lifetime: new UiLifetime(),
     _publishLocalePicker: StyleManager.prototype._publishLocalePicker,
+    _applyLocale: StyleManager.prototype._applyLocale,
+    _showToast() {},
     _chooseLocale: (locale) => chosen.push(locale),
   };
   try {

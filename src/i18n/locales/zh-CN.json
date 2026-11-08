@@ -4275,5 +4275,6 @@
   "Ctrl": "Ctrl",
   "Open command palette": "打开命令面板",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "来源"
+  "Sources": "来源",
+  "Could not load that language. Try again.": "无法加载该语言。请重试。"
 }

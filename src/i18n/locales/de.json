@@ -4350,5 +4350,6 @@
   "Ctrl": "Strg",
   "Open command palette": "Befehlspalette öffnen",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Quellen"
+  "Sources": "Quellen",
+  "Could not load that language. Try again.": "Diese Sprache konnte nicht geladen werden. Versuchen Sie es erneut."
 }

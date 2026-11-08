@@ -4500,5 +4500,6 @@
   "Ctrl": "Ctrl",
   "Open command palette": "Открыть палитру команд",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Источники"
+  "Sources": "Источники",
+  "Could not load that language. Try again.": "Не удалось загрузить этот язык. Попробуйте ещё раз."
 }

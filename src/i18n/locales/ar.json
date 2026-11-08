@@ -4650,5 +4650,6 @@
   "Ctrl": "Ctrl",
   "Open command palette": "فتح لوحة الأوامر",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "المصادر"
+  "Sources": "المصادر",
+  "Could not load that language. Try again.": "تعذّر تحميل هذه اللغة. حاول مرة أخرى."
 }

@@ -81,6 +81,9 @@ export function allocationTestArgs(file) {
 export const UNIT_TEST_NODE_FLAGS = Object.freeze([
   // Single-file components compile on import.
   '--import=./build/registerVue.js',
+  // The browser loads one translation catalog on demand; tests switch
+  // locale synchronously, so every catalog is loaded before they run.
+  '--import=./scripts/register-test-locales.mjs',
 ]);
 
 /**

@@ -4275,5 +4275,6 @@
   "Ctrl": "Ctrl",
   "Open command palette": "コマンドパレットを開く",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "ソース"
+  "Sources": "ソース",
+  "Could not load that language. Try again.": "その言語を読み込めませんでした。もう一度お試しください。"
 }

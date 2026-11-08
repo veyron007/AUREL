@@ -18,31 +18,56 @@ import {
   normalizeLocale,
   writeStoredLocale,
 } from './locale.js';
-import ar from './locales/ar.json' with { type: 'json' };
-import de from './locales/de.json' with { type: 'json' };
-import es from './locales/es.json' with { type: 'json' };
-import fr from './locales/fr.json' with { type: 'json' };
-import it from './locales/it.json' with { type: 'json' };
-import ja from './locales/ja.json' with { type: 'json' };
-import pt from './locales/pt.json' with { type: 'json' };
-import ru from './locales/ru.json' with { type: 'json' };
-import uk from './locales/uk.json' with { type: 'json' };
-import zhCN from './locales/zh-CN.json' with { type: 'json' };
-import zhHant from './locales/zh-Hant.json' with { type: 'json' };
+import { CATALOG_LOADERS } from './catalogLoaders.js';
 
-const CATALOGS = Object.freeze({
-  ar,
-  de,
-  es,
-  fr,
-  it,
-  ja,
-  pt,
-  ru,
-  uk,
-  'zh-CN': zhCN,
-  'zh-Hant': zhHant,
-});
+// Loaded catalogs by locale. A catalog is fetched the first time its locale
+// is asked for (loadLocale), so a page carries only the language it shows.
+const loadedCatalogs = new Map();
+const pendingCatalogs = new Map();
+
+/**
+ * Fetch and keep the catalog for `locale`. English and unknown codes need
+ * none. Concurrent calls share one fetch; a failed fetch can be retried.
+ * @param {string} locale
+ * @returns {Promise<string>} The normalized locale, once its catalog is in.
+ */
+export async function loadLocale(locale) {
+  const normalized = normalizeLocale(locale) || DEFAULT_LOCALE;
+  const loader = CATALOG_LOADERS[normalized];
+  if (!loader || loadedCatalogs.has(normalized)) return normalized;
+  let pending = pendingCatalogs.get(normalized);
+  if (!pending) {
+    pending = Promise.resolve()
+      .then(loader)
+      .then((catalog) => {
+        registerCatalog(normalized, catalog);
+        return normalized;
+      })
+      .finally(() => pendingCatalogs.delete(normalized));
+    pendingCatalogs.set(normalized, pending);
+  }
+  return pending;
+}
+
+/** Whether `locale` can be shown now: English, or its catalog is loaded. */
+export function isLocaleLoaded(locale) {
+  const normalized = normalizeLocale(locale) || DEFAULT_LOCALE;
+  return !CATALOG_LOADERS[normalized] || loadedCatalogs.has(normalized);
+}
+
+/**
+ * Keep an already-parsed catalog for a shipped locale.
+ * @param {string} locale
+ * @param {Record<string, string|object>} catalog
+ */
+export function registerCatalog(locale, catalog) {
+  const normalized = normalizeLocale(locale);
+  if (!normalized || !CATALOG_LOADERS[normalized])
+    throw new Error(`No shipped catalog for locale ${JSON.stringify(locale)}`);
+  if (!catalog || typeof catalog !== 'object')
+    throw new Error(`The ${normalized} catalog is not an object`);
+  loadedCatalogs.set(normalized, catalog);
+}
 
 // The page's locale. The UI binds it to its vue-i18n instance's
 // (src/ui/i18n.js), so a Vue render that translates re-renders when it
@@ -90,9 +115,12 @@ export function notifyLocaleChange() {
   }
 }
 
-/** The catalog for a locale; null for English and unknown codes. */
+/**
+ * The catalog for a locale; null for English, unknown codes and catalogs not
+ * loaded yet (loadLocale).
+ */
 export function getCatalog(locale) {
-  return CATALOGS[normalizeLocale(locale)] ?? null;
+  return loadedCatalogs.get(normalizeLocale(locale)) ?? null;
 }
 
 let boundValue = DEFAULT_LOCALE;
@@ -134,11 +162,31 @@ export function keepCodesWithValues(text) {
 /**
  * Switch the active locale. Views re-render and onLocaleChange listeners
  * word their text again; the application keeps <html lang>/<html dir> and
- * the page's data-i18n markup in step.
- * @returns {string} The locale actually applied (normalized).
+ * the page's data-i18n markup in step. A locale whose catalog is not loaded
+ * yet is loaded first and applied when it arrives (await loadLocale before
+ * calling to switch at once); a failed load keeps the current locale.
+ * @returns {string} The locale requested (normalized).
  */
 export function setLocale(locale) {
   const normalized = normalizeLocale(locale) || DEFAULT_LOCALE;
+  requestedLocale = normalized;
+  if (isLocaleLoaded(normalized)) {
+    applyLocale(normalized);
+    return normalized;
+  }
+  loadLocale(normalized).then(
+    () => {
+      if (requestedLocale === normalized) applyLocale(normalized);
+    },
+    (error) =>
+      console.error(`[i18n] could not load the ${normalized} catalog`, error),
+  );
+  return normalized;
+}
+
+let requestedLocale = DEFAULT_LOCALE;
+
+function applyLocale(normalized) {
   if (normalized !== pageLocale.value) {
     pageLocale.value = normalized;
     formatterCache.clear();
@@ -174,7 +222,7 @@ function interpolate(pattern, values) {
 const filled = (value) => typeof value === 'string' && value.trim() !== '';
 
 function lookup(text) {
-  const catalog = CATALOGS[getLocale()];
+  const catalog = loadedCatalogs.get(getLocale());
   if (!catalog) return undefined;
   const entry = Object.hasOwn(catalog, text) ? catalog[text] : undefined;
   if (filled(entry) || (entry && typeof entry === 'object')) return entry;
@@ -226,7 +274,7 @@ export function tn(count, one, other, values) {
  * missing-translation warning.
  */
 export function translateKnown(text) {
-  const catalog = CATALOGS[getLocale()];
+  const catalog = loadedCatalogs.get(getLocale());
   if (!catalog || typeof text !== 'string') return text;
   const entry = Object.hasOwn(catalog, text) ? catalog[text] : undefined;
   return filled(entry) ? entry : text;

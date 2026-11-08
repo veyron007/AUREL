@@ -45,6 +45,7 @@ import { runCctvLayerEnableTransition } from '../cctvFocusPolicy.js';
 
 import {
   getLocale,
+  loadLocale,
   onLocaleChange,
   persistLocale,
   setLocale,
@@ -762,13 +763,27 @@ export class StyleManager extends ShellFacade {
     return applyLocaleChoice(locale, {
       current: getLocale(),
       switchLocale: (next) => {
-        setLocale(persistLocale(next));
-        // Focus once, as the redrawn picker mounts; a later remount leaves
-        // focus where it is.
-        this._publishLocalePicker({ focus: true });
-        void nextTick(() => this._publishLocalePicker());
+        // The catalog downloads on first use; the page switches once it is in.
+        loadLocale(next).then(
+          () => this._applyLocale(next),
+          (error) => {
+            console.error(`[i18n] the ${next} catalog did not load`, error);
+            if (!this._disposed)
+              this._showToast(t('Could not load that language. Try again.'));
+          },
+        );
       },
     });
+  }
+
+  /** Store and show a locale whose catalog is loaded. */
+  _applyLocale(locale) {
+    if (this._disposed) return;
+    setLocale(persistLocale(locale));
+    // Focus once, as the redrawn picker mounts; a later remount leaves
+    // focus where it is.
+    this._publishLocalePicker({ focus: true });
+    void nextTick(() => this._publishLocalePicker());
   }
 
   /**

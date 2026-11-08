@@ -43,7 +43,7 @@ Edit `src/i18n/locales/<code>.json` and run `npm run i18n`. To see your change, 
 ## Adding a language
 
 1. Create `src/i18n/locales/<code>.json`, fill it from `npm run i18n -- --missing <code>` (start from `{}`), and translate every entry.
-2. Import it in `src/i18n/index.js` and add it to `CATALOGS`.
+2. Add a loader for it to `CATALOG_LOADERS` in `src/i18n/catalogLoaders.js` (a literal `import()`, so the catalog stays its own chunk).
 3. Add the code to `LOCALES` and its own-language name to `LOCALE_NAMES` in `src/i18n/locale.js`. Right-to-left languages also go in `RTL_LOCALES`; the chrome mirrors through logical CSS properties (`inset-inline-*`, `margin-inline-*`), and `src/ui/styles/rtl.css` holds what those cannot express (see the Arabic notes). If the language should keep Western digits, map it in `INTL_TAGS` in `locale.js`.
 4. Add `src/i18n/locales/<code>.json` next to `ru.json` in `scripts/package-boundaries.json`.
 5. Write `docs/translations/<code>.md`: glossary, plural forms, units and style (copy the structure of `ru.md`).

@@ -4500,5 +4500,6 @@
   "Ctrl": "Ctrl",
   "Open command palette": "Відкрити палітру команд",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Джерела"
+  "Sources": "Джерела",
+  "Could not load that language. Try again.": "Не вдалося завантажити цю мову. Спробуйте ще раз."
 }

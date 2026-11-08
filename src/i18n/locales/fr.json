@@ -4425,5 +4425,6 @@
   "Ctrl": "Ctrl",
   "Open command palette": "Ouvrir la palette de commandes",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Sources"
+  "Sources": "Sources",
+  "Could not load that language. Try again.": "Impossible de charger cette langue. Réessayez."
 }
