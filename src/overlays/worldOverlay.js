@@ -23,6 +23,12 @@ import {
   placementVariants,
   truncateOverlayTitle,
 } from './worldOverlayDraw.js';
+import {
+  beginOverlayBitmapFrame,
+  installOverlayBitmaps,
+  setOverlayBitmapDpr,
+  uninstallOverlayBitmaps,
+} from './worldOverlayBitmaps.js';
 import { WORLD_OVERLAY_STYLE } from './worldOverlayTokens.js';
 import { t } from '../i18n/index.js';
 
@@ -1234,6 +1240,7 @@ function ensureOverlayDom() {
   if (!_actions)
     presentActions({ owner: {}, items: [], status: '', announced: 0 });
   _ctx = _canvas.getContext('2d', { alpha: true, desynchronized: true });
+  installBodyBitmaps();
   _detectionCtx = _detectionSurface.getContext('2d', {
     alpha: true,
     desynchronized: true,
@@ -1254,6 +1261,22 @@ function sizeCanvasSurface(canvas, ctx, width, height, dpr) {
   canvas.style.height = `${height}px`;
   ctx?.setTransform?.(dpr, 0, 0, dpr, 0, 0);
   return changed;
+}
+
+/**
+ * Cache card bodies as bitmaps (worldOverlayBitmaps.js) when this document
+ * can make canvases; otherwise the painters draw every body directly.
+ */
+function installBodyBitmaps() {
+  if (typeof document?.createElement !== 'function' || !_ctx?.drawImage) return;
+  installOverlayBitmaps({
+    createSurface: (width, height) => {
+      const surface = document.createElement('canvas');
+      surface.width = width;
+      surface.height = height;
+      return surface;
+    },
+  });
 }
 
 /**
@@ -1285,6 +1308,7 @@ function ensureCanvasSize() {
   if (!changed) return false;
   sizeCanvasSurface(_detectionSurface, _detectionCtx, width, height, dpr);
   sizeCanvasSurface(_canvas, _ctx, width, height, dpr);
+  setOverlayBitmapDpr(dpr);
   _canvasWidth = width;
   _canvasHeight = height;
   _viewport.width = width;
@@ -2578,6 +2602,7 @@ function paintFrame(keyhole) {
     ? createCyberSonarSampler(_canvasWidth, _canvasHeight, started)
     : null;
   clearCanvas(true, false);
+  beginOverlayBitmapFrame();
   _detectionSurfacePrepared = false;
   if (
     activeCustomPaintLaneCount(PAINT_TARGET_DETECTION) === 0 &&
@@ -2788,6 +2813,7 @@ export function destroyWorldOverlay() {
   _mutationObserver?.disconnect?.();
   _mutationObserver = null;
   destroyWorldOverlayDraw();
+  uninstallOverlayBitmaps();
   if (_occluderRefreshTimer != null) clearTimeout(_occluderRefreshTimer);
   _occluderRefreshTimer = null;
   _root?.remove?.();

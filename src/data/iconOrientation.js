@@ -57,7 +57,24 @@ export function screenProjectedRotation(
 ) {
   const camera = scene?.camera;
   if (!camera?.rightWC || !camera?.upWC || !position) return previous;
+  return rotationFromWorldCourse(
+    camera,
+    courseWorldVector(position, courseDeg, _scratchWorldForward),
+    previous,
+  );
+}
 
+/**
+ * The course as a world-space vector at `position` (the ENU course vector
+ * of {@link screenProjectedRotation}, FORWARD_PROBE_M long). It depends only
+ * on the contact, so a layer can compute it once per position update and
+ * turn each camera move into two dot products ({@link rotationFromWorldCourse}).
+ * @param {Cesium.Cartesian3} position Entity world position.
+ * @param {number} courseDeg Degrees clockwise from north.
+ * @param {Cesium.Cartesian3} result Written and returned.
+ * @returns {Cesium.Cartesian3}
+ */
+export function courseWorldVector(position, courseDeg, result) {
   const courseRad = Cesium.Math.toRadians(courseDeg || 0);
   Cesium.Cartesian3.fromElements(
     Math.sin(courseRad) * FORWARD_PROBE_M,
@@ -70,17 +87,24 @@ export function screenProjectedRotation(
     Cesium.Ellipsoid.WGS84,
     _scratchEnu,
   );
-  Cesium.Matrix4.multiplyByPointAsVector(
-    enu,
-    _scratchForward,
-    _scratchWorldForward,
-  );
+  return Cesium.Matrix4.multiplyByPointAsVector(enu, _scratchForward, result);
+}
 
+/**
+ * Billboard rotation for a world-space course vector from
+ * {@link courseWorldVector}: identical to {@link screenProjectedRotation}.
+ * @param {Cesium.Camera} camera
+ * @param {Cesium.Cartesian3} worldCourse
+ * @param {number|null} previous Kept when the projection is degenerate.
+ * @returns {number|null}
+ */
+export function rotationFromWorldCourse(camera, worldCourse, previous = null) {
+  if (!camera?.rightWC || !camera?.upWC || !worldCourse) return previous;
   // Screen x follows camera-right. Window y grows downward, the opposite of
   // camera-up. Projecting the vector itself avoids clipping/behind-camera
   // failure modes from the old forward-point worldToWindowCoordinates probe.
-  const dx = Cesium.Cartesian3.dot(_scratchWorldForward, camera.rightWC);
-  const dy = -Cesium.Cartesian3.dot(_scratchWorldForward, camera.upWC);
+  const dx = Cesium.Cartesian3.dot(worldCourse, camera.rightWC);
+  const dy = -Cesium.Cartesian3.dot(worldCourse, camera.upWC);
   if (dx * dx + dy * dy < MIN_SCREEN_COMPONENT_M * MIN_SCREEN_COMPONENT_M)
     return previous;
 
@@ -261,6 +285,57 @@ export function cameraPoseSignature(camera) {
   return (
     `${Math.round(p.x / 10)}:${Math.round(p.y / 10)}:${Math.round(p.z / 10)}:` +
     `${camera.heading.toFixed(3)}:${camera.pitch.toFixed(3)}:${camera.roll.toFixed(3)}`
+  );
+}
+
+/**
+ * {@link cameraPoseSignature} as numbers, written into `out` (a
+ * Float64Array(6)) with the same quantization, so a per-frame "did the
+ * camera move" check compares six numbers instead of building a string.
+ * @param {Cesium.Camera} camera
+ * @param {Float64Array} out
+ * @returns {boolean} True when the pose differs from what `out` held.
+ */
+export function updateCameraPose(camera, out) {
+  const p = camera.positionWC;
+  const x = Math.round(p.x / 10);
+  const y = Math.round(p.y / 10);
+  const z = Math.round(p.z / 10);
+  const heading = Math.round(camera.heading * 1000);
+  const pitch = Math.round(camera.pitch * 1000);
+  const roll = Math.round(camera.roll * 1000);
+  const changed =
+    out[0] !== x ||
+    out[1] !== y ||
+    out[2] !== z ||
+    out[3] !== heading ||
+    out[4] !== pitch ||
+    out[5] !== roll;
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  out[3] = heading;
+  out[4] = pitch;
+  out[5] = roll;
+  return changed;
+}
+
+/**
+ * Whether `camera` sits at a different quantized pose than `pose` holds,
+ * without updating it.
+ * @param {Cesium.Camera} camera
+ * @param {Float64Array} pose
+ * @returns {boolean}
+ */
+export function cameraPoseDiffers(camera, pose) {
+  const p = camera.positionWC;
+  return (
+    pose[0] !== Math.round(p.x / 10) ||
+    pose[1] !== Math.round(p.y / 10) ||
+    pose[2] !== Math.round(p.z / 10) ||
+    pose[3] !== Math.round(camera.heading * 1000) ||
+    pose[4] !== Math.round(camera.pitch * 1000) ||
+    pose[5] !== Math.round(camera.roll * 1000)
   );
 }
 

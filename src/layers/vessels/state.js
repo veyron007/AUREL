@@ -16,7 +16,8 @@ export function createVesselState({ source, services }) {
 
   /** Camera pose signature at the last vessel rotation pass. */
 
-  vesselState._lastCamPoseSig = '';
+  /** Quantized camera pose of the last rotation pass (updateCameraPose). */
+  vesselState._lastCamPose = new Float64Array(6).fill(Number.NaN);
 
   vesselState._scratchFocusScreen = new Cesium.Cartesian2();
 

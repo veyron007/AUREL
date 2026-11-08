@@ -1,4 +1,5 @@
 import { readShellSource } from '../testSupport/readShellSource.mjs';
+import { createSensorPalette } from './detectionSurfaceLook.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -29,6 +30,12 @@ import {
   setAwarenessEchoField,
 } from '../awarenessEcho.js';
 import { composeLabel, resolveTier } from './detectionDraw.js';
+
+
+/** A theme colour as the sensor surface draws it (its contrast/saturate baked in). */
+function sensorColor(theme, color) {
+  return createSensorPalette(DETECTION_THEME_MAP[theme].filter)(color);
+}
 
 test('detection diagnostics count rendered fading rows instead of absent selected identities', () => {
   assert.equal(countFadingRenderEntries([
@@ -373,10 +380,8 @@ test('detection lifecycle re-hosts unchanged painters behind the sole host liste
     assert.equal(surface.parentElement, env.viewer.container);
     assert.deepEqual(root.children, [mainCanvas]);
     assert.equal(surface.style.mixBlendMode, 'screen');
-    assert.equal(
-      surface.style.filter,
-      'contrast(1.05) saturate(1.05) drop-shadow(0 0 3px rgba(0, 244, 255, 0.4))',
-    );
+    // The filter look is drawn into the canvas (detectionSurfaceLook.js).
+    assert.equal(surface.style.filter, 'none');
     assert.equal(surface.style.display, 'none');
 
     setMode('DENSE');
@@ -452,16 +457,11 @@ test('detection lifecycle re-hosts unchanged painters behind the sole host liste
 
     // These are the exact engine calls made by military style presets after
     // their production UI gate chooses CRT/NVG/FLIR defaults.
-    const expectedThemes = {
-      retro: 'contrast(1.08) saturate(1.04) drop-shadow(0 0 3px rgba(255, 176, 56, 0.45))',
-      surveillance: 'contrast(1.12) saturate(1.12) drop-shadow(0 0 3px rgba(120, 255, 120, 0.42))',
-      thermal: 'contrast(1.1) saturate(1.08) drop-shadow(0 0 3px rgba(255, 224, 170, 0.42))',
-    };
     for (const style of ['retro', 'surveillance', 'thermal']) {
       setMode('OFF');
       setDetectionStyle(style);
       assert.equal(surface.style.mixBlendMode, 'screen');
-      assert.equal(surface.style.filter, expectedThemes[style]);
+      assert.equal(surface.style.filter, 'none');
       setDetectionTuning({ densityPct: 75 });
       setMode('DENSE');
       env.postRender.raise();
@@ -473,10 +473,8 @@ test('detection lifecycle re-hosts unchanged painters behind the sole host liste
     setMode('OFF');
     setDetectionStyle('normal');
     assert.equal(surface.style.mixBlendMode, 'screen');
-    assert.equal(
-      surface.style.filter,
-      'contrast(1.05) saturate(1.05) drop-shadow(0 0 3px rgba(0, 244, 255, 0.4))',
-    );
+    // The filter look is drawn into the canvas (detectionSurfaceLook.js).
+    assert.equal(surface.style.filter, 'none');
     env.postRender.raise();
     assert.equal(getMode(), 'OFF');
     assert.equal(surface.style.display, 'none');
@@ -622,7 +620,8 @@ test('surveillance military tier reaches the dedicated render target as shipped 
     env.postRender.raise();
 
     assert.ok(
-      env.detectionCtx.calls.some(([name, value]) => name === 'strokeStyle' && value === '#ff5a47'),
+      env.detectionCtx.calls.some(([name, value]) => name === 'strokeStyle'
+        && value === sensorColor('surveillance', '#ff5a47')),
       'the production projection/tier/batched-bracket paint path emits surveillance military red',
     );
     assert.ok(env.detectionCtx.calls.some(([name, path]) => name === 'stroke'
@@ -660,7 +659,7 @@ test('Global Context echo brackets reach the canvas in the detection style colou
     setDetectionStyle('normal');
     settleFrame(env);
     assert.ok(echoStrokes().length > 0, 'the echo bracket is painted');
-    assert.ok(echoStrokes().every((style) => style === echo.color));
+    assert.ok(echoStrokes().every((style) => style === sensorColor('_default', echo.color)));
 
     // CRT, NVG and FLIR keep their own palettes.
     for (const style of ['retro', 'surveillance', 'thermal']) {
@@ -670,7 +669,7 @@ test('Global Context echo brackets reach the canvas in the detection style colou
       const strokes = echoStrokes();
       assert.ok(strokes.length > 0, style);
       assert.ok(
-        strokes.every((stroke) => stroke === DETECTION_THEME_MAP[style].line),
+        strokes.every((stroke) => stroke === sensorColor(style, DETECTION_THEME_MAP[style].line)),
         `${style} echoes take the style line colour, got ${strokes}`,
       );
     }
@@ -708,10 +707,12 @@ test('a Global Context echo bracket is drawn outside its contact bracket and dim
     env.detectionCtx.calls.length = 0;
     settleFrame(env);
     const strokes = env.detectionCtx.calls.filter(([name]) => name === 'stroke');
-    const echoStroke = strokes.find(([, , style, width]) => style === echo.color && width === echo.lineWidth);
+    const echoColor = sensorColor('_default', echo.color);
+    const echoStroke = strokes.find(([, , style, width]) => style === echoColor && width === echo.lineWidth);
     assert.ok(echoStroke, 'the echo bracket is painted');
     const bracketStroke = strokes.find(([, path, style, width]) =>
-      path instanceof MockPath2D && path.points.length && width !== echo.lineWidth && style !== echo.color);
+      path instanceof MockPath2D && path.points.length && width !== echo.lineWidth && style !== echoColor
+      && style !== DETECTION_THEME_MAP._default.glow);
     assert.ok(bracketStroke, 'the contact bracket is painted');
     const extent = (path) => {
       const xs = path.points.map(([x]) => x);
@@ -783,9 +784,11 @@ test('under the Cyber sonar sweep an echo is never brighter than its own bracket
       env.detectionCtx.calls.length = 0;
       settleFrame(env);
       const strokes = env.detectionCtx.calls.filter(([name]) => name === 'stroke');
-      const echoStroke = strokes.find(([, , style, width]) => style === echo.color && width === echo.lineWidth);
+      const echoColor = sensorColor('_default', echo.color);
+      const echoStroke = strokes.find(([, , style, width]) => style === echoColor && width === echo.lineWidth);
       const bracketStroke = strokes.find(([, path, style, width]) =>
-        path instanceof MockPath2D && path.points.length && width !== echo.lineWidth && style !== echo.color);
+        path instanceof MockPath2D && path.points.length && width !== echo.lineWidth && style !== echoColor
+        && style !== DETECTION_THEME_MAP._default.glow);
       if (!bracketStroke) continue;
       const bracketAlpha = bracketStroke[4];
       if (bracketAlpha < 0.99) dimmed++;
@@ -883,8 +886,10 @@ test('pathological detection paint holds alternate frames without freezing share
     const detectionBanners = env.detectionCtx.calls.filter(([name, text]) => name === 'fillText'
       && String(text).startsWith('DENSE  VIS:')).length;
     const sharedClears = env.ctx.calls.filter(([name]) => name === 'clearRect').length;
-    const sharedCards = env.ctx.calls.filter(([name, text]) => name === 'fillText'
-      && text === 'AMBIENT-CONTINUES').length;
+    // A card body paints as its text or, once cached, as one bitmap blit.
+    const cardPaints = () => env.ctx.calls.filter(([name, text]) => name === 'drawImage'
+      || (name === 'fillText' && text === 'AMBIENT-CONTINUES')).length;
+    const sharedCards = cardPaints();
 
     env.postRender.raise();
     assert.equal(env.detectionCtx.calls.filter(([name]) => name === 'clearRect').length, detectionClears,
@@ -893,9 +898,8 @@ test('pathological detection paint holds alternate frames without freezing share
       && String(text).startsWith('DENSE  VIS:')).length, detectionBanners);
     assert.equal(env.ctx.calls.filter(([name]) => name === 'clearRect').length, sharedClears + 1,
       'the shared surface still clears');
-    assert.equal(env.ctx.calls.filter(([name, text]) => name === 'fillText'
-      && text === 'AMBIENT-CONTINUES').length, sharedCards + 1,
-      'the shared lane still repaints');
+    // A frame that first caches the body both draws and blits it.
+    assert.ok(cardPaints() > sharedCards, 'the shared lane still repaints');
     assert.equal(getDetectionDiagnostics().throttleSkipCount, 1);
 
     env.postRender.raise();
@@ -920,7 +924,7 @@ test('detection cannot resurrect a private canvas, listener, matrix, resize, cle
   assert.doesNotMatch(source, /CALLOUT_OCCLUSION_SELECTORS/);
   assert.doesNotMatch(source, /_ctx\.(?:filter|globalCompositeOperation)\s*=/);
   assert.match(source, /_hostSurface\.style\.mixBlendMode = _theme\.blend;/);
-  assert.match(source, /_hostSurface\.style\.filter = `\$\{_theme\.filter\} drop-shadow\(0 0 \$\{GLOW_PX\}px \$\{_theme\.glow\}\)`;/);
+  assert.match(source, /_hostSurface\.style\.filter = 'none';/);
   assert.match(source, /const LABEL_SOLVE_INTERVAL_MS = 125;/);
   assert.match(source, /const _labelArbiter = new LabelArbiter\(\);/);
   assert.match(source, /const clipW = vp3 \* px \+ vp7 \* py \+ vp11 \* pz \+ vp15;/);

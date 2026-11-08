@@ -6,6 +6,7 @@ import {
   clearWorldOverlayTextMeasureCache,
   getWorldOverlayTextMeasureCacheSize,
   measureOverlayEntry,
+  TEXT_MEASURE_GENERATION_SIZE,
   paintOverlayEntry,
   placementVariants,
 } from './worldOverlayDraw.js';
@@ -19,23 +20,26 @@ import { normalizeOverlayEntry } from './worldOverlay.js';
 // worldOverlay.js's frame loop (not exported) and is not measured here.
 //  - steady: warm text-measure cache, the per-frame cost while parked.
 //  - overflow: the same cohort and frame, but with per-entry detail lines so
-//    its ~1,600 unique strings exceed the 1,024-entry text-measure cache;
-//    every parked frame then misses and runs an O(cache) eviction scan.
-//  - churn: 2,000 never-seen titles per frame, so every measure misses and
-//    the 1,024-entry cache evicts on each insert (worst case after a data
-//    refresh renames every label).
+//    its ~1,600 unique strings exceed the former 1,024-entry cache.
+//  - churn: 2,000 never-seen titles per frame, so every measure misses
+//    (worst case after a data refresh renames every label).
 //
 // Measured 2026-11-08, Apple M4, Node v26.13.0 — per-run median of 15 (7 for
-// churn) after warm-up, median (range) over 3 runs:
+// churn) after warm-up, median (range) over 3 runs.
+// Before Phase 4B (one 1,024-entry cache with an O(n) eviction scan):
 //   steady=0.23ms (0.23-0.31)  overflow=16.0ms (14.8-16.5)
 //   churn=33.2ms (28.8-33.3)
-// The ~65x steady->overflow gap is the text-measure cache's eviction scan.
-// Budgets are roughly 2.5-3x those medians; steady has a 1.5 ms noise floor.
+// After Phase 4B (two O(1) generations of 4,096 strings):
+//   steady=0.22ms  overflow=0.22ms  churn=1.8ms
+// Budgets are roughly 5x those medians with a 1.5 ms noise floor, so the
+// eviction-scan cliff cannot come back unnoticed.
 
 const CANDIDATE_COUNT = 864;
 const PAINTED_COUNT = 400;
 const CHURN_TITLE_COUNT = 2_000;
-const TEXT_MEASURE_CACHE_LIMIT = 1_024;
+// The former single-generation cache held 1,024 entries; the overflow cohort
+// is sized against that historic cliff.
+const FORMER_CACHE_LIMIT = 1_024;
 const VIEWPORT = Object.freeze({ width: 1600, height: 900 });
 const CHAR_WIDTH_PX = 6;
 // Distinct detail lines per cohort: 24 keeps the steady cohort's unique
@@ -46,7 +50,7 @@ const OVERFLOW_DETAIL_VARIETY = 900;
 const SOURCE_ID = 'perf-overlay';
 const STEADY_RUNS = Object.freeze({ warmup: 200, runs: 15 });
 const CHURN_RUNS = Object.freeze({ warmup: 5, runs: 7 });
-const BUDGET_MS = Object.freeze({ steady: 1.5, overflow: 45, churn: 85 });
+const BUDGET_MS = Object.freeze({ steady: 1.5, overflow: 1.5, churn: 10 });
 
 /** Variant mix by index: mostly ambient labels and cards, few protected. */
 const VARIANT_CYCLE = Object.freeze([
@@ -205,9 +209,11 @@ test('overlay frame measures, places and paints the synthetic cohort', () => {
   const variants = new Set(STEADY_ENTRIES.map((entry) => entry.variant));
   assert.deepEqual([...variants].sort(), ['card', 'label', 'track']);
   assert.ok(STEADY_ENTRIES.some((entry) => entry.cardStyle === 'tactical'));
-  assert.ok(uniqueTextCount(STEADY_ENTRIES) < TEXT_MEASURE_CACHE_LIMIT);
-  assert.ok(uniqueTextCount(OVERFLOW_ENTRIES) > TEXT_MEASURE_CACHE_LIMIT);
-  assert.ok(getWorldOverlayTextMeasureCacheSize() <= TEXT_MEASURE_CACHE_LIMIT);
+  assert.ok(uniqueTextCount(STEADY_ENTRIES) < FORMER_CACHE_LIMIT);
+  assert.ok(uniqueTextCount(OVERFLOW_ENTRIES) > FORMER_CACHE_LIMIT);
+  assert.ok(
+    getWorldOverlayTextMeasureCacheSize() <= TEXT_MEASURE_GENERATION_SIZE * 2,
+  );
   clearWorldOverlayTextMeasureCache();
 });
 
@@ -240,9 +246,8 @@ test(
       (i) => churnFrame(churnCohorts[i], PAINTED_COUNT),
       CHURN_RUNS,
     );
-    assert.equal(
-      getWorldOverlayTextMeasureCacheSize(),
-      TEXT_MEASURE_CACHE_LIMIT,
+    assert.ok(
+      getWorldOverlayTextMeasureCacheSize() <= TEXT_MEASURE_GENERATION_SIZE * 2,
     );
     clearWorldOverlayTextMeasureCache();
 

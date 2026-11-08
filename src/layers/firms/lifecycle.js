@@ -122,6 +122,9 @@ export function createLifecycle({
       layerState._heatRebuildTimer = null;
       layerState._heatImagery?.destroy();
       layerState._heatImagery = null;
+      layerState._heatRasterClient?.destroy();
+      layerState._heatRasterClient = null;
+      layerState._heatBuildFires = null;
       layerState._heatRaster = null;
       layerState._handoffHeat = -1;
       layerState._imageryHost = null;
@@ -145,6 +148,10 @@ export function createLifecycle({
       layerState._pickIndexById.clear();
       layerState._fireByCardId.clear();
       layerState._cullPositions.length = 0;
+      layerState._markerByFire = new Map();
+      layerState._markerBillboards = [];
+      layerState._markerIndex = null;
+      layerState._markerIndexSource = null;
       layerState._camSnapValid = false;
     },
   };

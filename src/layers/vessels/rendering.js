@@ -8,8 +8,10 @@ import {
   VESSEL_CARD_FADE_DISTANCE_M,
 } from '../../data/vesselLabels.js';
 import {
-  cameraPoseSignature,
-  screenProjectedRotation,
+  cameraPoseDiffers,
+  courseWorldVector,
+  rotationFromWorldCourse,
+  updateCameraPose,
 } from '../../data/iconOrientation.js';
 import {
   VESSEL_LIFT_M,
@@ -46,19 +48,28 @@ export function createRendering({
       components.tracking.currentGeoidN(record.lat, record.lon),
       VESSEL_LIFT_M,
     );
+    // A fresh render anchor per update: cards and the selection hold it.
     visual.position = Cesium.Cartesian3.fromDegrees(
       record.lon,
       record.lat,
       heightM,
     );
+    // Horizon-test point and course vector are owned by this visual alone,
+    // so they are rewritten in place instead of allocated per snapshot.
     visual.surfacePosition = Cesium.Cartesian3.fromDegrees(
       record.lon,
       record.lat,
       0,
+      Cesium.Ellipsoid.WGS84,
+      visual.surfacePosition || new Cesium.Cartesian3(),
     );
-    visual.normal = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(
+    // The course in world space depends only on the fix, so a camera move
+    // costs two dot products per vessel (rotationFromWorldCourse) instead of
+    // an east-north-up frame per vessel per pass.
+    visual.course = courseWorldVector(
       visual.position,
-      new Cesium.Cartesian3(),
+      vesselCourseDeg(record),
+      visual.course || new Cesium.Cartesian3(),
     );
     return visual;
   }
@@ -248,7 +259,7 @@ export function createRendering({
     if (
       !regularPass &&
       state.viewer?.camera &&
-      cameraPoseSignature(state.viewer.camera) !== vesselState._lastCamPoseSig
+      cameraPoseDiffers(state.viewer.camera, vesselState._lastCamPose)
     )
       scheduleTrailingVisibilityPass(now);
     if (!regularPass && !focusPass) return;
@@ -260,9 +271,7 @@ export function createRendering({
       // falls inside the cadence would schedule another trailing frame.
       if (regularPass) {
         if (state.viewer?.camera)
-          vesselState._lastCamPoseSig = cameraPoseSignature(
-            state.viewer.camera,
-          );
+          updateCameraPose(state.viewer.camera, vesselState._lastCamPose);
         updateClusteredLabels([]);
       }
       if (focusPass) {
@@ -277,9 +286,10 @@ export function createRendering({
     if (regularPass) {
       // Candidate construction stays on the original 800 ms selector cadence.
       // The 80 ms focus-only pass below never allocates label candidates.
-      const poseSig = camera ? cameraPoseSignature(camera) : '';
-      const doRotations = force || poseSig !== vesselState._lastCamPoseSig;
-      if (doRotations) vesselState._lastCamPoseSig = poseSig;
+      const moved = camera
+        ? updateCameraPose(camera, vesselState._lastCamPose)
+        : false;
+      const doRotations = force || moved;
       const occluder = makeOccluder();
       const labelCandidates = [];
       for (const record of state.records.all) {
@@ -287,11 +297,10 @@ export function createRendering({
         const visible = isVisible(visual.surfacePosition, occluder);
         if (visual.billboard) {
           visual.billboard.show = visible;
-          if (visible && doRotations && scene) {
-            const rot = screenProjectedRotation(
-              scene,
-              visual.position,
-              vesselCourseDeg(record),
+          if (visible && doRotations && camera) {
+            const rot = rotationFromWorldCourse(
+              camera,
+              visual.course,
               visual.billboard.rotation,
             );
             if (

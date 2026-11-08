@@ -1,8 +1,10 @@
 /**
  * Drapes the Active Fires heat raster over the globe as one full-extent
  * imagery tile on the active imagery host (globe or 3D-tiles), like the wind
- * layer's scalar field. Owns the canvas and the imagery layer; nothing else
- * in the fires layer touches imagery.
+ * layer's scalar field. The raster arrives as an image (an ImageBitmap from
+ * the raster worker, or a canvas) and is handed to Cesium as it is, through
+ * a one-tile provider: no PNG encode and decode. Owns the image and the
+ * imagery layer; nothing else in the fires layer touches imagery.
  *
  * `show` is only for the layer being on or off. The zoom hand-off fades
  * `alpha` instead: Cesium unmaps a hidden imagery layer from the globe
@@ -11,18 +13,9 @@
  * and costs no draw.
  */
 
-const defaultCanvas = (width, height) => {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  return canvas;
-};
+import { createBitmapImageryProvider } from './bitmapImageryProvider.js';
 
-export function createHeatImagery({
-  cesium,
-  getHost,
-  createCanvas = defaultCanvas,
-}) {
+export function createHeatImagery({ cesium, getHost }) {
   let raster = null;
   let layer = null;
   let collection = null;
@@ -40,15 +33,9 @@ export function createHeatImagery({
     if (!raster) return;
     const host = getHost?.() ?? { collection: null, kind: 'none' };
     if (!host.collection) return;
-    const canvas = createCanvas(raster.width, raster.height);
-    const ctx = canvas.getContext('2d');
-    const image = ctx.createImageData(raster.width, raster.height);
-    image.data.set(raster.rgba);
-    ctx.putImageData(image, 0, 0);
-    const provider = new cesium.SingleTileImageryProvider({
-      url: canvas.toDataURL('image/png'),
-      tileWidth: raster.width,
-      tileHeight: raster.height,
+    const provider = createBitmapImageryProvider({
+      cesium,
+      image: raster.image,
       rectangle: cesium.Rectangle.MAX_VALUE,
     });
     collection = host.collection;
@@ -59,9 +46,12 @@ export function createHeatImagery({
   }
 
   return {
+    /** @param {{image: ImageBitmap|HTMLCanvasElement}} next Built raster. */
     setRaster(next) {
+      const previous = raster;
       raster = next;
       attach();
+      if (previous?.image !== next?.image) previous?.image?.close?.();
     },
     /** True once a raster was handed over (painted or waiting for a host). */
     hasRaster() {
@@ -82,6 +72,7 @@ export function createHeatImagery({
     },
     destroy() {
       detach();
+      raster?.image?.close?.();
       raster = null;
     },
   };

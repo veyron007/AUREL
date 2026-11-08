@@ -1611,5 +1611,18 @@
   "src/app/qualityGovernor.js",
   "src/app/qualityGovernor.test.mjs",
   "src/ui/stores/quality.js",
-  "src/ui/stores/quality.test.mjs"
+  "src/ui/stores/quality.test.mjs",
+  "src/overlays/worldOverlayBitmaps.js",
+  "src/overlays/worldOverlayBitmaps.test.mjs",
+  "src/layers/firms/heatRasterClient.js",
+  "src/layers/firms/heatRasterClient.test.mjs",
+  "src/layers/firms/bitmapImageryProvider.js",
+  "src/layers/firms/markerIndex.js",
+  "src/layers/firms/markerIndex.test.mjs",
+  "src/data/firmsHeatRaster.worker.js",
+  "src/data/detectionSurfaceLook.js",
+  "src/data/detectionSurfaceLook.test.mjs",
+  "src/styles/separableStages.js",
+  "src/styles/separableStages.test.mjs",
+  "src/data/iconOrientationCourse.test.mjs"
 ]

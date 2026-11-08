@@ -65,26 +65,64 @@ const defaultWeight = (fire) =>
  */
 export function binFires(fires, { width, height, weight = defaultWeight }) {
   const grid = new Float32Array(width * height);
-  const row = (y) => Math.min(height - 1, Math.max(0, y)) * width;
-  const col = (x) => ((x % width) + width) % width;
   for (const fire of fires) {
     if (!Number.isFinite(fire.lat) || !Number.isFinite(fire.lon)) continue;
-    const fx = ((fire.lon + 180) / 360) * width - 0.5;
-    const fy = ((90 - fire.lat) / 180) * height - 0.5;
-    const x0 = Math.floor(fx);
-    const y0 = Math.floor(fy);
-    const tx = fx - x0;
-    const ty = fy - y0;
-    const w = weight(fire);
-    const top = row(y0);
-    const bottom = row(y0 + 1);
-    const left = col(x0);
-    const right = col(x0 + 1);
-    grid[top + left] += w * (1 - tx) * (1 - ty);
-    grid[top + right] += w * tx * (1 - ty);
-    grid[bottom + left] += w * (1 - tx) * ty;
-    grid[bottom + right] += w * tx * ty;
+    depositFire(grid, width, height, fire.lat, fire.lon, weight(fire));
   }
+  return grid;
+}
+
+/** Share one detection's weight between the four pixel centres around it. */
+function depositFire(grid, width, height, lat, lon, w) {
+  const fx = ((lon + 180) / 360) * width - 0.5;
+  const fy = ((90 - lat) / 180) * height - 0.5;
+  const x0 = Math.floor(fx);
+  const y0 = Math.floor(fy);
+  const tx = fx - x0;
+  const ty = fy - y0;
+  const top = Math.min(height - 1, Math.max(0, y0)) * width;
+  const bottom = Math.min(height - 1, Math.max(0, y0 + 1)) * width;
+  const left = ((x0 % width) + width) % width;
+  const right = (((x0 + 1) % width) + width) % width;
+  grid[top + left] += w * (1 - tx) * (1 - ty);
+  grid[top + right] += w * tx * (1 - ty);
+  grid[bottom + left] += w * (1 - tx) * ty;
+  grid[bottom + right] += w * tx * ty;
+}
+
+/**
+ * The raster inputs as three transferable columns, so the build can run in a
+ * worker without copying 100k record objects across: positions and the
+ * weight each detection carries ({@link binFires}'s default weight).
+ * Detections without a finite position are left out.
+ * @param {Array<{lat:number, lon:number, frp:number}>} fires
+ * @returns {{lat: Float64Array, lon: Float64Array, weight: Float64Array}}
+ */
+export function packHeatFires(fires) {
+  const lat = new Float64Array(fires.length);
+  const lon = new Float64Array(fires.length);
+  const weight = new Float64Array(fires.length);
+  let count = 0;
+  for (const fire of fires) {
+    if (!Number.isFinite(fire.lat) || !Number.isFinite(fire.lon)) continue;
+    lat[count] = fire.lat;
+    lon[count] = fire.lon;
+    weight[count] = defaultWeight(fire);
+    count += 1;
+  }
+  return {
+    lat: lat.slice(0, count),
+    lon: lon.slice(0, count),
+    weight: weight.slice(0, count),
+  };
+}
+
+/** {@link binFires} over {@link packHeatFires} columns; identical sums. */
+export function binPackedFires(packed, { width, height }) {
+  const grid = new Float32Array(width * height);
+  const { lat, lon, weight } = packed;
+  for (let i = 0; i < lat.length; i++)
+    depositFire(grid, width, height, lat[i], lon[i], weight[i]);
   return grid;
 }
 
@@ -181,12 +219,29 @@ export function buildHeatRaster(
   fires,
   { width, height, sigmaPx, percentile = 0.995 },
 ) {
-  const density = blurGaussian(
-    binFires(fires, { width, height }),
+  return colorHeatGrid(binFires(fires, { width, height }), {
     width,
     height,
     sigmaPx,
-  );
+    percentile,
+  });
+}
+
+/** {@link buildHeatRaster} from {@link packHeatFires} columns (the worker's path). */
+export function buildHeatRasterFromPacked(
+  packed,
+  { width, height, sigmaPx, percentile = 0.995 },
+) {
+  return colorHeatGrid(binPackedFires(packed, { width, height }), {
+    width,
+    height,
+    sigmaPx,
+    percentile,
+  });
+}
+
+function colorHeatGrid(grid, { width, height, sigmaPx, percentile }) {
+  const density = blurGaussian(grid, width, height, sigmaPx);
   const reference = percentileOfNonZero(density, percentile);
   const rgba = new Uint8ClampedArray(width * height * 4);
   if (reference > 0) {
@@ -206,4 +261,41 @@ export function buildHeatRaster(
     }
   }
   return { width, height, rgba, reference };
+}
+
+/**
+ * The raster as an image Cesium can drape without a PNG round trip: an
+ * ImageBitmap flipped, with straight alpha and no colour conversion (the
+ * options Cesium's ImageryProvider.loadImage decode uses), from the worker
+ * or the main thread.
+ * Where createImageBitmap is missing, a canvas holding the pixels is
+ * returned instead, made by `createCanvas(width, height)`.
+ * @param {{width:number, height:number, rgba: Uint8ClampedArray}} raster
+ * @param {{createCanvas?: function(number, number): HTMLCanvasElement}} [options]
+ * @returns {Promise<ImageBitmap|HTMLCanvasElement>}
+ */
+export async function heatRasterImage(raster, { createCanvas } = {}) {
+  if (
+    typeof createImageBitmap === 'function' &&
+    typeof ImageData === 'function'
+  )
+    return createImageBitmap(
+      new ImageData(raster.rgba, raster.width, raster.height),
+      {
+        // Cesium fetches imagery as flipped ImageBitmaps (UNPACK_FLIP_Y does
+        // not apply to an ImageBitmap upload), so a bitmap for an imagery
+        // tile must be flipped at decode too; a canvas is flipped on upload.
+        imageOrientation: 'flipY',
+        premultiplyAlpha: 'none',
+        colorSpaceConversion: 'none',
+      },
+    );
+  if (typeof createCanvas !== 'function')
+    throw new Error('No ImageBitmap support and no canvas to hold the raster');
+  const canvas = createCanvas(raster.width, raster.height);
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(raster.width, raster.height);
+  image.data.set(raster.rgba);
+  ctx.putImageData(image, 0, 0);
+  return canvas;
 }

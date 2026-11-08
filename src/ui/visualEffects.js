@@ -1,4 +1,4 @@
-import { PostProcessStage } from 'cesium';
+import { PostProcessStage, PostProcessStageComposite } from 'cesium';
 import {
   bloomStrengthFromIntensity,
   clampBloomIntensity,
@@ -26,6 +26,7 @@ export class VisualEffects {
     now = () => performance.now(),
     wallNow = () => Date.now(),
     createStage = (options) => new PostProcessStage(options),
+    createComposite = (options) => new PostProcessStageComposite(options),
   }) {
     this.viewer = viewer;
     this.requestRender = requestRender;
@@ -36,6 +37,7 @@ export class VisualEffects {
     this.now = now;
     this.wallNow = wallNow;
     this.createStage = createStage;
+    this.createComposite = createComposite;
     this.stages = {};
     this.transitions = new Map();
     this.startTime = wallNow();
@@ -60,11 +62,19 @@ export class VisualEffects {
         uniforms.time = 0.0;
       for (const [name, meta] of Object.entries(shader.uniforms || {}))
         uniforms[name] = meta.default;
-      const stage = this.createStage({
-        name: `godsEyeView_${name}`,
-        fragmentShader: shader.fragmentShader,
-        uniforms,
-      });
+      // Styles with blur passes build a composite (styles/separableStages.js).
+      const stage = shader.buildStage
+        ? shader.buildStage({
+            name: `godsEyeView_${name}`,
+            uniforms,
+            createStage: this.createStage,
+            createComposite: this.createComposite,
+          })
+        : this.createStage({
+            name: `godsEyeView_${name}`,
+            fragmentShader: shader.fragmentShader,
+            uniforms,
+          });
       stage.enabled = false;
       this.viewer.scene.postProcessStages.add(stage);
       this.stages[name] = stage;
