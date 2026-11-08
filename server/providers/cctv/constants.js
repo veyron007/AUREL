@@ -611,6 +611,15 @@ export const CCTV_FRAME_FETCH_TIMEOUT_MS = 8 * 1000;
 /** Maximum buffered snapshot size. */
 export const CCTV_FRAME_MAX_BODY_BYTES = 16 * 1024 * 1024;
 
+/**
+ * Shared still-frame cache. A frame is reused for at most 5 s, half the
+ * client's 10 s still refresh, so no viewer sees an older frame than it would
+ * have fetched itself; count and byte bounds cap its memory.
+ */
+export const CCTV_FRAME_CACHE_MAX_AGE_MS = 5_000;
+export const CCTV_FRAME_CACHE_MAX_ENTRIES = 256;
+export const CCTV_FRAME_CACHE_MAX_BYTES = 48 * 1024 * 1024;
+
 /** Deadline for upstream response headers; live bodies keep streaming afterward. */
 export const CCTV_MEDIA_FETCH_TIMEOUT_MS = 15 * 1000;
 /** Silence a live body may carry before the relay gives up on it. Twice the

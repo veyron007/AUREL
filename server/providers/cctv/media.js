@@ -438,12 +438,25 @@ export async function fetchCctvMediaUpstream(
  * TxDOT returns JSON with a base64-encoded JPEG in `snippet`, rather than
  * returning image/jpeg directly.
  */
+/**
+ * Abort `controller` when the caller's `signal` aborts (a viewer that left).
+ * @returns {() => void} Detach the listener.
+ */
+function linkAbort(controller, signal) {
+  if (!signal) return () => {};
+  const abort = () => controller.abort(signal.reason);
+  if (signal.aborted) abort();
+  else signal.addEventListener('abort', abort, { once: true });
+  return () => signal.removeEventListener('abort', abort);
+}
+
 export async function fetchTxdotSnapshot(
   url,
   {
     fetchImpl = fetch,
     timeoutMs = CCTV_FRAME_FETCH_TIMEOUT_MS,
     maxBytes = CCTV_FRAME_MAX_BODY_BYTES,
+    signal = null,
   } = {},
 ) {
   if (!url) return null;
@@ -463,6 +476,7 @@ export async function fetchTxdotSnapshot(
   const maxEnvelopeBytes = Math.ceil((maxBytes * 4) / 3) + 4096;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const unlink = linkAbort(controller, signal);
   try {
     // The snapshot endpoint answers directly; a redirect is not followed, so
     // the origin/path pin above holds for the request that is actually made.
@@ -506,6 +520,7 @@ export async function fetchTxdotSnapshot(
     return null;
   } finally {
     clearTimeout(timeoutId);
+    unlink();
     controller.abort();
   }
 }
@@ -641,6 +656,7 @@ export async function fetchCctvImageFromUpstream(
     fetchImpl = fetch,
     timeoutMs = CCTV_FRAME_FETCH_TIMEOUT_MS,
     maxBytes = CCTV_FRAME_MAX_BODY_BYTES,
+    signal = null,
   } = {},
 ) {
   if (!url || !/^https?:\/\//i.test(url)) return null;
@@ -650,6 +666,7 @@ export async function fetchCctvImageFromUpstream(
       new DOMException('CCTV upstream frame fetch timed out', 'TimeoutError'),
     );
   }, timeoutMs);
+  const unlink = linkAbort(controller, signal);
   try {
     const upstream = await fetchWithinHost(
       url,
@@ -678,6 +695,7 @@ export async function fetchCctvImageFromUpstream(
     return null;
   } finally {
     clearTimeout(timeoutId);
+    unlink();
     controller.abort();
   }
 }

@@ -11,6 +11,9 @@ import {
   watchDownstreamClose,
 } from './cctv/media.js';
 import {
+  CCTV_FRAME_CACHE_MAX_AGE_MS,
+  CCTV_FRAME_CACHE_MAX_BYTES,
+  CCTV_FRAME_CACHE_MAX_ENTRIES,
   CCTV_FRAME_FETCH_TIMEOUT_MS,
   CCTV_MAX_SOURCES_CEILING,
 } from './cctv/constants.js';
@@ -18,6 +21,12 @@ import { sanitizeCctvRangeHeader } from './cctv/range.js';
 import { admitSameSiteKeyless } from './common/same-site.js';
 import { PROXY_SIGNALS } from '../../src/localRequestGate.mjs';
 import { createHlsPuller } from './cctv/stream.js';
+import {
+  createCatalogViews,
+  createFrameCache,
+  createSharedFetches,
+} from './cctv/serving.js';
+import { ifNoneMatchHits } from './common/etag.js';
 import { googleServerApiKey } from './places/google-key.js';
 export { CCTV_FRAME_FETCH_TIMEOUT_MS, fetchCctvImageFromUpstream };
 /**
@@ -46,6 +55,17 @@ export function cctvProxy({
   const HEALTH_MAX_ENTRIES = CCTV_MAX_SOURCES_CEILING;
   /** Live HLS strategies (see ./cctv/stream.js). Shared across dev and preview. */
   const puller = createHlsPuller();
+  /** Id index and `/sources` body, built once per catalog. */
+  const catalogViews = createCatalogViews({
+    trimmedPacks: (sources) => getCctvSources.trimmedPacks?.(sources) ?? [],
+  });
+  /** Recent stills, shared by every viewer of a camera (see serving.js). */
+  const frameCache = createFrameCache({
+    maxEntries: CCTV_FRAME_CACHE_MAX_ENTRIES,
+    maxBytes: CCTV_FRAME_CACHE_MAX_BYTES,
+    maxAgeMs: CCTV_FRAME_CACHE_MAX_AGE_MS,
+  });
+  const frameFetches = createSharedFetches();
 
   /** Update the health entry for a camera, evicting the oldest entry if at capacity. */
   const setHealth = (cameraId, patch) => {
@@ -151,46 +171,23 @@ export function cctvProxy({
         // key-bearing Street View fallback below has its own check.
         if (admitSameSiteKeyless(req, res)) return;
         const sources = await getCctvSources();
-        const sourceById = new Map(
-          sources.map((source) => [source.id, source]),
-        );
+        const view = catalogViews.viewFor(sources);
+        const { sourceById } = view;
 
         if (url.pathname === '/sources') {
-          const body = {
-            trimmedPacks: getCctvSources.trimmedPacks?.(sources) ?? [],
-            sources: sources.map((source) => ({
-              id: source.id,
-              pack: source.pack,
-              name: source.name,
-              city: source.city,
-              cityId: source.cityId,
-              provider: source.provider,
-              lat: source.lat,
-              lon: source.lon,
-              headingDeg: source.headingDeg,
-              headingConfidence: source.headingConfidence || '',
-              pitchDeg: source.pitchDeg,
-              fovDeg: source.fovDeg,
-              rangeM: source.rangeM,
-              mountHeightM: source.mountHeightM,
-              groundElevationM: source.groundElevationM,
-              feedType: normalizeFeedType(source.feedType),
-              sourceKind:
-                source.sourceKind || (source.url ? 'configured' : 'fallback'),
-              poseSource: source.poseSource,
-              model: source.model || '',
-              manufacturer: source.manufacturer || '',
-              license: source.license,
-              credit: source.credit || '',
-              code: source.code || '',
-              groundHeights: source.groundHeights || null,
-            })),
-          };
+          // The catalog changes only when it refreshes; a client holding the
+          // current one gets a bodyless 304.
+          const headers = { ETag: view.etag, 'Cache-Control': 'no-cache' };
+          if (ifNoneMatchHits(req.headers?.['if-none-match'], view.etag)) {
+            res.writeHead(304, headers);
+            res.end();
+            return;
+          }
           res.writeHead(200, {
+            ...headers,
             'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
           });
-          res.end(JSON.stringify(body));
+          res.end(view.body);
           return;
         }
 
@@ -528,10 +525,24 @@ export function cctvProxy({
             ? source?.url
             : '');
 
-        const upstreamImage =
-          source?.sourceKind === 'txdot-its'
-            ? await fetchTxdotSnapshot(upstreamCandidate)
-            : await fetchCctvImageFromUpstream(upstreamCandidate);
+        // Viewers of the same camera share one upstream fetch and, for a few
+        // seconds, its frame; the fetch is abandoned when they all leave.
+        const downstream = watchDownstreamClose(res);
+        let cacheState = 'HIT';
+        let upstreamImage = frameCache.get(cameraId);
+        if (!upstreamImage) {
+          cacheState = 'MISS';
+          upstreamImage = await frameFetches.run(
+            cameraId,
+            (signal) =>
+              source?.sourceKind === 'txdot-its'
+                ? fetchTxdotSnapshot(upstreamCandidate, { signal })
+                : fetchCctvImageFromUpstream(upstreamCandidate, { signal }),
+            downstream.signal,
+          );
+          if (downstream.closed) return;
+          if (upstreamImage?.ok) frameCache.set(cameraId, upstreamImage);
+        }
         if (upstreamImage?.ok) {
           setHealth(cameraId, {
             status: 'ok',
@@ -543,6 +554,7 @@ export function cctvProxy({
             'Content-Type': upstreamImage.contentType,
             'Cache-Control': 'no-store',
             'X-CCTV-Source': 'upstream-image',
+            'X-CCTV-Frame-Cache': cacheState,
           });
           res.end(upstreamImage.body);
           return;

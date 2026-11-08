@@ -161,11 +161,11 @@ export const PROBE_CLEARANCE_M = 4;
 export const PROBE_MIN_RANGE_M = 12;
 
 // Bounded wait for the enable-time ground-prior batch: warm proxy disk cache
-// resolves in milliseconds; a cold/slow upstream must never hang layer init,
-// so past this budget init proceeds on catalog fallbacks and the batch applies
-// post-hoc (applyLateGroundPriors) when it lands.
+// resolves in milliseconds; a cold/slow upstream must never hold the cameras
+// back, so past this budget init draws them on catalog heights and the batch
+// applies post-hoc (applyLateGroundPriors) when it lands.
 
-export const GROUND_PRIOR_INIT_WAIT_MS = 8000;
+export const GROUND_PRIOR_INIT_WAIT_MS = 750;
 
 /** Default calibration offsets — all zeroed, range scale 1x. */
 

@@ -12,6 +12,7 @@ import {
   VIEW_MOTION_MIN_TURN_DEG,
   VIEW_MOTION_COST_FACTOR,
 } from './policy.js';
+import { awaitPriorsBriefly, startActivationRequests } from './activation.js';
 
 const MIN_TURN_COS = Math.cos((VIEW_MOTION_MIN_TURN_DEG * Math.PI) / 180);
 
@@ -210,13 +211,19 @@ export function createLifecycle({
       // records are normally built WITH their prior (correct first paint in
       // every regime); a cold/slow upstream loses the race and the batch
       // applies post-hoc via applyLateGroundPriors instead of hanging init.
-      const priorsPromise = parts.ground.resolveGroundPriors(catalog);
-      const priors = await Promise.race([
+      // The health check starts alongside the priors (activation.js); the
+      // cameras are drawn after at most a brief wait and take late priors and
+      // health when those land.
+      const { priors: priorsPromise, health: healthPromise } =
+        startActivationRequests({
+          catalog,
+          resolveGroundPriors: parts.ground.resolveGroundPriors,
+          syncHealth: () => parts.health.syncHealthState(true),
+        });
+      const priors = await awaitPriorsBriefly(
         priorsPromise,
-        new Promise((resolve) =>
-          setTimeout(() => resolve(null), GROUND_PRIOR_INIT_WAIT_MS),
-        ),
-      ]);
+        GROUND_PRIOR_INIT_WAIT_MS,
+      );
       sourceAbort.signal.throwIfAborted();
 
       for (let i = 0; i < catalog.length; i++) {
@@ -465,7 +472,7 @@ export function createLifecycle({
         },
       );
 
-      await parts.health.syncHealthState(true);
+      await healthPromise;
       // Health ranks crowded cells: thin again now that it has arrived (a
       // no-op unless enable() ran while health was loading).
       if (parts.rendering.refreshHorizonCulling()) {
