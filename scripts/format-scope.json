@@ -1536,5 +1536,7 @@
   "src/ui/commandPalette.test.mjs",
   "src/ui/stores/palette.js",
   "src/app/paletteTools.js",
-  "src/app/paletteTools.test.mjs"
+  "src/app/paletteTools.test.mjs",
+  "scripts/qa-aurel-spatial.mjs",
+  "docs/design/aurel/spatial/README.md"
 ]

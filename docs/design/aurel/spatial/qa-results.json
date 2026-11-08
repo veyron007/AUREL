@@ -1,0 +1,145 @@
+[
+  {
+    "name": "ornament search and destinations share one row",
+    "pass": true,
+    "detail": {
+      "search": {
+        "x": 296,
+        "y": 24,
+        "w": 360,
+        "h": 56
+      },
+      "nav": {
+        "x": 664,
+        "y": 24,
+        "w": 479,
+        "h": 56
+      },
+      "stamp": {
+        "x": 20,
+        "y": 834,
+        "w": 333,
+        "h": 32
+      },
+      "stampText": "ImageryNatural Earth · offline overview",
+      "placeholder": false,
+      "font": "\"Plus Jakarta Sans\", Manrope, Inter, -apple-system, \"system-ui\", sans-serif"
+    }
+  },
+  {
+    "name": "no placeholder place label",
+    "pass": true
+  },
+  {
+    "name": "imagery stamp names the source",
+    "pass": true,
+    "detail": {
+      "text": "ImageryNatural Earth · offline overview"
+    }
+  },
+  {
+    "name": "Plus Jakarta Sans is the interface face",
+    "pass": true
+  },
+  {
+    "name": "⌘K opens the palette",
+    "pass": true
+  },
+  {
+    "name": "typing ranks the Earthquakes layer first",
+    "pass": true,
+    "detail": {
+      "first": "Earthquakes (24h)"
+    }
+  },
+  {
+    "name": "Enter closes the palette",
+    "pass": true
+  },
+  {
+    "name": "the palette enabled the layer through its owner",
+    "pass": true
+  },
+  {
+    "name": "\"/\" opens the palette outside fields",
+    "pass": true
+  },
+  {
+    "name": "Escape closes the palette",
+    "pass": true
+  },
+  {
+    "name": "one side panel is shown at a time",
+    "pass": true,
+    "detail": {
+      "shown": [
+        "global-context-panel"
+      ]
+    }
+  },
+  {
+    "name": "a chosen place opens the Lens entity card",
+    "pass": true,
+    "detail": {
+      "title": "Dehradun",
+      "eyebrow": "Selected place",
+      "tiles": 3,
+      "place": "location_onDehradun"
+    }
+  },
+  {
+    "name": "a clicked earthquake uses the same entity card",
+    "pass": true,
+    "detail": {
+      "target": {
+        "x": 990.514053717603,
+        "y": 295.5210462657925
+      },
+      "title": "M4.7 · 137 km E of Miyako, Japan",
+      "eyebrow": "USGS"
+    }
+  },
+  {
+    "name": "chrome rests after a quiet spell",
+    "pass": true,
+    "detail": {
+      "held": [
+        "cockpit-context-toggle",
+        "cockpit-signal-toggle",
+        "param-panel-collapse-btn",
+        "locale-picker-search"
+      ]
+    }
+  },
+  {
+    "name": "movement wakes the chrome",
+    "pass": true
+  },
+  {
+    "name": "no page errors on desktop",
+    "pass": true,
+    "detail": []
+  },
+  {
+    "name": "reduced motion stops the palette animation",
+    "pass": true,
+    "detail": {
+      "palette": "none",
+      "nav": "none"
+    }
+  },
+  {
+    "name": "Cyber keeps its own theme",
+    "pass": true,
+    "detail": {
+      "theme": "cyber",
+      "font": "\"JetBrains Mono\", \"SF Mono\", \"Fira Code\", monospace",
+      "dockRadius": "0px"
+    }
+  },
+  {
+    "name": "no page errors on phone",
+    "pass": true,
+    "detail": []
+  }
+]
