@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { t } from '../../../i18n/index.js';
+import { formatNumber, formatRelativeTime, t } from '../../../i18n/index.js';
 import RailPanel from '../../rail/RailPanel.vue';
 import UiButton from '../../kit/UiButton.vue';
 import BreathCard from './BreathCard.vue';
@@ -17,6 +17,24 @@ const labels = { overview: () => t('Overview'), evidence: () => t('Evidence'), n
 const selected = computed(() => view.value?.selection);
 const selectedEvidence = computed(() => (view.value?.evidence || []).filter((row) => row.scope !== 'layer'));
 const feeds = computed(() => (view.value?.evidence || []).filter((row) => row.scope === 'layer'));
+// The entity card's eyebrow: where the selection came from and how old its
+// newest supplied observation is. Nothing is fetched; unknown stays unsaid.
+const AGE_UNITS = [[86400, 'day'], [3600, 'hour'], [60, 'minute'], [1, 'second']];
+function age(value) {
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return '';
+  const seconds = Math.max(0, Math.round((Date.now() - time) / 1000));
+  const [size, unit] = AGE_UNITS.find(([span]) => seconds >= span) || [1, 'second'];
+  return formatRelativeTime(-Math.floor(seconds / size), unit);
+}
+const eyebrow = computed(() => {
+  const source = selected.value?.sourceLabel;
+  const times = selectedEvidence.value.map((row) => new Date(row.applicableTime ?? row.retrievedAt ?? NaN).getTime()).filter(Number.isFinite);
+  const when = times.length ? age(Math.max(...times)) : '';
+  if (source && when) return t('{source} · {age}', { source, age: when });
+  return source || t('Selected place');
+});
+const degrees = (value) => `${formatNumber(value, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}°`;
 const stamp = (value) => value == null ? t('Unknown') : new Date(value).toISOString().replace('T', ' ').replace('.000Z', ' UTC');
 const quality = (value) => value == null ? t('Unknown') : `${value} m`;
 const kind = (value) => ({ observation: t('Observation'), forecast: t('Forecast'), imagery: t('Imagery'), derived: t('Derived'), manual: t('Manual'), simulation: t('Simulation'), unknown: t('Unknown') })[value] || t('Unknown');
@@ -43,9 +61,14 @@ async function moveTab(event) {
       <template v-else>
         <p v-if="view.status === 'loading'" class="lens-explanation" role="status">{{ t('Loading') }}</p>
         <header class="lens-identity">
-          <span class="lens-eyebrow">{{ t('Selected place') }}</span>
+          <span class="lens-eyebrow">{{ eyebrow }}</span>
           <h2>{{ selected.name }}</h2>
           <p v-if="selected.aliases.length">{{ selected.aliases.join(' · ') }}</p>
+          <dl class="lens-stats">
+            <div><dt>{{ t('Latitude') }}</dt><dd>{{ degrees(selected.geometry.coordinates[1]) }}</dd></div>
+            <div><dt>{{ t('Longitude') }}</dt><dd>{{ degrees(selected.geometry.coordinates[0]) }}</dd></div>
+            <div><dt>{{ t('Sources') }}</dt><dd>{{ formatNumber(selectedEvidence.length) }}</dd></div>
+          </dl>
           <p class="lens-coordinates">{{ selected.geometry.coordinates[1].toFixed(5) }}° {{ selected.geometry.coordinates[0].toFixed(5) }}°</p>
         </header>
         <div class="lens-tabs" role="tablist" :aria-label="t('Place details')" @keydown="moveTab">

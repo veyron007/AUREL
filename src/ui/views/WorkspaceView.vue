@@ -7,14 +7,24 @@ import { PANEL_RAIL_ITEMS } from '../panelRailCatalog.js';
 import { useDisplayStore } from '../stores/display.js';
 import { useLocationStore } from '../stores/location.js';
 import AgentWritesToggle from './panels/AgentWritesToggle.vue';
+import CommandPalette from './panels/CommandPalette.vue';
+import { ChromeRest, chromeHeldAwake } from '../chromeRest.js';
 
 const workspace = useWorkspaceStore();
 const panels = usePanelStore();
 const display = useDisplayStore();
 const location = useLocationStore();
+// Only a real place is named; the pin is the tray's decoration, not the name.
 const placeLabel = computed(() => {
   const city = location.view?.status?.city;
-  return !city || city === t('📍 Location: --') ? t('Explore the globe') : city;
+  if (!city || city === t('📍 Location: --')) return '';
+  return city.replace(/^📍\s*/u, '').trim();
+});
+// The imagery stamp names the active map source in full when it is known.
+const imagerySource = computed(() => {
+  const source = display.mapSource;
+  const active = source?.chips?.find((chip) => chip.active);
+  return active?.label || source?.status?.text || t('Loading');
 });
 const tools = computed(() => [...panels.sides.left, ...panels.sides.right].filter((panel) => panel.available));
 const activePanel = computed(() => tools.value.find((panel) => panel.open));
@@ -41,7 +51,11 @@ async function pauseFeeds() {
   } finally { pausing.value = false; }
 }
 let stop;
+let chromeRest;
 onMounted(() => {
+  // Chrome rests after a quiet spell; anything open or focused holds it awake.
+  chromeRest = new ChromeRest({ target: document.body, events: window, isHeld: () => chromeHeldAwake(document) });
+  chromeRest.start();
   workspace.restoreAppearance();
   stop = watch(() => [workspace.appearance, workspace.destination, workspace.sheetSize, activePanel.value?.id], ([appearance, destination, size, panel]) => {
     document.body.dataset.workspaceAppearance = appearance;
@@ -52,6 +66,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   stop?.();
+  chromeRest?.destroy();
   for (const key of ['workspaceAppearance', 'workspaceDestination', 'workspaceSheet', 'workspaceInspector']) delete document.body.dataset[key];
 });
 function openPanel(id) {
@@ -63,10 +78,9 @@ function openPanel(id) {
 <template>
   <div id="aurel-workspace">
     <header id="aurel-workspace-topbar" class="workspace-topbar">
-      <div class="workspace-context"><span>{{ placeLabel }}</span></div>
-      <div class="workspace-source" role="status"><span class="workspace-status-dot" aria-hidden="true"></span>{{ display.mapSource?.status?.text || t('Loading') }}</div>
-      <label class="workspace-appearance"><span>{{ t('Appearance') }}</span><select :value="workspace.appearance" @change="workspace.setAppearance($event.target.value)"><option v-for="item in WORKSPACE_APPEARANCES" :key="item.id" :value="item.id">{{ t(item.label) }}</option></select></label>
+      <div v-if="placeLabel" class="workspace-context" :title="placeLabel"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span>{{ placeLabel }}</span></div>
     </header>
+    <div class="workspace-source workspace-imagery-stamp" role="status" :aria-label="t('Map source')"><span class="workspace-status-dot" aria-hidden="true"></span><span class="workspace-stamp-label">{{ t('Imagery') }}</span><span class="workspace-stamp-value">{{ imagerySource }}</span></div>
     <nav id="aurel-workspace-nav" class="workspace-nav" :aria-label="t('Workspace')">
       <button v-for="item in WORKSPACE_DESTINATIONS" :key="item.id" type="button" :data-workspace="item.id" :aria-pressed="workspace.destination === item.id" @click="workspace.chooseDestination(item.id)"><span class="material-symbols-outlined" aria-hidden="true">{{ item.icon }}</span><span>{{ t(item.label) }}</span></button>
     </nav>
@@ -78,6 +92,7 @@ function openPanel(id) {
       <button type="button" data-pause-feeds :disabled="pausing" :title="t('Stop live feeds, local watches and pending analyses. Saved work stays open.')" @click="pauseFeeds">{{ pausing ? t('Pausing feeds…') : t('Pause feeds') }}</button>
       <p v-if="pauseStatus" class="workspace-session-status workspace-tool-hint" role="status">{{ pauseStatus }}</p>
       <AgentWritesToggle />
+      <details class="workspace-settings"><summary>{{ t('Settings') }}</summary><label class="workspace-appearance"><span>{{ t('Appearance') }}</span><select :value="workspace.appearance" @change="workspace.setAppearance($event.target.value)"><option v-for="item in WORKSPACE_APPEARANCES" :key="item.id" :value="item.id">{{ t(item.label) }}</option></select></label></details>
     </section>
     <div v-if="activePanel" id="aurel-workspace-sheet-controls" class="workspace-sheet-controls" role="group" :aria-label="t('Inspector size')">
       <span class="workspace-sheet-title">{{ panelLabel(activePanel) }}</span>
@@ -85,5 +100,6 @@ function openPanel(id) {
       <button type="button" :aria-pressed="workspace.sheetSize === 'half'" @click="workspace.setSheetSize('half')" :aria-label="t('Half-height inspector')">↕</button>
       <button type="button" :aria-pressed="workspace.sheetSize === 'full'" @click="workspace.setSheetSize('full')" :aria-label="t('Full-height inspector')">⌃</button>
     </div>
+    <CommandPalette />
   </div>
 </template>

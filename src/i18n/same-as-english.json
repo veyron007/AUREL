@@ -41,7 +41,10 @@
     "Raindrop",
     "India Meteorological Department",
     "Central Water Commission",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "de": [
     "1090 MHz",
@@ -235,7 +238,9 @@
     "Bengaluru",
     "Chennai",
     "Kolkata",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "{source} · {age}"
   ],
   "es": [
     "1090 MHz",
@@ -391,7 +396,10 @@
     "Rishikesh",
     "Delhi",
     "Chennai",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "fr": [
     "1090 MHz",
@@ -606,7 +614,11 @@
     "Bengaluru",
     "Chennai",
     "Kolkata",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Actions",
+    "Ctrl",
+    "{source} · {age}",
+    "Sources"
   ],
   "it": [
     "1090 MHz",
@@ -805,7 +817,10 @@
     "Bengaluru",
     "Chennai",
     "Kolkata",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "ja": [
     "1090 MHz",
@@ -868,7 +883,10 @@
     "{value} mm",
     "India Meteorological Department",
     "Central Water Commission",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "pt": [
     "1090 MHz",
@@ -1022,7 +1040,10 @@
     "Rishikesh",
     "Mumbai",
     "Chennai",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "ru": [
     "AIS: --",
@@ -1050,7 +1071,10 @@
     "Raindrop",
     "India Meteorological Department",
     "Central Water Commission",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "uk": [
     "AIS: --",
@@ -1073,7 +1097,10 @@
     "Raindrop",
     "India Meteorological Department",
     "Central Water Commission",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "zh-CN": [
     "1090 MHz",
@@ -1144,7 +1171,10 @@
     "{value} mm",
     "India Meteorological Department",
     "Central Water Commission",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ],
   "zh-Hant": [
     "1090 MHz",
@@ -1215,6 +1245,9 @@
     "{value} mm",
     "India Meteorological Department",
     "Central Water Commission",
-    "OpenStreetMap"
+    "OpenStreetMap",
+    "Esc",
+    "Ctrl",
+    "{source} · {age}"
   ]
 }

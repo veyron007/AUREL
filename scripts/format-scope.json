@@ -1529,5 +1529,12 @@
   "docs/design/aurel/phase-6/wp2/GATE.md",
   "src/ui/styles/search-suggest.css",
   "src/ui/styles/spatial.css",
-  "src/ui/styles/spatial-shell.css"
+  "src/ui/styles/spatial-shell.css",
+  "src/ui/chromeRest.js",
+  "src/ui/chromeRest.test.mjs",
+  "src/ui/commandPalette.js",
+  "src/ui/commandPalette.test.mjs",
+  "src/ui/stores/palette.js",
+  "src/app/paletteTools.js",
+  "src/app/paletteTools.test.mjs"
 ]

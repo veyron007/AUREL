@@ -1,5 +1,6 @@
 import { createSessionControls } from './sessionControls.js';
 import { createLocalCommandTools } from './localCommandTools.js';
+import { createPaletteTools } from './paletteTools.js';
 import { useLocationStore } from '../ui/stores/location.js';
 import { SceneDirector } from '../scenes/director.js';
 import { createPersonalTools } from './personalTools.js';
@@ -385,6 +386,11 @@ export function createApplicationTools({
     },
   });
   defer(() => localCommands.destroy());
+  const paletteTools = createPaletteTools({
+    pinia: applicationPinia(),
+    dataManager,
+  });
+  defer(() => paletteTools.destroy());
   defer(
     installViews({
       shell: styleManager,

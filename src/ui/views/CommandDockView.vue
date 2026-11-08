@@ -12,6 +12,12 @@ import { usePointerReticleStore } from '../stores/pointerReticle.js';
 import { useVoiceStore } from '../stores/voice.js';
 import PhoneTabBar from './panels/PhoneTabBar.vue';
 import VoiceControl from './panels/VoiceControl.vue';
+import { usePaletteStore } from '../stores/palette.js';
+
+// The search field's shortcut hint opens the command palette (⌘K, Ctrl+K, /).
+const palette = usePaletteStore();
+const appleKeys = /Mac|iPhone|iPad/.test(globalThis.navigator?.platform || globalThis.navigator?.userAgent || '');
+const paletteKeys = computed(() => (appleKeys ? '⌘K' : `${t('Ctrl')} K`));
 
 // VisualSettings publishes the active style and the map source controls
 // their chip row; until they do, the dock shows its initial markup. A style
@@ -73,6 +79,7 @@ function selectMapSource(chip) {
       </button>
       <input type="search" id="location-search" class="aurel-search-input" v-class-toggle="{ expanded: !!loc?.searchExpanded, searching: !!loc?.searching }" :placeholder="t('Search any location...')" autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-controls="location-suggestions" :aria-expanded="loc?.suggest?.open ? 'true' : 'false'" :aria-activedescendant="loc?.suggest?.activeId || null" :aria-label="t('Search location by name or coordinates')" :aria-invalid="loc?.searchError ? 'true' : null" :aria-describedby="loc?.searchError ? 'location-search-error' : null" />
       <button id="search-submit" type="button" :aria-label="t('Search')" :title="t('Search')" @click="locationControls?.submitSearch()"><span aria-hidden="true">↵</span></button>
+      <button id="aurel-palette-open" class="aurel-search-shortcut" type="button" :aria-label="t('Open command palette')" :title="t('Open command palette')" :aria-keyshortcuts="appleKeys ? 'Meta+K /' : 'Control+K /'" @click="palette.act('open')"><kbd aria-hidden="true">{{ paletteKeys }}</kbd></button>
     </div>
     <div id="location-suggestions-wrap" class="location-suggestions" v-show="loc?.suggest?.open">
       <ul id="location-suggestions" role="listbox" :aria-label="t('Place suggestions')" class="ui-scroll">

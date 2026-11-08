@@ -119,7 +119,7 @@ function englishPanelLabel(layer) {
 }
 
 // PANEL_LABELS win over layer-name keys; otherwise the module's own name.
-function panelLabel(layer) {
+export function panelLabel(layer) {
   if (PANEL_LABELS[layer.id]) return t(PANEL_LABELS[layer.id]);
   const key = LAYER_NAME_KEYS[layer.id];
   return key ? t(key) : layer.name;

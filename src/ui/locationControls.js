@@ -283,6 +283,18 @@ export class LocationControls {
     this.onChoosePlace?.(row.place);
     return this.onSearch(label, { place: row.place });
   }
+  /**
+   * Ask the suggestion engine about `text` for another presenter (the command
+   * palette), which lists the same rows and chooses them by index.
+   */
+  suggestPlaces(text) {
+    if (this.destroyed || !this.suggestions) return;
+    this.suggestions.input(String(text ?? ''), this.readBias());
+  }
+  /** Close the suggestion list and stop any pending lookup. */
+  closeSuggestions() {
+    if (!this.destroyed) this.suggestions?.close();
+  }
   /** The pointer moved over a suggestion row. */
   highlightSuggestion(index) {
     if (!this.destroyed) this.suggestions?.highlight(index);
