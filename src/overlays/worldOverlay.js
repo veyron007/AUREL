@@ -24,6 +24,7 @@ import {
   truncateOverlayTitle,
 } from './worldOverlayDraw.js';
 import {
+  beginOverlayBitmapFrame,
   installOverlayBitmaps,
   setOverlayBitmapDpr,
   uninstallOverlayBitmaps,
@@ -2601,6 +2602,7 @@ function paintFrame(keyhole) {
     ? createCyberSonarSampler(_canvasWidth, _canvasHeight, started)
     : null;
   clearCanvas(true, false);
+  beginOverlayBitmapFrame();
   _detectionSurfacePrepared = false;
   if (
     activeCustomPaintLaneCount(PAINT_TARGET_DETECTION) === 0 &&

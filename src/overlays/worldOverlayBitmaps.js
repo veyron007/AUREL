@@ -16,12 +16,23 @@
  * one by one onto the overlay (to within rounding). A faded card at rest
  * therefore looks exactly as before, not like a group-faded layer.
  *
- * A bitmap is made only for a body whose scale and opacity held for one
- * frame, so a zoom or fade that changes them every frame paints directly as
- * before and never churns the cache. The cache is bounded by total texels and evicts the
+ * A bitmap is made only for a body whose scale and opacity held for three
+ * frames, at most eight new ones per frame, so a zoom or fade that changes
+ * them every frame paints directly as before and never churns the cache. The cache is bounded by total texels and evicts the
  * least recently used body. Without an installed surface factory (node tests,
  * a browser without canvas) every painter paints directly.
  */
+
+/** Frames a body's scale and opacity must hold before it is cached. */
+const STABLE_FRAMES = 3;
+/** New bitmaps drawn per overlay frame at most. */
+const MAX_BUILDS_PER_FRAME = 8;
+let _buildsThisFrame = 0;
+
+/** Call once per overlay frame, before painting. */
+export function beginOverlayBitmapFrame() {
+  _buildsThisFrame = 0;
+}
 
 /** Device-pixel margin around a body for strokes that straddle its edge. */
 const MARGIN_DEVICE_PX = 3;
@@ -62,6 +73,7 @@ export function uninstallOverlayBitmaps() {
 export function clearOverlayBitmaps() {
   _bitmaps = new Map();
   _texels = 0;
+  _buildsThisFrame = 0;
 }
 
 /**
@@ -144,6 +156,11 @@ function lookupOrBuild(memo, entry, drawBody) {
     _bitmaps.set(key, found);
     return found;
   }
+  // New bitmaps are spread over frames so a burst of fresh cards (a data
+  // refresh, the end of a zoom) never stalls one frame; the rest paint
+  // directly until their turn.
+  if (_buildsThisFrame >= MAX_BUILDS_PER_FRAME) return null;
+  _buildsThisFrame++;
   const offset = Math.ceil(MARGIN_DEVICE_PX);
   const width = Math.ceil(memo.w * memo.scale) + offset * 2;
   const height = Math.ceil(memo.h * memo.scale) + offset * 2;
@@ -160,6 +177,42 @@ function lookupOrBuild(memo, entry, drawBody) {
   _diagnostics.builds++;
   evictToBudget();
   return bitmap;
+}
+
+/**
+ * The entry's memo, rewritten in place when the body changed. The memo is
+ * per-entry scratch owned by this module; reusing it keeps a zoom or fade,
+ * where scale or opacity changes every frame, free of allocation.
+ */
+function currentMemo(ctx, entry, kind, rect, scale, alpha, layout) {
+  let memo = entry._overlayBitmapMemo;
+  if (memo && memoMatches(memo, kind, entry, rect, scale, alpha, layout)) {
+    memo.seen++;
+    return memo;
+  }
+  if (!memo) {
+    memo = { rect: { x: 0, y: 0, w: 0, h: 0 }, details: [], ltr: null };
+    entry._overlayBitmapMemo = memo;
+  }
+  memo.kind = kind;
+  memo.scale = scale;
+  memo.alpha = alpha;
+  memo.w = memo.rect.w = rect.w;
+  memo.h = memo.rect.h = rect.h;
+  memo.title = entry.title;
+  memo.accent = entry.accent;
+  memo.padX = layout?.padX;
+  memo.padY = layout?.padY;
+  memo.titleH = layout?.titleH;
+  memo.lineH = layout?.lineH;
+  const details = Array.isArray(entry.details) ? entry.details : [];
+  memo.details.length = details.length;
+  for (let i = 0; i < details.length; i++) memo.details[i] = details[i];
+  memo.bitmap = null;
+  memo.ltr ??= directionIsLtr(ctx);
+  // Seen once: a zoom or fade may still be moving it.
+  memo.seen = 1;
+  return memo;
 }
 
 function directionIsLtr(ctx) {
@@ -203,37 +256,8 @@ export function paintOverlayBody(
   }
   const scale = _dpr * (paintScale || 1);
   const alpha = ctx.globalAlpha;
-  let memo = entry._overlayBitmapMemo;
-  if (!memo || !memoMatches(memo, kind, entry, rect, scale, alpha, layout)) {
-    memo = {
-      kind,
-      scale,
-      alpha,
-      w: rect.w,
-      h: rect.h,
-      rect: { x: 0, y: 0, w: rect.w, h: rect.h },
-      title: entry.title,
-      accent: entry.accent,
-      padX: layout?.padX,
-      padY: layout?.padY,
-      titleH: layout?.titleH,
-      lineH: layout?.lineH,
-      details: Array.isArray(entry.details) ? [...entry.details] : [],
-      bitmap: null,
-      ltr: memo?.ltr ?? directionIsLtr(ctx),
-      // Scale or opacity seen once may be a zoom or fade in progress; the
-      // body paints directly and the bitmap is built if the next frame agrees.
-      ready: false,
-    };
-    entry._overlayBitmapMemo = memo;
-  }
-  if (!memo.ready) {
-    memo.ready = true;
-    _diagnostics.direct++;
-    drawBody(ctx, entry, rect, kind);
-    return;
-  }
-  if (!memo.bitmap && memo.ltr)
+  const memo = currentMemo(ctx, entry, kind, rect, scale, alpha, layout);
+  if (!memo.bitmap && memo.ltr && memo.seen >= STABLE_FRAMES)
     memo.bitmap = lookupOrBuild(memo, entry, drawBody);
   if (!memo.bitmap) {
     _diagnostics.direct++;

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   clearOverlayBitmaps,
   getOverlayBitmapDiagnostics,
+  beginOverlayBitmapFrame,
   installOverlayBitmaps,
   paintOverlayBody,
   resetOverlayBitmapDiagnostics,
@@ -65,7 +66,7 @@ test('without a surface factory every body paints directly', () => {
   assert.deepEqual(ctx.calls, [['fillText', 'body', 40, 30]]);
 });
 
-test('a body paints directly once, then blits one aligned bitmap', () => {
+test('a body paints directly until it holds for three frames, then blits one aligned bitmap', () => {
   const made = [];
   installOverlayBitmaps({ createSurface: surfaceFactory(made) });
   setOverlayBitmapDpr(2);
@@ -73,19 +74,23 @@ test('a body paints directly once, then blits one aligned bitmap', () => {
   const ctx = recordingContext();
   const card = entry();
   paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
-  assert.equal(ctx.calls[0][0], 'fillText');
   paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
-  paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
+  assert.deepEqual(
+    ctx.calls.map(([name]) => name),
+    ['fillText', 'fillText'],
+  );
+  for (let i = 0; i < 3; i++)
+    paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
   assert.equal(made.length, 1, 'one bitmap for a stable body');
   const [surface] = made;
   // Body drawn at the device scale with a whole-device-pixel margin.
   assert.deepEqual(surface.ctx.calls[0], ['setTransform', 2, 0, 0, 2, 3, 3]);
   assert.equal(surface.width, 120 * 2 + 6);
   const blits = ctx.calls.filter(([name]) => name === 'drawImage');
-  assert.equal(blits.length, 2);
+  assert.equal(blits.length, 3);
   // Destination lands the margin on whole device pixels: x*2 - 3 is integral.
   assert.deepEqual(blits[0].slice(2), [40 - 1.5, 30 - 1.5, 123, 35]);
-  assert.equal(getOverlayBitmapDiagnostics().hits, 2);
+  assert.equal(getOverlayBitmapDiagnostics().hits, 3);
   uninstallOverlayBitmaps();
 });
 
@@ -108,14 +113,14 @@ test('changed text rebuilds; equal content on a new entry reuses the bitmap', ()
   setOverlayBitmapDpr(1);
   const ctx = recordingContext();
   const first = entry('A');
-  for (let i = 0; i < 2; i++)
+  for (let i = 0; i < 3; i++)
     paintOverlayBody(ctx, first, 'card', rect, 1, null, drawBody);
   const republished = entry('A');
-  for (let i = 0; i < 2; i++)
+  for (let i = 0; i < 3; i++)
     paintOverlayBody(ctx, republished, 'card', rect, 1, null, drawBody);
   assert.equal(made.length, 1);
   const renamed = { ...republished, title: 'B' };
-  for (let i = 0; i < 2; i++)
+  for (let i = 0; i < 3; i++)
     paintOverlayBody(ctx, renamed, 'card', rect, 1, null, drawBody);
   assert.equal(made.length, 2);
   uninstallOverlayBitmaps();
@@ -131,8 +136,8 @@ test('the texel budget evicts the least recently used bodies', () => {
   const ctx = recordingContext();
   for (let i = 0; i < 8; i++) {
     const card = entry(`CARD ${i}`);
-    paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
-    paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
+    for (let frame = 0; frame < 3; frame++)
+      paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
   }
   const { count, texels, evictions } = getOverlayBitmapDiagnostics();
   assert.ok(count <= 4);
@@ -162,12 +167,31 @@ test('a cached card body draws the same operations as the direct paint', () => {
   setOverlayBitmapDpr(1);
   const cached = recordingContext();
   const card = entry();
-  paintOverlayEntry(cached, card, placement, 1);
-  paintOverlayEntry(cached, card, placement, 1);
+  for (let frame = 0; frame < 3; frame++)
+    paintOverlayEntry(cached, card, placement, 1);
   const bodyOps = made[0].ctx.calls.slice(1).map(([name]) => name);
   const directOps = direct.calls.map(([name]) => name);
   // Direct: save, leader (beginPath moveTo lineTo stroke), body..., restore.
   const directBody = directOps.slice(5, -1);
   assert.deepEqual(bodyOps, directBody);
+  uninstallOverlayBitmaps();
+});
+
+test('at most eight new bitmaps are drawn per frame', () => {
+  const made = [];
+  installOverlayBitmaps({ createSurface: surfaceFactory(made) });
+  setOverlayBitmapDpr(1);
+  const ctx = recordingContext();
+  const cards = Array.from({ length: 20 }, (_, i) => entry(`BURST ${i}`));
+  for (let frame = 0; frame < 3; frame++) {
+    beginOverlayBitmapFrame();
+    for (const card of cards)
+      paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
+  }
+  assert.equal(made.length, 8);
+  beginOverlayBitmapFrame();
+  for (const card of cards)
+    paintOverlayBody(ctx, card, 'card', rect, 1, null, drawBody);
+  assert.equal(made.length, 16);
   uninstallOverlayBitmaps();
 });
