@@ -22,6 +22,7 @@ import {
   LABEL_GRID_PX,
   CARD_MIN_SEP_PX,
 } from './policy.js';
+import { createHorizonVisibility } from './horizonVisibility.js';
 
 export function createRendering({
   vesselState,
@@ -32,6 +33,10 @@ export function createRendering({
 }) {
   const { state } = vesselState;
   let visualRecords = new WeakMap();
+  // Bumped whenever a horizon point is rewritten, so the per-cell horizon
+  // index (horizonVisibility.js) rebuilds only after an AIS update.
+  let visualVersion = 0;
+  const horizon = createHorizonVisibility();
 
   // The fallback preserves helper calls with externally supplied render records.
   function getVisual(record) {
@@ -56,6 +61,7 @@ export function createRendering({
     );
     // Horizon-test point and course vector are owned by this visual alone,
     // so they are rewritten in place instead of allocated per snapshot.
+    visualVersion++;
     visual.surfacePosition = Cesium.Cartesian3.fromDegrees(
       record.lon,
       record.lat,
@@ -76,6 +82,7 @@ export function createRendering({
 
   function resetRecordVisuals() {
     visualRecords = new WeakMap();
+    visualVersion++;
   }
 
   const { registerSpriteCollection } = services.sprites;
@@ -292,9 +299,15 @@ export function createRendering({
       const doRotations = force || moved;
       const occluder = makeOccluder();
       const labelCandidates = [];
-      for (const record of state.records.all) {
+      const records = state.records.all;
+      // The horizon test runs per spatial cell; only records in a cell the
+      // horizon crosses are tested one by one, with the same occluder.
+      horizon.prepare(records, getVisual, visualVersion);
+      horizon.classify(occluder ? state.viewer.camera.positionWC : null);
+      for (let i = 0; i < records.length; i++) {
+        const record = records[i];
         const visual = getVisual(record);
-        const visible = isVisible(visual.surfacePosition, occluder);
+        const visible = horizon.isVisible(i, visual.surfacePosition, occluder);
         if (visual.billboard) {
           visual.billboard.show = visible;
           if (visible && doRotations && camera) {
