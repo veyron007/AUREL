@@ -48,7 +48,12 @@ test('the committed scene file parses and keeps the baseline scenes', () => {
   const scenes = parseScenes(JSON.parse(readFileSync(SCENE_FILE, 'utf8')));
   assert.deepEqual(
     scenes.map((scene) => scene.id),
-    ['empty-dehradun', 'flights-quakes-sats', 'cables-datacenters-fires'],
+    [
+      'empty-dehradun',
+      'flights-quakes-sats',
+      'cables-datacenters-fires',
+      'datacenters-only',
+    ],
   );
   assert.ok(scenes.every((scene) => scene.hash.includes('map=esri-imagery')));
 });

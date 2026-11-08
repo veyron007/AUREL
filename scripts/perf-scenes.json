@@ -14,6 +14,11 @@
       "id": "cables-datacenters-fires",
       "label": "Cables, datacenters, fires (world view)",
       "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=u.d.w"
+    },
+    {
+      "id": "datacenters-only",
+      "label": "Datacenters only (world view)",
+      "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=d"
     }
   ]
 }

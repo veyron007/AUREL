@@ -1,13 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as Cesium from 'cesium';
 import { localGeoJsonServices } from '../app/localGeojsonServices.js';
 import { createLocalGeoJsonLayer as createLayer } from './localGeojsonCore.js';
 import { getContextStore } from './contextStore.js';
+import { parseLocalGeojsonDataset } from './localGeojsonParse.js';
+import {
+  NODE_RENDER_OPTIONS,
+  localSceneStub,
+  renderedRecords,
+} from './localGeojsonSceneStub.mjs';
 
 /** The catalog's services, with the overlay host each test supplies. */
 const createLocalGeoJsonLayer = (options) =>
-  createLayer(options, {
+  createLayer({ ...NODE_RENDER_OPTIONS, ...options }, {
     ...localGeoJsonServices,
     overlayHost: options.overlayHost,
   });
@@ -31,20 +36,18 @@ function harness(t) {
     if (previousWindow === undefined) delete globalThis.window;
     else globalThis.window = previousWindow;
   });
-  const sources = new Set();
+  const scene = localSceneStub();
   const listeners = new Set();
   const event = { addEventListener(fn) { listeners.add(fn); return () => listeners.delete(fn); } };
   let handlers = 0;
+  let parseWorker = null;
   const viewer = {
-    dataSources: {
-      async add(source) { sources.add(source); return source; },
-      remove(source) { return sources.delete(source); },
-    },
-    scene: { canvas: {}, preRender: event, requestRender() {} },
+    scene: { ...scene, canvas: {}, preRender: event, requestRender() {} },
     camera: { moveEnd: event },
   };
   const create = () => createLocalGeoJsonLayer({
     id: 'local-dams', name: 'Dams', color: '#0088ff', url: '/dams.geojsonl',
+    parseWorkerFactory: () => parseWorker?.(),
     overlayHost: { setVisible() {}, setEntries() {}, clearSource() {} },
     screenSpaceEventHandlerFactory() {
       handlers++;
@@ -52,7 +55,24 @@ function harness(t) {
     },
   });
   const layer = create();
-  return { layer, create, viewer, sources, listeners, handlers: () => handlers };
+  return {
+    layer,
+    create,
+    viewer,
+    /** Builds the layer currently holds in the scene (root collections). */
+    builds: () => viewer.scene.primitives.items.length,
+    groundBuilds: () => viewer.scene.groundPrimitives.items.length,
+    drawn: () => renderedRecords(viewer.scene),
+    listeners,
+    handlers: () => handlers,
+    /** Route the dataset parse through a worker double (null: this thread). */
+    useParseWorker(factory) { parseWorker = factory; },
+  };
+}
+
+/** The context record's `dataSource` handle: shown once the build is live. */
+function contextHandle() {
+  return [...getContextStore().entities.values()][0]?.dataSource;
 }
 
 test('destroy removes context records and permits a fresh replacement', async t => {
@@ -63,10 +83,11 @@ test('destroy removes context records and permits a fresh replacement', async t 
   assert.equal(getContextStore().entities.size, 1);
   env.layer.disable(env.viewer);
   assert.equal(getContextStore().entities.size, 0, 'disable releases its records with the source');
-  assert.equal(env.sources.size, 0, 'disable removes the built source from the scene');
+  assert.equal(env.builds(), 0, 'disable removes the built primitives from the scene');
+  assert.equal(env.groundBuilds(), 0);
   env.layer.destroy(env.viewer);
   assert.equal(getContextStore().entities.size, 0);
-  assert.equal(env.sources.size, 0);
+  assert.equal(env.builds(), 0);
   assert.equal(env.listeners.size, 0);
   assert.equal(env.handlers(), 0);
   const replacement = env.create();
@@ -78,7 +99,7 @@ test('destroy removes context records and permits a fresh replacement', async t 
   assert.equal(getContextStore().entities.size, 0);
 });
 
-for (const phase of ['fetch', 'text', 'parse', 'add']) {
+for (const phase of ['fetch', 'text', 'parse']) {
   test(`destroy during ${phase} leaves no late objects or context records`, async t => {
     const env = harness(t);
     const entered = deferred();
@@ -92,14 +113,17 @@ for (const phase of ['fetch', 'text', 'parse', 'add']) {
       return response();
     });
     if (phase === 'parse') {
-      const load = Cesium.GeoJsonDataSource.load;
-      t.mock.method(Cesium.GeoJsonDataSource, 'load', async (...args) => pause(await load(...args)));
-    }
-    if (phase === 'add') {
-      t.mock.method(env.viewer.dataSources, 'add', async source => {
-        await pause();
-        env.sources.add(source);
-        return source;
+      // A worker double that holds its reply until released.
+      env.useParseWorker(() => {
+        const worker = {
+          terminate() {},
+          postMessage({ text }) {
+            pause().then(() =>
+              worker.onmessage?.({ data: { ok: true, records: parseLocalGeojsonDataset(text) } }),
+            );
+          },
+        };
+        return worker;
       });
     }
     const loading = env.layer.enable(env.viewer);
@@ -108,7 +132,8 @@ for (const phase of ['fetch', 'text', 'parse', 'add']) {
     assert.equal(signal.aborted, true);
     release.resolve();
     await loading;
-    assert.equal(env.sources.size, 0);
+    assert.equal(env.builds(), 0);
+    assert.equal(env.groundBuilds(), 0);
     assert.equal(env.listeners.size, 0);
     assert.equal(env.handlers(), 0);
     assert.equal(getContextStore().entities.size, 0);
@@ -129,10 +154,10 @@ test('concurrent enable and disable/re-enable share one pending dataset load', a
   release.resolve();
   await Promise.all([first, second]);
   assert.equal(fetchMock.mock.callCount(), 1);
-  assert.equal(env.sources.size, 1);
+  assert.equal(env.builds(), 1);
   assert.equal(env.handlers(), 1);
   assert.equal(env.listeners.size, 2);
-  assert.equal([...env.sources][0].show, true);
+  assert.equal(contextHandle().show, true);
 });
 
 test('disable during loading releases the completed source; re-enable rebuilds without refetching', async t => {
@@ -143,32 +168,36 @@ test('disable during loading releases the completed source; re-enable rebuilds w
   env.layer.disable(env.viewer);
   release.resolve();
   await loading;
-  assert.equal(env.sources.size, 0, 'a build that finishes after disable() is released, not parked hidden');
+  assert.equal(env.builds(), 0, 'a load that finishes after disable() builds nothing');
   assert.equal(env.listeners.size, 0);
   assert.equal(getContextStore().entities.size, 0);
   await env.layer.enable(env.viewer);
-  assert.equal(env.sources.size, 1);
-  assert.equal([...env.sources][0].show, true);
+  assert.equal(env.builds(), 1);
+  assert.equal(contextHandle().show, true);
   assert.equal(fetchMock.mock.callCount(), 1, 'the parsed dataset is cached across the toggle');
 });
 
-test('a toggle-off frees the entities and a toggle-on rebuilds them from the cached dataset', async t => {
+test('a toggle-off frees every primitive and a toggle-on rebuilds them from the cached dataset', async t => {
   const env = harness(t);
   const fetchMock = t.mock.method(globalThis, 'fetch', async () => response());
   await env.layer.enable(env.viewer);
-  const first = [...env.sources][0];
-  assert.equal(first.entities.values.length, 1);
+  const first = env.drawn();
+  assert.equal(first.length, 1);
+  assert.equal(env.groundBuilds(), 1);
   assert.equal(getContextStore().entities.size, 1);
+  const root = env.viewer.scene.primitives.items[0];
   env.layer.disable(env.viewer);
-  assert.equal(env.sources.size, 0, 'no data source stays registered while the layer is off');
+  assert.equal(env.builds(), 0, 'no primitive stays registered while the layer is off');
+  assert.equal(env.groundBuilds(), 0);
+  assert.equal(root.isDestroyed(), true, 'disable frees the GPU resources, not just hides them');
   assert.equal(getContextStore().entities.size, 0);
   assert.equal(env.layer.getLodDiagnostics().total, 0);
   assert.equal(env.layer.getStats().count, 1, 'the row keeps reporting the dataset size');
   await env.layer.enable(env.viewer);
-  const second = [...env.sources][0];
-  assert.notEqual(second, first, 're-enable builds a fresh source');
-  assert.equal(second.show, true);
-  assert.equal(second.entities.values.length, 1);
+  const second = env.drawn();
+  assert.notEqual(second[0].carrier, first[0].carrier, 're-enable builds fresh carriers');
+  assert.equal(contextHandle().show, true);
+  assert.equal(second.length, 1);
   assert.equal(getContextStore().entities.size, 1);
   assert.equal(fetchMock.mock.callCount(), 1, 'no second fetch for a bundled dataset');
   assert.equal(env.layer.getLodDiagnostics().total, 1);

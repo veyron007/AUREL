@@ -1587,5 +1587,16 @@
   "src/data/firmsHeatRaster.perf.test.mjs",
   "src/layers/vessels/records.perf.test.mjs",
   "src/overlays/worldOverlayDraw.perf.test.mjs",
-  "src/data/localGeojsonCore.perf.test.mjs"
+  "src/data/localGeojsonCore.perf.test.mjs",
+  "src/data/localGeojsonGround.js",
+  "src/data/localGeojsonOverlay.js",
+  "src/data/localGeojsonParse.js",
+  "src/data/localGeojsonParse.worker.js",
+  "src/data/localGeojsonParseClient.js",
+  "src/data/localGeojsonPrimitives.js",
+  "src/data/localGeojsonRecords.js",
+  "src/data/localGeojsonSceneStub.mjs",
+  "src/data/localGeojsonParse.test.mjs",
+  "src/data/localGeojsonPrimitives.test.mjs",
+  "scripts/qa-local-geojson-shot.mjs"
 ]
