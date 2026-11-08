@@ -10,7 +10,9 @@ import {
 } from './policy.js';
 import { createHeatImagery } from './heatImagery.js';
 import { createHeatRasterClient } from './heatRasterClient.js';
-import { buildFireGridIndex, queryFireGridIndex } from './markerIndex.js';
+import { buildFireGridIndex, queryFireGridIndexSteps } from './markerIndex.js';
+import { createMarkerPool } from './markerPool.js';
+import { createSlicedJobRunner } from './slicedJob.js';
 
 /** The markers drawn under the far bands' heatmap for the hand-off fade. */
 const HANDOFF_MARKER_LOD = LOD_LEVELS.find((lod) => lod.mode === 'detections');
@@ -28,6 +30,14 @@ export function createRendering({
   const { warmFireAnchorFloors } = services.anchors;
   const { registerSpriteCollection, restoreSpriteOrder } = services.sprites;
   const { overlayHost } = config;
+  // A marker set rebuild walks up to 40,000 detections; it runs in slices so
+  // no frame waits on it, and swaps the drawn set in one step at the end.
+  const markerRebuild = createSlicedJobRunner();
+  const markerPool = createMarkerPool({
+    create: createMarkerSprite,
+    pickIndex: layerState._pickIndexById,
+    pickIdFor: (fire) => `firms-${fire.index}`,
+  });
 
   /**
    * Rebuild the render for the current LOD band and viewport. Skips work
@@ -296,7 +306,7 @@ export function createRendering({
    */
 
   function renderHeat(lod, bounds) {
-    paintMarkers(HANDOFF_MARKER_LOD, bounds);
+    paintMarkers(HANDOFF_MARKER_LOD, bounds, () => {});
 
     const cells = aggregateFires(lod, bounds);
     layerState._cellCount = cells.length;
@@ -338,8 +348,17 @@ export function createRendering({
    */
 
   function renderDetections(lod, bounds) {
-    const markers = paintMarkers(lod, bounds);
-    if (!markers) return;
+    paintMarkers(lod, bounds, (markers) => showDetections(lod, markers));
+  }
+
+  /**
+   * Labels, context and terrain floors for a drawn detections set, once the
+   * set is on screen.
+   * @param {Object} lod - Detections band descriptor.
+   * @param {Array<Object>} markers - The drawn markers, strongest first.
+   */
+
+  function showDetections(lod, markers) {
     const candidates = markers.map((marker) => marker.fire);
 
     layerState._cellCount = candidates.length;
@@ -368,70 +387,173 @@ export function createRendering({
   }
 
   /**
-   * The glow-sprite markers for a detections band: the strongest fires in
-   * view, capped at the band's maxDetections, horizon-culled.
+   * Rebuild the glow-sprite markers for a detections band: the strongest
+   * fires in view, capped at the band's maxDetections, horizon-culled. The
+   * walk runs in time slices (slicedJob.js) and the drawn set is swapped in
+   * one step, then `onDrawn` gets the markers; a small set finishes inside
+   * this call. A newer rebuild cancels one still in flight.
    * @param {Object} lod - Detections band descriptor.
    * @param {?Object} bounds - Padded view bounds in degrees, or null.
-   * @returns {?Array<Object>} Label candidates for the fires drawn,
-   *   strongest first; null before the sprite collection exists.
+   * @param {function(Array<Object>): void} onDrawn - Called with the label
+   *   candidates for the fires drawn, strongest first.
+   * @returns {boolean} False before the sprite collection exists.
    */
 
-  function paintMarkers(lod, bounds) {
+  function paintMarkers(lod, bounds, onDrawn) {
     ensureDetectionCollections();
     layerState._dataSource.entities.removeAll();
-    if (!layerState._billboards) return null;
-    const candidates = markerCandidates(lod, bounds);
+    if (!layerState._billboards) return false;
+    markerRebuild.start(markerRebuildSteps(lod, bounds, onDrawn));
+    return true;
+  }
+
+  /** The pool key of a detection's sprite image (see glowSprite). */
+
+  function spriteKey(fire) {
+    const stop = components.model.detectionColorStop(fire);
+    const size = components.model.sizeBucket(
+      components.model.frpPixelSize(fire.frp),
+    );
+    return `${stop.name}:${size}`;
+  }
+
+  /**
+   * The sliced marker rebuild. Yields between small batches; everything that
+   * changes what is drawn happens in the final swap, without a yield.
+   */
+
+  function* markerRebuildSteps(lod, bounds, onDrawn) {
+    const candidates = yield* markerCandidates(lod, bounds);
     // Only the close band warms terrain floors (renderDetections).
     const anchor =
       lod.id === 'close'
         ? components.model.firePosition
         : components.model.fireBuiltPosition;
-    const markers = [];
-    const next = new Map();
-    const billboards = [];
-    layerState._cullPositions.length = 0;
-    for (const fire of candidates) {
+    const plan = yield* planMarkers(candidates, anchor);
+    yield* growPool(plan);
+    swapMarkers(plan);
+    onDrawn(plan.markers);
+  }
+
+  /** Anchors and kept sprites for the new set; nothing drawn changes. */
+
+  function* planMarkers(candidates, anchor) {
+    const previous = layerState._markerByFire;
+    const count = candidates.length;
+    const plan = {
+      previous,
+      keys: new Array(count),
+      billboards: new Array(count),
+      markers: new Array(count),
+      cullPositions: new Array(count),
+      // Kept sprites now; entering ones are added at the swap.
+      next: new Map(),
+    };
+    // Hot loop over up to 40,000 detections: fills arrays only this plan
+    // holds, so the drawn set is untouched until the swap.
+    for (let i = 0; i < count; i++) {
+      const fire = candidates[i];
       const position = anchor(fire);
       const cullPosition = components.model.fireCullPosition(fire, position);
-      const billboard = keepOrAddMarker(fire, position);
-      next.set(fire, billboard);
-      billboards.push(billboard);
-      layerState._cullPositions.push(cullPosition);
-      markers.push({ position, cullPosition, fire, cell: null });
+      const kept = previous.get(fire) ?? null;
+      plan.billboards[i] = kept;
+      plan.keys[i] = kept ? null : spriteKey(fire);
+      plan.cullPositions[i] = cullPosition;
+      plan.markers[i] = { position, cullPosition, fire, cell: null };
+      plan.next.set(fire, kept);
+      if ((i & 255) === 255) yield;
     }
-    for (const [fire, billboard] of layerState._markerByFire) {
-      if (next.has(fire)) continue;
-      layerState._pickIndexById.delete(billboard.id);
-      layerState._billboards.remove(billboard);
+    return plan;
+  }
+
+  /**
+   * Make sure the pool holds a hidden sprite of the right image for every
+   * entering fire, counting the sprites the leaving fires will free, so the
+   * swap moves sprites and never creates them.
+   */
+
+  function* growPool(plan) {
+    // Per image: how many entrants, and one of them to draw the image from.
+    const demand = new Map();
+    plan.keys.forEach((key, i) => {
+      if (!key) return;
+      const entry = demand.get(key);
+      if (entry) entry.count += 1;
+      else demand.set(key, { count: 1, fire: plan.markers[i].fire });
+    });
+    for (const fire of plan.previous.keys()) {
+      if (plan.next.has(fire)) continue;
+      const entry = demand.get(spriteKey(fire));
+      if (entry) entry.count -= 1;
+    }
+    yield;
+    for (const [key, { count, fire }] of demand) {
+      let missing = count - markerPool.available(key);
+      while (missing > 0) {
+        const batch = Math.min(missing, 256);
+        markerPool.grow(key, batch, fire);
+        missing -= batch;
+        yield;
+      }
+    }
+  }
+
+  /** Swap the drawn set in one step: hide leavers, place entrants, cull. */
+
+  function swapMarkers(plan) {
+    for (const [fire, billboard] of plan.previous)
+      if (!plan.next.has(fire)) markerPool.release(billboard);
+    const color = currentFadeColor();
+    const { billboards, next } = plan;
+    for (let i = 0; i < plan.markers.length; i++) {
+      const { fire, position } = plan.markers[i];
+      const kept = billboards[i];
+      // Cesium's setter skips an equal position; an anchor moves only when
+      // a terrain floor lands.
+      if (kept) {
+        kept.position = position;
+        continue;
+      }
+      const taken = markerPool.take(
+        plan.keys[i],
+        fire,
+        position,
+        color,
+        Cesium.Color.equals,
+      );
+      next.set(fire, taken);
+      billboards[i] = taken;
     }
     layerState._markerByFire = next;
     layerState._markerBillboards = billboards;
-
-    // Freshly-added sprites default to show=true; cull the far side now so a
-    // rebuild never flashes through-the-planet detections while the camera
-    // sits still (the moveEnd/preRender hooks only fire on camera motion).
+    layerState._cullPositions = plan.cullPositions;
+    // Entering sprites are hidden; the horizon pass shows the near-side
+    // ones with the current fade, so a rebuild never flashes
+    // through-the-planet detections while the camera sits still.
     refreshHorizonCulling();
-    return markers;
+    services.render?.governorRequestRender?.('firms-markers');
   }
 
   /**
    * The strongest detections in view for a marker band, strongest first:
    * the grid index walks only the cells the padded view touches and returns
-   * what a scan of the FRP-sorted set would (markerIndex.js).
+   * what a scan of the FRP-sorted set would (markerIndex.js). A generator
+   * step of the sliced rebuild; it returns the list.
    * @param {Object} lod - Detections band descriptor.
    * @param {?Object} bounds - Padded view bounds in degrees, or null.
-   * @returns {Array<Object>}
+   * @returns {Generator<void, Array<Object>, void>}
    */
 
-  function markerCandidates(lod, bounds) {
+  function* markerCandidates(lod, bounds) {
     const firesByFrp = layerState._firesByFrp;
     // Sky/horizon view: fall back to the globally strongest detections.
     if (!bounds) return firesByFrp.slice(0, lod.maxDetections);
     if (layerState._markerIndexSource !== firesByFrp) {
       layerState._markerIndex = buildFireGridIndex(firesByFrp);
       layerState._markerIndexSource = firesByFrp;
+      yield;
     }
-    return queryFireGridIndex(
+    return yield* queryFireGridIndexSteps(
       layerState._markerIndex,
       firesByFrp,
       bounds,
@@ -441,25 +563,17 @@ export function createRendering({
   }
 
   /**
-   * The sprite for one detection: the one already drawn when it stays in
-   * the set (its image depends only on the detection; its anchor moves only
-   * when a terrain floor lands), else a new one carrying the current
-   * hand-off fade. Diffing replaces the old clear-and-refill of up to 40,000
-   * sprites on every rebuild.
+   * A new hidden sprite with the image `fire` is drawn with. The pool
+   * creates these only when it holds too few of that image (markerPool.js);
+   * a drawn sprite never changes image, so the texture atlas never grows on
+   * reuse.
    */
 
-  function keepOrAddMarker(fire, position) {
-    const kept = layerState._markerByFire.get(fire);
-    if (kept) {
-      if (kept.position !== position) kept.position = position;
-      return kept;
-    }
-    const pickId = `firms-${fire.index}`;
-    layerState._pickIndexById.set(pickId, fire);
+  function createMarkerSprite(fire) {
     const coreSize = components.model.frpPixelSize(fire.frp);
     return layerState._billboards.add({
-      id: pickId,
-      position,
+      position: Cesium.Cartesian3.ZERO,
+      show: false,
       color: currentFadeColor(),
       image: components.model.glowSprite(
         components.model.detectionColorStop(fire),
@@ -492,6 +606,8 @@ export function createRendering({
   }
 
   function removeDetectionCollections(viewer) {
+    markerRebuild.cancel();
+    markerPool.clear();
     const scene = viewer?.scene || layerState._viewer?.scene;
     if (scene && !scene.isDestroyed?.()) {
       try {
@@ -555,6 +671,7 @@ export function createRendering({
     },
   };
   return {
+    cancelMarkerRebuild: markerRebuild.cancel,
     renderCurrentLod,
     renderBand,
     aggregateFires,

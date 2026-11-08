@@ -79,6 +79,8 @@ export function createLifecycle({
       layerState.request = null;
       layerState._loading = false;
       layerState._enabled = false;
+      // A marker rebuild still in flight would publish labels after disable.
+      components.rendering.cancelMarkerRebuild?.();
       // Disable clears the label overlay; the first poll after enable redraws
       // it even when the snapshot is unchanged (304).
       layerState._redrawOnNextPoll = true;

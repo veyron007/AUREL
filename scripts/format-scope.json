@@ -1652,5 +1652,8 @@
   "src/sources/live/vesselDelta.js",
   "src/layers/vessels/horizonCells.js",
   "src/layers/vessels/horizonVisibility.js",
-  "src/layers/vessels/horizonCells.test.mjs"
+  "src/layers/vessels/horizonCells.test.mjs",
+  "src/layers/firms/slicedJob.js",
+  "src/layers/firms/markerPool.js",
+  "src/layers/firms/markerRebuild.test.mjs"
 ]
