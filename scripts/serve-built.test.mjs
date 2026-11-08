@@ -128,10 +128,9 @@ test('a dist/ this launcher did not stamp is rebuilt', async (t) => {
 
 test('the served build answers, restarts in place, and closes', async (t) => {
   const root = await fixture(t);
-  const previous = process.env.GEV_SERVED_BUILD;
+  const previous = globalThis.__GEV_SERVED_BUILD_AT_BOOT;
   t.after(() => {
-    if (previous === undefined) delete process.env.GEV_SERVED_BUILD;
-    else process.env.GEV_SERVED_BUILD = previous;
+    globalThis.__GEV_SERVED_BUILD_AT_BOOT = previous;
   });
   const { runs, runBuild } = fakeBuild();
   const failures = [];
@@ -145,7 +144,8 @@ test('the served build answers, restarts in place, and closes', async (t) => {
     onRestartFailure: (error) => failures.push(error),
   });
   t.after(() => served.close());
-  assert.equal(process.env.GEV_SERVED_BUILD, '1');
+  assert.equal(globalThis.__GEV_SERVED_BUILD_AT_BOOT, true);
+  assert.equal(process.env.GEV_SERVED_BUILD, undefined);
   const url = () =>
     `http://127.0.0.1:${served.server.httpServer.address().port}/`;
   assert.match(await (await fetch(url())).text(), /build 1/);
@@ -158,4 +158,40 @@ test('the served build answers, restarts in place, and closes', async (t) => {
   assert.match(await (await fetch(url())).text(), /build 2/);
   assert.equal(runs.length, 2);
   assert.deepEqual(failures, []);
+});
+
+test('a failed rebuild keeps the previous build serving', async (t) => {
+  const root = await fixture(t);
+  const previous = globalThis.__GEV_SERVED_BUILD_AT_BOOT;
+  t.after(() => {
+    globalThis.__GEV_SERVED_BUILD_AT_BOOT = previous;
+  });
+  const { runBuild } = fakeBuild();
+  let failNext = false;
+  const flakyBuild = async (dir) => {
+    if (failNext) throw new Error('disk full');
+    await runBuild(dir);
+  };
+  const failures = [];
+  const logs = [];
+  const served = await startServedBuild({
+    root,
+    host: '127.0.0.1',
+    port: 0,
+    vite,
+    log: (line) => logs.push(line),
+    runBuild: flakyBuild,
+    onRestartFailure: (error) => failures.push(error),
+  });
+  t.after(() => served.close());
+  const url = () =>
+    `http://127.0.0.1:${served.server.httpServer.address().port}/`;
+  await utimes(path.join(root, 'src', 'main.js'), future(5), future(5));
+  failNext = true;
+  const first = served.server;
+  await first.restart();
+  assert.equal(served.server, first);
+  assert.match(await (await fetch(url())).text(), /build 1/);
+  assert.deepEqual(failures, []);
+  assert.ok(logs.some((line) => /Rebuild failed.*disk full/.test(line)));
 });

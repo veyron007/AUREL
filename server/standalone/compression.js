@@ -220,10 +220,35 @@ function wrapResponse(res, encoding) {
   };
 }
 
+/**
+ * Routes whose bodies can carry a credential (minted realtime tokens, key
+ * setup). They are never compressed, so response sizes cannot leak a secret
+ * next to reflected input (BREACH).
+ */
+export const UNCOMPRESSED_ROUTE_PREFIXES = Object.freeze([
+  '/api/setup',
+  '/api/realtime',
+  '/api/gemini/token',
+]);
+
+/** Whether a request path belongs to a credential-bearing route. */
+export function isCredentialRoute(url) {
+  const path = String(url || '')
+    .split(/[?#]/, 1)[0]
+    .toLowerCase();
+  return UNCOMPRESSED_ROUTE_PREFIXES.some(
+    (prefix) =>
+      path === prefix ||
+      path.startsWith(`${prefix}/`) ||
+      path.startsWith(`${prefix}.`),
+  );
+}
+
 /** Connect middleware that compresses text responses for capable clients. */
 export function compressionMiddleware() {
   return (req, res, next) => {
     if (req.method === 'HEAD' || req.headers.upgrade) return next();
+    if (isCredentialRoute(req.url)) return next();
     const encoding = negotiateEncoding(req.headers['accept-encoding']);
     // Later compressors (Vite preview's own gzip) must not encode again.
     if (encoding) req.headers['accept-encoding'] = 'identity';

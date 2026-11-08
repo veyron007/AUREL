@@ -28,11 +28,11 @@ const LAUNCHER_AT_BOOT = process.env.GEV_LAUNCHER;
 /**
  * Whether scripts/serve-built.mjs started this process. Only that launcher
  * gives the preview server a restart, so only then does Provider Settings run
- * on the built app as well as on the dev server. Memoized on globalThis at
- * first load, before loadEnv, so a dotenv line can never switch it on.
+ * on the built app as well as on the dev server. The launcher sets a
+ * process-local flag on globalThis; no environment variable or dotenv line can
+ * switch it on.
  */
-const SERVED_BUILD_AT_BOOT = (globalThis.__GEV_SERVED_BUILD_AT_BOOT ??=
-  process.env.GEV_SERVED_BUILD === '1');
+const SERVED_BUILD_AT_BOOT = globalThis.__GEV_SERVED_BUILD_AT_BOOT === true;
 
 /**
  * Provider values present before Vite loads the checkout's dotenv files.

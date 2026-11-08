@@ -185,8 +185,10 @@ export async function startServedBuild({
     process.exit(1);
   },
 }) {
-  // Read once by key-setup.js at load; set before Vite loads the config.
-  process.env.GEV_SERVED_BUILD = '1';
+  // Read once by key-setup.js at load; set before Vite loads the config. A
+  // process-local flag, not an environment variable, so a shell export or a
+  // child process can never switch Provider Settings on for a plain preview.
+  globalThis.__GEV_SERVED_BUILD_AT_BOOT = true;
   let server = null;
   let pending = null;
   const restartPlugin = {
@@ -195,9 +197,9 @@ export async function startServedBuild({
       previewServer.restart = () => restart();
     },
   };
-  const open = async () => {
-    const env = effectiveEnv(vite, root);
-    await ensureBuild({ root, env, runBuild, log });
+  const build = () =>
+    ensureBuild({ root, env: effectiveEnv(vite, root), runBuild, log });
+  const serve = async () => {
     server = await vite.preview({
       root,
       plugins: [restartPlugin],
@@ -205,18 +207,29 @@ export async function startServedBuild({
     });
     return server;
   };
+  // Rebuild while the current build keeps serving. A failed rebuild leaves the
+  // running server in place; only a failure to reopen the port is fatal.
   const restart = () =>
     (pending ??= (async () => {
       log('[serve] Restarting.');
+      try {
+        await build();
+      } catch (error) {
+        log(
+          `[serve] Rebuild failed, still serving the previous build: ${error.message}`,
+        );
+        return;
+      }
       await server?.close();
       server = null;
-      await open();
+      await serve();
     })()
       .catch(onRestartFailure)
       .finally(() => {
         pending = null;
       }));
-  await open();
+  await build();
+  await serve();
   return {
     get server() {
       return server;

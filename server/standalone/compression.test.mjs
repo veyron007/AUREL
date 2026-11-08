@@ -10,6 +10,7 @@ import {
   compressionMiddleware,
   compressionPlugin,
   isCompressibleType,
+  isCredentialRoute,
   negotiateEncoding,
 } from './compression.js';
 import { makeFixtureRoot } from '../../src/tooling/fixtureRoot.mjs';
@@ -296,4 +297,29 @@ test('dev and preview servers compress /api routes and built assets once', async
       await server.close();
     }
   }
+});
+
+test('credential-bearing routes are never compressed', () => {
+  assert.equal(isCredentialRoute('/api/setup/keys'), true);
+  assert.equal(isCredentialRoute('/api/setup/status?x=1'), true);
+  assert.equal(isCredentialRoute('/API/Realtime/token'), true);
+  assert.equal(isCredentialRoute('/api/gemini/token'), true);
+  assert.equal(isCredentialRoute('/api/gemini/chat'), false);
+  assert.equal(isCredentialRoute('/api/firms'), false);
+  assert.equal(isCredentialRoute('/api/setupx'), false);
+});
+
+test('the middleware leaves a credential route untouched', () => {
+  const req = {
+    method: 'POST',
+    url: '/api/realtime/token',
+    headers: { 'accept-encoding': 'br, gzip' },
+  };
+  const res = { writeHead() {}, write() {}, end() {} };
+  const original = res.end;
+  let called = false;
+  compressionMiddleware()(req, res, () => (called = true));
+  assert.equal(called, true);
+  assert.equal(res.end, original);
+  assert.equal(req.headers['accept-encoding'], 'br, gzip');
 });
