@@ -4,8 +4,20 @@
 // compares. Regenerate an entry when a layer's static fields, methods,
 // default parameters or idle statistics change.
 
+import { BHOTE_KOSHI_EVENT_DESCRIPTOR } from './descriptors/bhoteKoshiEvent.js';
+import { CCTV_DESCRIPTOR } from './descriptors/cctv.js';
+import { LAUNCHES_DESCRIPTOR } from './descriptors/launches.js';
+import { RADIO_DESCRIPTOR } from './descriptors/radio.js';
+import { TRANSIT_DESCRIPTOR } from './descriptors/transit.js';
+
 /** @type {Readonly<Record<string, import('../deferredLayer.js').LayerDescriptor>>} */
 export const DEFERRED_LAYER_DESCRIPTORS = Object.freeze({
+  // Layers the shell talks to while they are off carry a facade too.
+  'bhote-koshi-2026': BHOTE_KOSHI_EVENT_DESCRIPTOR,
+  cctv: CCTV_DESCRIPTOR,
+  radio: RADIO_DESCRIPTOR,
+  'rocket-launches': LAUNCHES_DESCRIPTOR,
+  transit: TRANSIT_DESCRIPTOR,
   'wildlife-sightings': Object.freeze({
     id: 'wildlife-sightings',
     values: Object.freeze({

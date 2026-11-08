@@ -12,6 +12,11 @@ import { t } from '../i18n/index.js';
  * services, listeners, parameters) and from then on forwards every property.
  * During the import the lifecycle reports the layer as loading; an import
  * failure rejects `init()` like any other layer error, with a readable message.
+ *
+ * A layer the shell talks to while it is off (CCTV, radio, launches, ...)
+ * also declares a facade in its descriptor: the idle answers of the queries
+ * the shell reads, the subscriptions that answer at once like the real layer,
+ * and the commands that load the layer and forward the call.
  */
 
 /** Lifecycle calls that need the real layer. */
@@ -38,6 +43,22 @@ const isSubscription = (name) => name.startsWith('subscribe');
  *   `getParams()` before any change; null when it has no parameters.
  * @property {Readonly<Record<string, unknown>>|null} [stats] Its idle
  *   `getStats()`.
+ * @property {Readonly<Record<string, unknown>>} [answers] Idle answers of
+ *   query methods: a value (copied per call) or a function of the parameters
+ *   set so far (`pending`, the raw merged `setParams` input) and the call's
+ *   arguments. An entry that is not a method is an answer `emits` names.
+ * @property {Readonly<Record<string, string>>} [emits] Subscriptions that call
+ *   the listener at once with the named answer, and again after each
+ *   `setParams`, as the real layer does while it is off.
+ * @property {readonly string[]} [commands] Methods that load the layer and
+ *   forward the call; they resolve with the real method's result.
+ * @property {readonly string[]} [remember] Further methods whose latest
+ *   arguments are kept and replayed once loaded, like `attach*` calls.
+ * @property {Readonly<Record<string, (args: unknown[]) => boolean>>} [skipWhenIdle]
+ *   Commands that change nothing with these arguments while no load has
+ *   started; they answer `undefined` without loading.
+ * @property {(params: object) => boolean} [acceptParams] Whether the real
+ *   layer would accept these parameters; refused ones are not kept.
  */
 
 /**
@@ -48,13 +69,18 @@ const isSubscription = (name) => name.startsWith('subscribe');
 export function createDeferredLayer(descriptor, load) {
   validateDescriptor(descriptor, load);
   const methods = new Set(descriptor.methods);
+  const commands = new Set(descriptor.commands ?? []);
   const remembered = new Map();
   const subscriptions = new Set();
   let pendingParams = null;
   let real = null;
-  let loading = null;
   let destroyed = false;
 
+  const answer = (name, args = []) =>
+    readAnswer(descriptor.answers[name], pendingParams, args);
+  const emitIdle = () => {
+    for (const subscription of subscriptions) subscription.emitIdle?.();
+  };
   const replay = (layer) => {
     for (const [name, args] of remembered) layer[name](...args);
     remembered.clear();
@@ -63,40 +89,24 @@ export function createDeferredLayer(descriptor, load) {
     pendingParams = null;
     for (const subscription of subscriptions) subscription.attach(layer);
   };
-
-  const ensureLoaded = () => {
-    if (real) return Promise.resolve(real);
-    if (destroyed)
-      return Promise.reject(new Error(`${descriptor.id} was destroyed`));
-    if (!loading)
-      loading = Promise.resolve()
-        .then(load)
-        .then(
-          (layer) => {
-            if (!layer || layer.id !== descriptor.id)
-              throw new Error(`${descriptor.id} loaded a different layer`);
-            if (destroyed) {
-              layer.destroy?.();
-              throw new Error(`${descriptor.id} was destroyed`);
-            }
-            replay(layer);
-            real = layer;
-            return layer;
-          },
-          (error) => {
-            loading = null;
-            throw loadError(descriptor, error);
-          },
-        );
-    return loading;
-  };
+  const ensureLoaded = createLoader(descriptor, load, {
+    isDestroyed: () => destroyed,
+    current: () => real,
+    adopt: (layer) => {
+      replay(layer);
+      real = layer;
+    },
+  });
 
   const idle = {
     getStats: () => (descriptor.stats ? { ...descriptor.stats } : undefined),
     getParams: () =>
       descriptor.params ? { ...descriptor.params, ...pendingParams } : null,
     setParams: (params) => {
+      if (descriptor.acceptParams && !descriptor.acceptParams(params ?? {}))
+        return false;
       pendingParams = { ...pendingParams, ...params };
+      emitIdle();
       return true;
     },
     getRowControls: () => null,
@@ -112,13 +122,24 @@ export function createDeferredLayer(descriptor, load) {
   const idleCall = (name) => {
     if (LOADING_CALLS.has(name))
       return async (...args) => (await ensureLoaded())[name](...args);
+    if (commands.has(name))
+      return (...args) =>
+        descriptor.skipWhenIdle?.[name]?.(args) && !ensureLoaded.started()
+          ? undefined
+          : ensureLoaded().then((layer) => layer[name](...args));
+    if (descriptor.answers && Object.hasOwn(descriptor.answers, name))
+      return (...args) => answer(name, args);
     if (Object.hasOwn(idle, name)) return idle[name];
-    if (isRememberedCall(name))
+    if (isRememberedCall(name) || descriptor.remember?.includes(name))
       return (...args) => {
         remembered.set(name, args);
       };
     if (isSubscription(name))
-      return (...args) => subscribe(subscriptions, name, args, () => real);
+      return (...args) =>
+        subscribe(subscriptions, name, args, () => real, {
+          emits: descriptor.emits?.[name],
+          answer,
+        });
     // Anything else asks about data a layer that is off does not have.
     return () => undefined;
   };
@@ -175,23 +196,69 @@ export function isDeferredLayerPending(layer) {
   return Boolean(control && !control.loaded());
 }
 
-function subscribe(subscriptions, name, args, currentLayer) {
+function subscribe(subscriptions, name, args, currentLayer, idle = {}) {
   const loadedNow = currentLayer();
   if (loadedNow) return loadedNow[name](...args);
   let release = null;
   let active = true;
+  const [listener] = args;
   const subscription = {
     attach(layer) {
       if (active) release = layer[name](...args);
     },
+    // The real layer calls the listener at once and after each change.
+    emitIdle: idle.emits
+      ? () => {
+          if (active && typeof listener === 'function')
+            listener(idle.answer(idle.emits));
+        }
+      : null,
   };
   subscriptions.add(subscription);
+  subscription.emitIdle?.();
   return () => {
     active = false;
     subscriptions.delete(subscription);
     if (typeof release === 'function') release();
     release = null;
   };
+}
+
+/** An idle answer: a function of the parameters set so far, or a copy. */
+function readAnswer(value, pending, args) {
+  if (typeof value === 'function') return value(pending ?? {}, args);
+  return value && typeof value === 'object' ? structuredClone(value) : value;
+}
+
+/** Import and construct once; a failed import may be retried. */
+function createLoader(descriptor, load, { isDestroyed, current, adopt }) {
+  let loading = null;
+  const ensureLoaded = () => {
+    if (current()) return Promise.resolve(current());
+    if (isDestroyed())
+      return Promise.reject(new Error(`${descriptor.id} was destroyed`));
+    loading ??= Promise.resolve()
+      .then(load)
+      .then(
+        (layer) => {
+          if (!layer || layer.id !== descriptor.id)
+            throw new Error(`${descriptor.id} loaded a different layer`);
+          if (isDestroyed()) {
+            layer.destroy?.();
+            throw new Error(`${descriptor.id} was destroyed`);
+          }
+          adopt(layer);
+          return layer;
+        },
+        (error) => {
+          loading = null;
+          throw loadError(descriptor, error);
+        },
+      );
+    return loading;
+  };
+  ensureLoaded.started = () => Boolean(loading || current());
+  return ensureLoaded;
 }
 
 function loadError(descriptor, cause) {
@@ -215,4 +282,17 @@ function validateDescriptor(descriptor, load) {
       throw new TypeError(`${descriptor.id}: the layer has no ${name}()`);
   if (typeof load !== 'function')
     throw new TypeError(`${descriptor.id}: a loader is required`);
+  const emitted = new Set(Object.values(descriptor.emits ?? {}));
+  const declared = [
+    ...(descriptor.commands ?? []),
+    ...(descriptor.remember ?? []),
+    ...Object.keys(descriptor.answers ?? {}).filter((key) => !emitted.has(key)),
+    ...Object.keys(descriptor.emits ?? {}),
+  ];
+  for (const name of declared)
+    if (!descriptor.methods.includes(name))
+      throw new TypeError(`${descriptor.id}: the layer has no ${name}()`);
+  for (const name of emitted)
+    if (!Object.hasOwn(descriptor.answers ?? {}, name))
+      throw new TypeError(`${descriptor.id}: ${name}() has no idle answer`);
 }

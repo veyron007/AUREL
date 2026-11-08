@@ -13,7 +13,8 @@
  *   - every locale switches and renders translated text;
  *   - the four looks (Observatory, Field, Instrument, Cyber) apply, with a
  *     computed-style signature of the main surfaces printed per look.
- * `--only layers,share,voice,palette,panels,locales,looks` runs a subset.
+ *   - replaying the Bhote Koshi media shot holds the shot for its clip.
+ * `--only layers,share,voice,palette,panels,locales,looks,media` runs a subset.
  * Prints one JSON summary (`--json <file>` writes it too) and exits non-zero on
  * a page error or a failed check. Compare two builds by running it on each.
  */
@@ -33,6 +34,9 @@ const SHARED_LAYERS = Object.freeze([
   'telegeography-submarine-cables',
   'drone-airspace',
   'traffic',
+  'cctv',
+  'radio',
+  'rocket-launches',
 ]);
 const LAYER_TIMEOUT_MS = 45_000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -381,6 +385,57 @@ async function everyLookApplies() {
   return looks;
 }
 
+const MEDIA_BEAT = 'immediate-collapse-viewpoint';
+
+// Replaying the Bhote Koshi evidence shot from a cold start grants the event
+// layer its media owner before the shot enables it (and before its code has
+// loaded); only an owned shot autoplays its clip.
+async function bhoteKoshiMediaPlays() {
+  const page = await open('bhote-koshi-media');
+  const result = await page.evaluate(
+    async (beatId, timeout) => {
+      const app = window.__godsEyeView;
+      const director = app.sceneDirector;
+      await director.ready?.();
+      const isMediaShot = (shot) =>
+        shot.sourcePackId &&
+        shot.layers?.['bhote-koshi-2026']?.params?.beatId === beatId;
+      const scene = director
+        .getProjectSnapshot()
+        .scenes.find((candidate) => candidate.shots.some(isMediaShot));
+      const shot = scene?.shots.find(isMediaShot);
+      if (!shot) return { found: false };
+      void director.replayShot(scene.id, shot.id);
+      const autoplaying = () =>
+        [...document.querySelectorAll('iframe, video')].some(
+          (element) =>
+            /[?&]autoplay=1/.test(element.src || '') ||
+            (element.tagName === 'VIDEO' && !element.paused),
+        );
+      const deadline = Date.now() + timeout;
+      let playing = false;
+      while (Date.now() < deadline && !playing) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        playing = autoplaying();
+      }
+      director.stopScene();
+      return {
+        found: true,
+        enabled: app.dataManager.isEnabled('bhote-koshi-2026'),
+        playing,
+      };
+    },
+    MEDIA_BEAT,
+    LAYER_TIMEOUT_MS,
+  );
+  await page.close();
+  check(
+    'Bhote Koshi evidence media autoplays from a cold start',
+    result.found && result.playing,
+    result,
+  );
+}
+
 const onlyIndex = process.argv.indexOf('--only');
 const only = onlyIndex > 0 ? process.argv[onlyIndex + 1].split(',') : null;
 const want = (name) => !only || only.includes(name);
@@ -393,6 +448,7 @@ try {
   if (want('panels')) summary.panels = await everyPanelOpens();
   if (want('locales')) summary.locales = await everyLocaleRenders();
   if (want('looks')) summary.looks = await everyLookApplies();
+  if (want('media')) await bhoteKoshiMediaPlays();
 } finally {
   await browser.close();
 }

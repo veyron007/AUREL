@@ -11,15 +11,11 @@ import { createMilitaryRegistry } from '../layers/aircraft/classification.js';
 import { createApplicationFlights } from './layers/flights.js';
 import { createApplicationMilitary } from './layers/militaryFlights.js';
 import { createApplicationVessels } from './layers/aisLiveVessels.js';
-import { createApplicationCctv } from './layers/cctv.js';
-import { createApplicationRadio } from './layers/radio.js';
 import { createApplicationDirections } from './layers/directions.js';
 import { createApplicationRecentImagery } from './layers/recentImagery.js';
 import { createApplicationOsmPlaces } from './layers/osmPlaces.js';
-import { createApplicationTransit } from './layers/transit.js';
 import { createApplicationInstallations } from './layers/militaryInstallations.js';
 import { createApplicationSatellites } from './layers/satellites.js';
-import { createApplicationLaunches } from './layers/rocketLaunches.js';
 import { createApplicationLocalAdsb } from './layers/localAdsb.js';
 import { createApplicationAwareness } from './layers/militaryAwareness.js';
 import { createApplicationAirQuality } from './layers/airQuality.js';
@@ -28,7 +24,6 @@ import { createOsmOverlayLayers } from '../data/osmOverlays.js';
 import { createApplicationStreetLevel } from './layers/streetLevel.js';
 import { createInfrastructureLayers } from '../data/infrastructure.js';
 import { localGeoJsonServices } from './localGeojsonServices.js';
-import { createBhoteKoshiEventLayer } from '../data/bhoteKoshiEvent.js';
 import { createBhoteKoshiLocatorLayer } from '../data/bhoteKoshiLocator.js';
 
 /**
@@ -114,7 +109,12 @@ export function createApplicationCatalog({
     });
     const catalog = createLayerCatalog(
       [
-        createBhoteKoshiEventLayer(),
+        // Scenes grant it media before enabling it; the stand-in keeps that.
+        deferred('bhote-koshi-2026', () =>
+          import('../data/bhoteKoshiEvent.js').then((module) =>
+            module.createBhoteKoshiEventLayer(),
+          ),
+        ),
         createBhoteKoshiLocatorLayer({
           boundaryResolver: nepalBoundaryResolver,
         }),
@@ -179,7 +179,14 @@ export function createApplicationCatalog({
           providers: streetLevelProviders,
         }),
         satellites,
-        createApplicationLaunches({ source: sources.launches, satellites }),
+        deferred('rocket-launches', () =>
+          import('./layers/rocketLaunches.js').then((module) =>
+            module.createApplicationLaunches({
+              source: sources.launches,
+              satellites,
+            }),
+          ),
+        ),
         deferred('traffic', () =>
           import('./layers/traffic.js').then((module) =>
             module.createApplicationTraffic({
@@ -188,9 +195,24 @@ export function createApplicationCatalog({
             }),
           ),
         ),
-        createApplicationCctv({ surface, source: sources.cctv }),
-        createApplicationRadio({ surface, source: sources.radio }),
-        createApplicationTransit({ surface, source: sources.transit }),
+        deferred('cctv', () =>
+          import('./layers/cctv.js').then((module) =>
+            module.createApplicationCctv({ surface, source: sources.cctv }),
+          ),
+        ),
+        deferred('radio', () =>
+          import('./layers/radio.js').then((module) =>
+            module.createApplicationRadio({ surface, source: sources.radio }),
+          ),
+        ),
+        deferred('transit', () =>
+          import('./layers/transit.js').then((module) =>
+            module.createApplicationTransit({
+              surface,
+              source: sources.transit,
+            }),
+          ),
+        ),
         deferred('bikeshare', () =>
           import('./layers/bikeshare.js').then((module) =>
             module.createApplicationBikeshare({ source: sources.bikeshare }),
