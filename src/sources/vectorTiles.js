@@ -467,7 +467,8 @@ export function createVectorTileSource({
           bytes: bytes.byteLength,
         });
         const decodeStart = performance.now();
-        const decoded = decode(bytes, tile.z, tile.x, tile.y);
+        // A decoder may answer asynchronously (a worker); sync ones still work.
+        const decoded = await decode(bytes, tile.z, tile.x, tile.y);
         phaseTiming('decode', decodeStart, { source: allowedOrigin, key });
         ownedSignal.throwIfAborted();
         // Body-based decoded-storage estimate; projections may increase it.

@@ -541,6 +541,9 @@
   "src/layers/traffic/animation.js",
   "src/layers/traffic/index.js",
   "src/layers/traffic/flowDecode.js",
+  "src/layers/traffic/flowDecode.worker.js",
+  "src/layers/traffic/flowDecodeClient.js",
+  "src/layers/traffic/flowDecodeClient.test.mjs",
   "src/layers/traffic/model.js",
   "src/layers/traffic/timing.js",
   "src/layers/traffic/style.js",
@@ -1601,5 +1604,6 @@
   "src/data/localGeojsonSceneStub.mjs",
   "src/data/localGeojsonParse.test.mjs",
   "src/data/localGeojsonPrimitives.test.mjs",
-  "scripts/qa-local-geojson-shot.mjs"
+  "scripts/qa-local-geojson-shot.mjs",
+  "scripts/qa-phase4a-smoke.mjs"
 ]
