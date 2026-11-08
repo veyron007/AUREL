@@ -4500,5 +4500,11 @@
   "Ctrl": "Ctrl",
   "Open command palette": "Відкрити палітру команд",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Джерела"
+  "Sources": "Джерела",
+  "Auto": "Авто",
+  "Balanced": "Збалансована",
+  "Battery": "Економія батареї",
+  "Now: reduced, step {step} of {steps}": "Зараз: знижено, крок {step} з {steps}",
+  "Now: full quality": "Зараз: повна якість",
+  "Display quality": "Якість зображення"
 }

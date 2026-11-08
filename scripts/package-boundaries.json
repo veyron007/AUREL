@@ -159,6 +159,7 @@
       "src/ui/views/WorkspaceView.vue",
       "src/ui/chromeRest.js",
       "src/ui/bodyFlags.js",
+      "src/ui/stores/quality.js",
       "src/ui/stores/palette.js",
       "src/ui/views/panels/CommandPalette.vue",
       "src/ui/stores/workspace.js",
@@ -3561,7 +3562,9 @@
       "src/ui/searchSuggestions.js",
       "src/search/suggest.js",
       "src/search/recentPlaces.js",
-      "src/ui/cameraMotionFlag.js"
+      "src/ui/cameraMotionFlag.js",
+      "src/app/qualityGovernor.js",
+      "src/ui/stores/quality.js"
     ],
     "external": [
       "hls.js",

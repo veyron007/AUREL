@@ -4275,5 +4275,11 @@
   "Ctrl": "Ctrl",
   "Open command palette": "コマンドパレットを開く",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "ソース"
+  "Sources": "ソース",
+  "Auto": "自動",
+  "Balanced": "バランス",
+  "Battery": "バッテリー",
+  "Now: reduced, step {step} of {steps}": "現在: 低減中（{steps} 段階中 {step}）",
+  "Now: full quality": "現在: 最高品質",
+  "Display quality": "表示品質"
 }

@@ -4425,5 +4425,11 @@
   "Ctrl": "Ctrl",
   "Open command palette": "Abrir a paleta de comandos",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Fontes"
+  "Sources": "Fontes",
+  "Auto": "Automática",
+  "Balanced": "Equilibrada",
+  "Battery": "Bateria",
+  "Now: reduced, step {step} of {steps}": "Agora: reduzida, nível {step} de {steps}",
+  "Now: full quality": "Agora: qualidade total",
+  "Display quality": "Qualidade de exibição"
 }

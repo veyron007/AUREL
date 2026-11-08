@@ -10,6 +10,13 @@
 /** Longest wait for a requested frame before the capture gives up. */
 export const FRESH_FRAME_TIMEOUT_MS = 400;
 
+let capturesInFlight = 0;
+
+/** Whether a capture is waiting to read the canvas (adaptive quality holds). */
+export function captureInFlight() {
+  return capturesInFlight > 0;
+}
+
 const isDocumentHidden = () =>
   typeof document !== 'undefined' && document.hidden === true;
 
@@ -68,12 +75,17 @@ export async function captureCesiumFrame(
 ) {
   const scene = viewer?.scene;
   if (!scene?.postRender || typeof read !== 'function') return null;
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    // While hidden the render loop is suspended: don't restart it for an
-    // optional screenshot.
-    if (isDocumentHidden()) return null;
-    const { fresh, value } = await readNextFrame(scene, read, timeoutMs);
-    if (fresh) return value ?? null;
+  capturesInFlight++;
+  try {
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      // While hidden the render loop is suspended: don't restart it for an
+      // optional screenshot.
+      if (isDocumentHidden()) return null;
+      const { fresh, value } = await readNextFrame(scene, read, timeoutMs);
+      if (fresh) return value ?? null;
+    }
+    return null;
+  } finally {
+    capturesInFlight--;
   }
-  return null;
 }

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   FRESH_FRAME_TIMEOUT_MS,
   captureCesiumFrame,
+  captureInFlight,
 } from './cesiumFrameCapture.js';
 import {
   RealtimeViewport,
@@ -183,4 +184,18 @@ test('pointer crop draws inside postRender and reports its rect', async () => {
   assert.deepEqual(copy.args.slice(0, 4), [494, 219, 512, 512]);
   assert.equal(crop.rect.w, 512 / 1500);
   assert.equal(scene.listenerCount, 0);
+});
+
+test('capture: in flight from the request until the read settles', async () => {
+  const scene = createFakeCesiumScene();
+  assert.equal(captureInFlight(), false);
+  let during = null;
+  const result = await withDocument(createFakeDocument(), () => {
+    const pending = captureCesiumFrame({ scene }, () => 'read');
+    during = captureInFlight();
+    return pending;
+  });
+  assert.equal(during, true);
+  assert.equal(result, 'read');
+  assert.equal(captureInFlight(), false);
 });

@@ -6,6 +6,7 @@ import { usePanelStore } from '../stores/panels.js';
 import { PANEL_RAIL_ITEMS } from '../panelRailCatalog.js';
 import { useDisplayStore } from '../stores/display.js';
 import { useLocationStore } from '../stores/location.js';
+import { useQualityStore, QUALITY_MODES } from '../stores/quality.js';
 import AgentWritesToggle from './panels/AgentWritesToggle.vue';
 import CommandPalette from './panels/CommandPalette.vue';
 import { ChromeRest, chromeHeldAwake } from '../chromeRest.js';
@@ -14,6 +15,14 @@ const workspace = useWorkspaceStore();
 const panels = usePanelStore();
 const display = useDisplayStore();
 const location = useLocationStore();
+const quality = useQualityStore();
+// What adaptive quality applies now (src/app/qualityGovernor.js levels).
+const QUALITY_STEPS = 3;
+const qualityStatus = computed(() =>
+  quality.level > 0
+    ? t('Now: reduced, step {step} of {steps}', { step: quality.level, steps: QUALITY_STEPS })
+    : t('Now: full quality'),
+);
 // Only a real place is named; the pin is the tray's decoration, not the name.
 const placeLabel = computed(() => {
   const city = location.view?.status?.city;
@@ -92,7 +101,7 @@ function openPanel(id) {
       <button type="button" data-pause-feeds :disabled="pausing" :title="t('Stop live feeds, local watches and pending analyses. Saved work stays open.')" @click="pauseFeeds">{{ pausing ? t('Pausing feeds…') : t('Pause feeds') }}</button>
       <p v-if="pauseStatus" class="workspace-session-status workspace-tool-hint" role="status">{{ pauseStatus }}</p>
       <AgentWritesToggle />
-      <details class="workspace-settings"><summary>{{ t('Settings') }}</summary><label class="workspace-appearance"><span>{{ t('Appearance') }}</span><select :value="workspace.appearance" @change="workspace.setAppearance($event.target.value)"><option v-for="item in WORKSPACE_APPEARANCES" :key="item.id" :value="item.id">{{ t(item.label) }}</option></select></label></details>
+      <details class="workspace-settings"><summary>{{ t('Settings') }}</summary><label class="workspace-appearance"><span>{{ t('Appearance') }}</span><select :value="workspace.appearance" @change="workspace.setAppearance($event.target.value)"><option v-for="item in WORKSPACE_APPEARANCES" :key="item.id" :value="item.id">{{ t(item.label) }}</option></select></label><label class="workspace-appearance workspace-quality"><span>{{ t('Display quality') }}</span><select :value="quality.mode" @change="quality.setMode($event.target.value)"><option v-for="item in QUALITY_MODES" :key="item.id" :value="item.id">{{ t(item.label) }}</option></select></label><p class="workspace-tool-hint workspace-quality-status" role="status">{{ qualityStatus }}</p></details>
     </section>
     <div v-if="activePanel" id="aurel-workspace-sheet-controls" class="workspace-sheet-controls" role="group" :aria-label="t('Inspector size')">
       <span class="workspace-sheet-title">{{ panelLabel(activePanel) }}</span>

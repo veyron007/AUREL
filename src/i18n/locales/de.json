@@ -4350,5 +4350,11 @@
   "Ctrl": "Strg",
   "Open command palette": "Befehlspalette öffnen",
   "{source} · {age}": "{source} · {age}",
-  "Sources": "Quellen"
+  "Sources": "Quellen",
+  "Auto": "Automatisch",
+  "Balanced": "Ausgewogen",
+  "Battery": "Akku",
+  "Now: reduced, step {step} of {steps}": "Jetzt: reduziert, Stufe {step} von {steps}",
+  "Now: full quality": "Jetzt: volle Qualität",
+  "Display quality": "Anzeigequalität"
 }

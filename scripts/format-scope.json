@@ -1577,5 +1577,9 @@
   "src/ui/styles/spatial-budget.css",
   "scripts/qa-spatial-perf-shots.mjs",
   "src/ui/bodyFlags.js",
-  "src/ui/bodyFlags.test.mjs"
+  "src/ui/bodyFlags.test.mjs",
+  "src/app/qualityGovernor.js",
+  "src/app/qualityGovernor.test.mjs",
+  "src/ui/stores/quality.js",
+  "src/ui/stores/quality.test.mjs"
 ]

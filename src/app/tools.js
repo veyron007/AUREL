@@ -1,4 +1,7 @@
 import { installCameraMotionFlag } from '../ui/cameraMotionFlag.js';
+import { installQualityGovernor } from './qualityGovernor.js';
+import { useQualityStore } from '../ui/stores/quality.js';
+import { captureInFlight } from '../voice/cesiumFrameCapture.js';
 import { createSessionControls } from './sessionControls.js';
 import { createLocalCommandTools } from './localCommandTools.js';
 import { createPaletteTools } from './paletteTools.js';
@@ -290,6 +293,7 @@ export function createApplicationTools({
       root: document.documentElement,
     }),
   );
+  defer(installAdaptiveQuality(viewer));
   // Cesium keeps a turned-off layer's draw commands (and so all its entities)
   // alive in reused per-pass arrays; trim them after each disable.
   defer(
@@ -419,4 +423,23 @@ export function createApplicationTools({
     }),
   );
   return { sceneDirector, annotations, voiceCommands };
+}
+
+/** Adaptive display quality (Settings → Display quality), until teardown. */
+function installAdaptiveQuality(viewer) {
+  const quality = useQualityStore(applicationPinia());
+  quality.restoreMode();
+  const governor = installQualityGovernor({
+    viewer,
+    root: document.documentElement,
+    readMode: () => quality.mode,
+    publishLevel: (level) => quality.publishLevel(level),
+    isRecording: () => document.body.classList.contains('recording-mode'),
+    isCapturing: captureInFlight,
+  });
+  const stop = quality.$subscribe(() => governor.sync());
+  return () => {
+    stop();
+    governor.destroy();
+  };
 }
