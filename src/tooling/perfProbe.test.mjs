@@ -46,8 +46,9 @@ function run(overrides = {}) {
 
 test('the committed scene file parses and keeps the baseline scenes', () => {
   const scenes = parseScenes(JSON.parse(readFileSync(SCENE_FILE, 'utf8')));
+  // The baseline scenes stay first; later phases append their own.
   assert.deepEqual(
-    scenes.map((scene) => scene.id),
+    scenes.slice(0, 3).map((scene) => scene.id),
     ['empty-dehradun', 'flights-quakes-sats', 'cables-datacenters-fires'],
   );
   assert.ok(scenes.every((scene) => scene.hash.includes('map=esri-imagery')));
