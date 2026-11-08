@@ -1577,7 +1577,11 @@ export function createGevActionRunner({
     }
 
     if (name === 'control_scene') {
-      return controlScene(sceneDirector, args);
+      // The Director loads on first use; a scene command waits for it.
+      return controlScene(
+        (await sceneDirector?.ready?.()) ?? sceneDirector,
+        args,
+      );
     }
 
     if (name === 'control_cctv') {

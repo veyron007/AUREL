@@ -124,14 +124,16 @@ export function createRideDirector(sceneDirector) {
       return Boolean(sceneDirector.running);
     },
     async ride(scene) {
-      const snapshot = sceneDirector.getProjectSnapshot();
-      if (!snapshot || sceneDirector.running) return false;
-      const restored = await sceneDirector.restoreProjectSnapshot(
+      // The Director loads on first use (src/scenes/lazyDirector.js).
+      const director = (await sceneDirector.ready?.()) ?? sceneDirector;
+      const snapshot = director.getProjectSnapshot();
+      if (!snapshot || director.running) return false;
+      const restored = await director.restoreProjectSnapshot(
         withRideScene(snapshot, scene),
       );
       if (!restored) return false;
       // Preview runs in recording mode; the promise settles when the run ends.
-      const run = sceneDirector.startScene(scene.id);
+      const run = director.startScene(scene.id);
       const early = await Promise.race([
         run,
         new Promise((resolve) => setTimeout(() => resolve(null), 250)),

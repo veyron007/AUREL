@@ -13,8 +13,11 @@
  *   - every locale switches and renders translated text;
  *   - the four looks (Observatory, Field, Instrument, Cyber) apply, with a
  *     computed-style signature of the main surfaces printed per look.
- *   - replaying the Bhote Koshi media shot holds the shot for its clip.
- * `--only layers,share,voice,palette,panels,locales,looks,media` runs a subset.
+ *   - a panel opened during start-up ends with its full body and height;
+ *   - the Authoring panel lists scenes and a scene document imports;
+ *   - replaying the Bhote Koshi evidence shot autoplays its clip.
+ * `--only layers,share,voice,palette,panels,locales,looks,director,media`
+ * runs a subset.
  * Prints one JSON summary (`--json <file>` writes it too) and exits non-zero on
  * a page error or a failed check. Compare two builds by running it on each.
  */
@@ -491,6 +494,74 @@ async function bhoteKoshiMediaPlays() {
   );
 }
 
+// The Authoring panel opened from a cold start lists the project's scenes,
+// and a scene document imported before the Director has loaded is restored
+// and playable (the Fieldbook and Orbit Witness paths).
+async function directorOpens() {
+  const page = await open('director');
+  const panel = await page.evaluate(async () => {
+    window.__godsEyeView.styleManager._panelNavigation.openPanel('scene-panel');
+    const deadline = Date.now() + 15_000;
+    const options = () =>
+      document.querySelectorAll('#scene-select option').length;
+    while (Date.now() < deadline && options() === 0)
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    return {
+      options: options(),
+      shots: document.querySelectorAll('#scene-panel .scene-shot-list li')
+        .length,
+      status: document.getElementById('scene-status')?.textContent.trim(),
+    };
+  });
+  await page.close();
+  check('the Authoring panel opens with its scenes', panel.options > 0, panel);
+
+  const importer = await open('scene-import');
+  const imported = await importer.evaluate(async () => {
+    const director = window.__godsEyeView.sceneDirector;
+    const loadedBefore = director.loaded;
+    const original = (await director.ready()).getProjectSnapshot();
+    const camera = {
+      lat: 30.3258,
+      lon: 78.0438,
+      alt: 4000,
+      heading: 0,
+      pitch: -90,
+      roll: 0,
+    };
+    const project = {
+      version: 6,
+      scenes: [
+        {
+          id: 'smoke-import',
+          title: 'Smoke import',
+          shots: [
+            {
+              id: 'shot-1',
+              title: 'Shot 1',
+              camera,
+              durationSec: 1,
+              holdSec: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const restored = await director.restoreProjectSnapshot(project);
+    const listed = director.listScenes().map((scene) => scene.id ?? scene);
+    // Put the visitor's project back: later checks share this browser.
+    await director.restoreProjectSnapshot(original);
+    return { loadedBefore, restored: Boolean(restored), listed };
+  });
+  await importer.close();
+  check(
+    'a scene document imported from a cold start is restored',
+    imported.restored &&
+      JSON.stringify(imported.listed).includes('smoke-import'),
+    imported,
+  );
+}
+
 const onlyIndex = process.argv.indexOf('--only');
 const only = onlyIndex > 0 ? process.argv[onlyIndex + 1].split(',') : null;
 const want = (name) => !only || only.includes(name);
@@ -504,6 +575,7 @@ try {
   if (want('panels')) await earlyPanelOpens();
   if (want('locales')) summary.locales = await everyLocaleRenders();
   if (want('looks')) summary.looks = await everyLookApplies();
+  if (want('director')) await directorOpens();
   if (want('media')) await bhoteKoshiMediaPlays();
 } finally {
   await browser.close();

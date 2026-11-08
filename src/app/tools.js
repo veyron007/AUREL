@@ -6,7 +6,7 @@ import { createSessionControls } from './sessionControls.js';
 import { createLocalCommandTools } from './localCommandTools.js';
 import { createPaletteTools } from './paletteTools.js';
 import { useLocationStore } from '../ui/stores/location.js';
-import { SceneDirector } from '../scenes/director.js';
+import { createApplicationDirector } from './sceneDirectorTools.js';
 import { createPersonalTools } from './personalTools.js';
 import { createPlannerTools } from './plannerTools.js';
 import { createHorizonTools } from './horizonTools.js';
@@ -66,11 +66,18 @@ export function createApplicationTools({
   const { viewer, tileset, mapStackController, operations } = scene;
   const { styleManager, weatherEffects, cockpitCloudEffects } = controls;
   const { dataManager } = data;
-  const sceneDirector = new SceneDirector(viewer, styleManager, dataManager, {
+  // Built on first use: the Authoring panel, a scene command, or once
+  // start-up settles (src/scenes/lazyDirector.js).
+  const directorOwner = createApplicationDirector({
+    viewer,
+    styleManager,
+    dataManager,
     dataPacks: sceneDataPacks,
-    isMapStackAvailable: (id) =>
-      mapStackController?.isStackAvailable(id) === true,
+    mapStackController,
+    pinia: applicationPinia(),
   });
+  const sceneDirector = directorOwner.director;
+  defer(() => directorOwner.stop());
   dataManager.layers
     .get('bhote-koshi-2026')
     ?.module.attachSceneController(sceneDirector);

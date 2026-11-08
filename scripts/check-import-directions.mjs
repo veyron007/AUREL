@@ -31,7 +31,10 @@ const compatibilityEdge = (from, to) =>
 // Modules these owners load with import() must not be reached by static
 // imports from the startup entry: the static edge would put them back in the
 // startup bundle (layers built on first use, docs/design/aurel/PERFORMANCE-PLAN.md WP2.2).
-const ON_DEMAND_OWNERS = Object.freeze(['src/app/constructCatalog.js']);
+const ON_DEMAND_OWNERS = Object.freeze([
+  'src/app/constructCatalog.js',
+  'src/app/sceneDirectorTools.js',
+]);
 const STARTUP_ENTRY = 'src/main.js';
 const portableExport = (key) =>
   key.startsWith('./sources/') ||
