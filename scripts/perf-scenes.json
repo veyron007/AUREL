@@ -14,6 +14,23 @@
       "id": "cables-datacenters-fires",
       "label": "Cables, datacenters, fires (world view)",
       "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=u.d.w"
+    },
+    {
+      "id": "empty-dehradun-cyber",
+      "label": "Empty globe over Dehradun, Cyber theme",
+      "hash": "lat=30.3258&lon=78.0438&alt=1800000&map=esri-imagery&hud=cyber&l="
+    },
+    {
+      "id": "annotations-dehradun",
+      "label": "Ten screen annotations over Dehradun",
+      "hash": "lat=30.3258&lon=78.0438&alt=60000&map=esri-imagery&l=",
+      "setup": "annotations-10"
+    },
+    {
+      "id": "detection-annotations",
+      "label": "Flights with detection at 100% and ten annotations",
+      "hash": "lat=30.3258&lon=78.0438&alt=60000&map=esri-imagery&dm=ON&dd=100&l=f.e.s",
+      "setup": "annotations-10"
     }
   ]
 }
