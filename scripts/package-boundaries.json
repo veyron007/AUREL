@@ -8,6 +8,7 @@
     "modules": [
       "src/data/infrastructure.js",
       "src/data/localGeojsonCore.js",
+      "src/data/localGeojsonTracking.js",
       "src/data/localGeojsonGround.js",
       "src/data/localGeojsonOverlay.js",
       "src/data/localGeojsonParse.js",
@@ -2596,6 +2597,7 @@
       "src/data/layerStateTokenReservations.json",
       "src/data/lifecycle.js",
       "src/data/localGeojsonCore.js",
+      "src/data/localGeojsonTracking.js",
       "src/data/localGeojsonGround.js",
       "src/data/localGeojsonOverlay.js",
       "src/data/localGeojsonParse.js",
@@ -3778,6 +3780,7 @@
       "src/data/layerState.js",
       "src/data/layerStateTokenReservations.json",
       "src/data/localGeojsonCore.js",
+      "src/data/localGeojsonTracking.js",
       "src/data/localGeojsonGround.js",
       "src/data/localGeojsonOverlay.js",
       "src/data/localGeojsonParse.js",

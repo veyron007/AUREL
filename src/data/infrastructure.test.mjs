@@ -134,7 +134,8 @@ test('two viewers use their supplied contexts and dispose independently', async 
         color: '#0088ff',
         url: '/dams.geojsonl',
         screenSpaceEventHandlerFactory: () => ({
-          setInputAction(fn) {
+          setInputAction(fn, type) {
+            if (type === Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK) return;
             click = fn;
           },
           destroy() {},
@@ -209,6 +210,7 @@ test('consumer build includes only infrastructure code and resolves assets under
     'localGeojsonParseClient.js',
     'localGeojsonPrimitives.js',
     'localGeojsonRecords.js',
+    'localGeojsonTracking.js',
   ]);
   const worker =
     output.find(

@@ -38,6 +38,8 @@
   "scripts/qa-emergency-squawk.mjs",
   "src/data/infrastructure.test.mjs",
   "src/data/localGeojsonCore.js",
+  "src/data/localGeojsonTracking.js",
+  "src/data/localGeojsonTracking.test.mjs",
   "src/data/localGeojsonLod.js",
   "src/data/inputOwnership.js",
   "src/annotations/drawMarks.js",

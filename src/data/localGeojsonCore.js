@@ -1,6 +1,7 @@
 import * as Cesium from 'cesium';
 import { mapAnalystRecord } from '../sources/infrastructureData.js';
 import { isPointerFree } from './inputOwnership.js';
+import { createRecordTracker } from './localGeojsonTracking.js';
 import {
   selectInfraLod,
   applyInfraEvictionGrace,
@@ -144,6 +145,8 @@ export function createLocalGeoJsonLayer(
   let _handle = null;
   let _enabled = false;
   let _clickHandler = null;
+  /** Double-click camera lock (Entities got it from Cesium's Viewer). */
+  let _tracker = null;
   let _count = 0;
   /** @type {number|null} Timestamp of the last successful dataset load. */
   let _lastUpdate = null;
@@ -265,6 +268,7 @@ export function createLocalGeoJsonLayer(
   function disableLayer(viewer) {
     hideOsmCredit?.(viewer, id);
     _enabled = false;
+    _tracker?.release();
     clearGroundRetryRender();
     resetLodState();
     releaseRenderer();
@@ -356,12 +360,31 @@ export function createLocalGeoJsonLayer(
     if (targetPos) flyToSurface(viewer, targetPos);
   }
 
+  /** Lock the camera onto a double-clicked record, as Entities were. */
+  function onDoubleClick(viewer, click) {
+    if (!isPointerFree() || !_enabled) return;
+    const carrier = viewer.scene.pick(click.position)?.id;
+    if (!carrier || carrier.__localLayerId !== id) return;
+    const target = _byCarrier.get(carrier);
+    const position = target?.base ?? target?.flyTarget;
+    if (!position) return;
+    viewer.camera.cancelFlight?.();
+    viewer.selectedEntity = carrier;
+    selectEntityContext(carrier);
+    _tracker ??= createRecordTracker(viewer);
+    _tracker.track(position, String(carrier.id));
+  }
+
   function installClickHandler(viewer) {
     if (_clickHandler) return;
     _clickHandler = screenSpaceEventHandlerFactory(viewer.scene.canvas);
     _clickHandler.setInputAction(
       (click) => onClick(viewer, click),
       Cesium.ScreenSpaceEventType.LEFT_CLICK,
+    );
+    _clickHandler.setInputAction(
+      (click) => onDoubleClick(viewer, click),
+      Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK,
     );
   }
 
@@ -688,6 +711,8 @@ export function createLocalGeoJsonLayer(
       removeEntityContextsForLayer(id);
       _clickHandler?.destroy();
       _clickHandler = null;
+      _tracker?.release();
+      _tracker = null;
       _overlayPublisher.destroy();
       _cachedRecords = null;
       _stemRecords = [];

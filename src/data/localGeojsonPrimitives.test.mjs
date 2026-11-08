@@ -100,6 +100,7 @@ async function enabledLayer(t, { pick = () => null } = {}) {
       FEATURES.map((feature) => JSON.stringify(feature)).join('\n'),
   }));
   let click = null;
+  let doubleClick = null;
   const flights = [];
   const pins = [];
   const renderRequests = [];
@@ -136,8 +137,10 @@ async function enabledLayer(t, { pick = () => null } = {}) {
       overlayHost: { setVisible() {}, setEntries() {}, clearSource() {} },
       projectToWindow: () => ({ x: 400, y: 300 }),
       screenSpaceEventHandlerFactory: () => ({
-        setInputAction(fn) {
-          click = fn;
+        setInputAction(fn, type) {
+          if (type === Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
+            doubleClick = fn;
+          else click = fn;
         },
         destroy() {},
       }),
@@ -161,6 +164,7 @@ async function enabledLayer(t, { pick = () => null } = {}) {
     pins,
     renderRequests,
     click: (position = {}) => click({ position }),
+    doubleClick: (position = {}) => doubleClick({ position }),
   };
 }
 
@@ -352,4 +356,42 @@ test('a ground primitive finishing after a parked frame gets one more frame, onc
   assert.equal(env.renderRequests.length, 1, 'no progress, no further frames');
   env.layer.disable(env.viewer);
   assert.equal(env.viewer.scene.postRender.listeners.size, 0);
+});
+
+test('a double-clicked record locks the camera on its base, as Entities did', async (t) => {
+  let picked = null;
+  const env = await enabledLayer(t, { pick: () => picked });
+  const added = [];
+  env.viewer.entities = {
+    add: (options) => {
+      const entity = { ...options };
+      added.push(entity);
+      return entity;
+    },
+    remove: (entity) => {
+      added.splice(added.indexOf(entity), 1);
+      return true;
+    },
+  };
+  env.viewer.trackedEntityChanged = new Cesium.Event();
+  const [record] = renderedRecords(env.viewer.scene);
+  picked = { primitive: record.point, id: record.carrier };
+  env.doubleClick();
+  assert.equal(added.length, 1);
+  assert.equal(env.viewer.trackedEntity, added[0]);
+  assert.ok(
+    Cesium.Cartesian3.equals(
+      added[0].position,
+      record.carrier.__localBaseCartesian,
+    ),
+  );
+  assert.equal(env.viewer.selectedEntity, record.carrier);
+
+  picked = { id: { __localLayerId: 'someone-else' } };
+  env.doubleClick();
+  assert.equal(added.length, 1, 'a foreign pick leaves the lock alone');
+
+  env.layer.disable(env.viewer);
+  assert.equal(env.viewer.trackedEntity, undefined);
+  assert.equal(added.length, 0, 'disable removes the helper');
 });

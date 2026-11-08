@@ -224,6 +224,7 @@ export const DEFERRED_LAYER_DESCRIPTORS = Object.freeze({
       'enable',
       'getStats',
       'init',
+      'resolvePick',
       'update',
     ]),
     params: null,
