@@ -14,6 +14,46 @@
       "id": "cables-datacenters-fires",
       "label": "Cables, datacenters, fires (world view)",
       "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=u.d.w"
+    },
+    {
+      "id": "fires-world",
+      "label": "Fires only (world view, heat raster)",
+      "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=w"
+    },
+    {
+      "id": "fires-handoff",
+      "label": "Fires only (Africa, heat/marker hand-off)",
+      "hash": "lat=2&lon=22&alt=4500000&map=esri-imagery&l=w"
+    },
+    {
+      "id": "vessels-world",
+      "label": "AIS vessels (needs AISSTREAM_API_KEY)",
+      "hash": "lat=30&lon=10&alt=9000000&map=esri-imagery&l=a"
+    },
+    {
+      "id": "detection-dense-100",
+      "label": "Detection Dense at 100% over New York",
+      "hash": "lat=40.7128&lon=-74.006&alt=60000&map=esri-imagery&l=f.e.s&dm=DENSE&dd=100"
+    },
+    {
+      "id": "style-flir",
+      "label": "FLIR style over Paris",
+      "hash": "lat=48.8584&lon=2.2945&alt=3000&pitch=-30&map=esri-imagery&l=&style=flir"
+    },
+    {
+      "id": "style-nvg",
+      "label": "Night vision style over Paris",
+      "hash": "lat=48.8584&lon=2.2945&alt=3000&pitch=-30&map=esri-imagery&l=&style=nvg"
+    },
+    {
+      "id": "style-noir",
+      "label": "Noir style over Paris",
+      "hash": "lat=48.8584&lon=2.2945&alt=3000&pitch=-30&map=esri-imagery&l=&style=noir"
+    },
+    {
+      "id": "text-stress",
+      "label": "Label stress: flights, quakes, sats, fires, cables, datacenters, launches, military",
+      "hash": "lat=20&lon=60&alt=12000000&map=esri-imagery&l=f.e.s.w.u.d.x.m"
     }
   ]
 }
