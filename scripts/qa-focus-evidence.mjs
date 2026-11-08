@@ -202,9 +202,14 @@ async function capture(page, scenario, frame) {
   // Chromium's Page.captureScreenshot can wedge while a manually driven
   // WebGL surface is paused. Reading the explicitly rendered canvas captures
   // that same frame without handing frame ownership back to the browser.
-  const dataUrl = await page.evaluate(() => (
-    window.__godsEyeView.viewer.scene.canvas.toDataURL('image/png')
-  ));
+  // The viewer runs without preserveDrawingBuffer, so the frame is rendered
+  // again at the same clock time and read in the same task, before the
+  // browser composites and clears it.
+  const dataUrl = await page.evaluate(() => {
+    const viewer = window.__godsEyeView.viewer;
+    viewer.scene.render(viewer.clock.currentTime);
+    return viewer.scene.canvas.toDataURL('image/png');
+  });
   fs.writeFileSync(out, Buffer.from(dataUrl.slice(dataUrl.indexOf(',') + 1), 'base64'));
   return { file: out, ...tileReadiness };
 }

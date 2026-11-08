@@ -310,12 +310,59 @@ test('both Google 3D routes keep tiles drawing while draped imagery loads', asyn
   assert.equal(await createGoogleIonTileset(sdk, 'token'), 'ion');
   assert.deepEqual(calls[0], [
     { key: 'key', onlyUsingWithGoogleGeocoder: true },
-    { asynchronouslyLoadImagery: true },
+    {
+      cacheBytes: 512 * 1024 * 1024,
+      maximumCacheOverflowBytes: 256 * 1024 * 1024,
+      cullRequestsWhileMoving: true,
+      asynchronouslyLoadImagery: true,
+    },
   ]);
   assert.equal(calls[1][0].id, 2275207);
   assert.equal(calls[1][0].accessToken, 'token');
   assert.equal(calls[1][1].asynchronouslyLoadImagery, true);
   assert.equal(calls[1][1].enableCollision, true);
+});
+
+test('every Google 3D route sizes its tile cache for an 8 GB machine', async () => {
+  const {
+    GOOGLE_TILESET_MEMORY,
+    createGoogleIonTileset,
+    createGoogleTokenTileset,
+  } = await import('./google3d.js');
+  assert.deepEqual(GOOGLE_TILESET_MEMORY, {
+    cacheBytes: 536870912,
+    maximumCacheOverflowBytes: 268435456,
+    cullRequestsWhileMoving: true,
+  });
+  assert.ok(Object.isFrozen(GOOGLE_TILESET_MEMORY));
+  const options = [];
+  const sdk = {
+    IonResource: { fromAssetId: async (id) => ({ id }) },
+    GoogleMaps: { mapTilesApiEndpoint: 'https://tiles.example/' },
+    Resource: class {
+      constructor(init) {
+        Object.assign(this, init);
+      }
+    },
+    Cesium3DTileset: {
+      fromUrl: async (_resource, tilesetOptions) => {
+        options.push(tilesetOptions);
+        return 'tileset';
+      },
+    },
+  };
+  await createGoogleIonTileset(sdk, 'token');
+  await createGoogleTokenTileset(sdk, { token: async () => 'bearer' });
+  for (const routeOptions of options) {
+    assert.equal(routeOptions.cacheBytes, 512 * 1024 * 1024);
+    assert.equal(routeOptions.maximumCacheOverflowBytes, 256 * 1024 * 1024);
+    assert.equal(routeOptions.cullRequestsWhileMoving, true);
+    assert.equal(
+      'maximumScreenSpaceError' in routeOptions,
+      false,
+      'the resting tile detail stays at the SDK default',
+    );
+  }
 });
 
 test('unreachable keyless terrain falls back to flat terrain marked as a fallback', async (t) => {

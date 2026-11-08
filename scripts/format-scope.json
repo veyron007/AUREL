@@ -1566,5 +1566,10 @@
   "src/data/firmsHeatRaster.perf.test.mjs",
   "src/layers/vessels/records.perf.test.mjs",
   "src/overlays/worldOverlayDraw.perf.test.mjs",
-  "src/data/localGeojsonCore.perf.test.mjs"
+  "src/data/localGeojsonCore.perf.test.mjs",
+  "src/voice/cesiumFrameCapture.js",
+  "src/voice/cesiumFrameCapture.test.mjs",
+  "src/ui/agentDeskCapture.test.mjs",
+  "src/testSupport/fakeCesiumCanvas.mjs",
+  "scripts/qa-canvas-capture.mjs"
 ]

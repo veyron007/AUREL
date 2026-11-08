@@ -245,6 +245,18 @@ test('the viewer gets the starry sky as an option, which keeps the Sun and Moon'
   options.skyBox.destroy();
 });
 
+test('the viewer does not preserve the drawing buffer; MSAA stays at 4', async () => {
+  const { applicationViewerOptions } = await import('./viewer.js');
+  const options = applicationViewerOptions({});
+  assert.notEqual(
+    options.contextOptions?.webgl?.preserveDrawingBuffer,
+    true,
+    'captures read inside postRender instead (WP4.8)',
+  );
+  assert.equal(options.msaaSamples, 4);
+  options.skyBox.destroy();
+});
+
 function pinchFixture({ zoomEventTypes } = {}) {
   const handlers = new Set();
   const relayed = [];
