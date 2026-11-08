@@ -1527,5 +1527,7 @@
   "docs/design/aurel/phase-6/wp2/SOURCE-ADMISSION.md",
   "docs/design/aurel/phase-6/wp2/README.md",
   "docs/design/aurel/phase-6/wp2/GATE.md",
-  "src/ui/styles/search-suggest.css"
+  "src/ui/styles/search-suggest.css",
+  "src/ui/styles/spatial.css",
+  "src/ui/styles/spatial-shell.css"
 ]

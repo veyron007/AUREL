@@ -39,4 +39,6 @@
 @import './src/ui/styles/ai-chat.css';
 @import './src/ui/styles/aurel.css';
 @import './src/ui/styles/lamplight.css';
+@import './src/ui/styles/spatial.css';
+@import './src/ui/styles/spatial-shell.css';
 @import './src/ui/styles/cyber.css';

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-06",
+  "generated": "2026-11-08",
   "description": "Official Google Fonts distribution; unicode subsets are browser-selected. Local files require no account or network at runtime.",
   "icons": {
     "file": "material-symbols-outlined.woff2",
@@ -243,6 +243,34 @@
       "source": "https://fonts.gstatic.com/s/notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj41v4rqxzLI.woff2",
       "sha256": "20d51311e187e0ff5be9d6fe24f099e97be6cc583078d6f271c74d68920cd1e0",
       "bytes": 31368
+    },
+    {
+      "file": "plus-jakarta-sans-1.woff2",
+      "family": "Plus Jakarta Sans",
+      "source": "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yygg_vbd-E.woff2",
+      "sha256": "a16f29d7d2a21a4f9b3249a82eb2725ed5bdb91500dfb5c4758977de27477f20",
+      "bytes": 1716
+    },
+    {
+      "file": "plus-jakarta-sans-2.woff2",
+      "family": "Plus Jakarta Sans",
+      "source": "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yygg_vbd-E.woff2",
+      "sha256": "5c913fc1b1f86f4b475e5df45a796aa480d1f7f0891ed6f1a5991d6d1be887c3",
+      "bytes": 8292
+    },
+    {
+      "file": "plus-jakarta-sans-3.woff2",
+      "family": "Plus Jakarta Sans",
+      "source": "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yygg_vbd-E.woff2",
+      "sha256": "0303e02b53b0298fb26a0193941a2e8754f0f9a9fce50d90b178d8da3424873f",
+      "bytes": 21688
+    },
+    {
+      "file": "plus-jakarta-sans-4.woff2",
+      "family": "Plus Jakarta Sans",
+      "source": "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2",
+      "sha256": "cd8db90cd950e26bc8761f65d323588bd5cd112d326d6d322bc7c8ea86771215",
+      "bytes": 27272
     }
   ]
 }

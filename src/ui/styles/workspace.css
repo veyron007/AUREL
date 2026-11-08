@@ -489,6 +489,35 @@ body[data-workspace-appearance] .workspace-source {
   color: var(--workspace-muted);
   font-size: 12px;
 }
+/* The map source stamp and the search's palette hint, as every theme shows
+   them; Spatial restyles and moves the stamp to the lower left. */
+body[data-workspace-appearance] .workspace-imagery-stamp {
+  position: fixed;
+  top: 28px;
+  inset-inline-end: 20px;
+  z-index: 150;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+body[data-workspace-appearance] .workspace-stamp-label {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+body[data-workspace-appearance] #aurel-search .aurel-search-shortcut {
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 6px;
+  color: var(--workspace-muted);
+  background: transparent;
+  border: 0;
+  font: 500 11px/1 var(--font-mono);
+  cursor: pointer;
+}
 body[data-workspace-appearance] .workspace-status-dot {
   flex: 0 0 6px;
   height: 6px;
@@ -501,13 +530,15 @@ body[data-workspace-appearance] .workspace-tools-heading {
   color: var(--workspace-text);
   font: 600 17px/1.4 var(--font-sans);
 }
-body[data-workspace-appearance] .workspace-all-tools {
+body[data-workspace-appearance] :is(.workspace-all-tools, .workspace-settings) {
   flex: 1 0 100%;
   min-width: 0;
   border-top: 1px solid var(--workspace-border);
   padding-top: 8px;
 }
-body[data-workspace-appearance] .workspace-all-tools summary {
+body[data-workspace-appearance]
+  :is(.workspace-all-tools, .workspace-settings)
+  summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -516,16 +547,20 @@ body[data-workspace-appearance] .workspace-all-tools summary {
   list-style: none;
   font-weight: 500 !important;
 }
-body[data-workspace-appearance] .workspace-all-tools summary::after {
+body[data-workspace-appearance]
+  :is(.workspace-all-tools, .workspace-settings)
+  summary::after {
   content: '+';
   font-size: 18px;
   color: var(--workspace-accent);
 }
-body[data-workspace-appearance] .workspace-all-tools[open] summary::after {
+body[data-workspace-appearance]
+  :is(.workspace-all-tools, .workspace-settings)[open]
+  summary::after {
   content: '−';
 }
 body[data-workspace-appearance]
-  .workspace-all-tools
+  :is(.workspace-all-tools, .workspace-settings)
   summary::-webkit-details-marker {
   display: none;
 }

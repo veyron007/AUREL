@@ -1,0 +1,1001 @@
+/* SPATIAL — the default theme.
+   visionOS-style glass: thick frosted panes float over the globe, depth comes
+   from blur and light, one focus at a time. White is the primary action,
+   sky blue the only interactive tint, warm amber reserved for alerts. Plus
+   Jakarta Sans for the interface, JetBrains Mono for data.
+
+   Presentation only: geometry pinned by tests, behaviour, map data colours
+   and the Cyber theme are untouched. Imported after lamplight.css (whose
+   selector coverage this mirrors) and before cyber.css.
+
+   Guarding: re-expressed rules use the zero-specificity guard
+   :where(:root:not([data-ui-theme='cyber'])) so they keep the specificity of
+   the rule they restyle; token roots keep the plain guard. Nothing here
+   reaches Cyber. Workspace composition (ornament, inspector card, palette,
+   chrome rest) lives in spatial-shell.css. */
+
+/* Spatial token root: the only place literal palette values live. */
+:root:not([data-ui-theme='cyber']) {
+  color-scheme: dark;
+  --spatial-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --spatial-glass: rgba(255, 255, 255, 0.14);
+  --spatial-glass-2: rgba(255, 255, 255, 0.22);
+  --spatial-glass-3: rgba(255, 255, 255, 0.9);
+  --spatial-floor: rgba(8, 12, 18, 0.44);
+  --spatial-edge: rgba(255, 255, 255, 0.32);
+  --spatial-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --spatial-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --spatial-shadow-soft:
+    0 12px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  --spatial-blur: blur(40px) saturate(1.7);
+  --spatial-pane:
+    linear-gradient(var(--spatial-glass), var(--spatial-glass)),
+    var(--spatial-floor);
+  /* Panes inside the frosted dock cannot sample the globe (the dock is their
+     backdrop root), so they use a nearly opaque glass instead. */
+  --spatial-pane-solid:
+    linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)),
+    rgba(26, 30, 38, 0.95);
+  --spatial-radius: 28px;
+  --spatial-on: #ffffff;
+  --spatial-on-ink: #0b1016;
+  --spatial-sky: #7ad7ff;
+  --spatial-warm: #ffb36b;
+  --bg-dark: #05070a;
+  --glass-bg: var(--spatial-glass);
+  --surface-info: rgba(8, 12, 18, 0.24);
+  --surface-info-raised: rgba(255, 255, 255, 0.1);
+  --raised: rgba(255, 255, 255, 0.12);
+  --menu-bg: rgba(34, 39, 47, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-hover: rgba(255, 255, 255, 0.5);
+  --accent: #7ad7ff;
+  --accent-hover: #a8e7ff;
+  --accent-dim: rgba(122, 215, 255, 0.16);
+  --accent-glow: rgba(122, 215, 255, 0.28);
+  --accent-strong: rgba(122, 215, 255, 0.55);
+  --accent-secondary: #ffb36b;
+  --accent-tertiary: #24384a;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.74);
+  --text-dim: rgba(255, 255, 255, 0.58);
+  --state-ok: #9be3a8;
+  --state-warn: #ffb36b;
+  --state-error: #ff8a80;
+  --state-info: #7ad7ff;
+  --state-busy: #7ad7ff;
+  --scroll-thumb: rgba(255, 255, 255, 0.28);
+  --scroll-track: rgba(255, 255, 255, 0.04);
+  --panel-radius: 24px;
+  --btn-radius: 14px;
+  --font-sans:
+    'Plus Jakarta Sans', 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --dock-label-color: rgba(255, 255, 255, 0.82);
+  --dock-label-font-size: 0.72rem;
+  --dock-label-font-weight: 600;
+  --dock-label-letter-spacing: 0.01rem;
+  --panel-surface-title: var(--text-secondary);
+  --panel-surface-font: var(--font-sans);
+  --panel-surface-shadow: var(--spatial-shadow);
+  --panel-surface-detail-base: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06),
+    transparent 42%
+  );
+  --panel-surface-detail: var(--panel-surface-detail-base);
+  --panel-surface-error: var(--state-error);
+  --bg-panel: rgba(20, 24, 30, 0.6);
+  --text-warning: var(--state-warn);
+  --hud-ink: #ffffff;
+  --hud-accent: #7ad7ff;
+  --hud-glow: rgba(122, 215, 255, 0.35);
+  --hud-line: rgba(255, 255, 255, 0.28);
+  --divider-gradient: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.32),
+    rgba(255, 255, 255, 0.08) 60%,
+    transparent
+  );
+  --divider-shadow: none;
+  --slider-track: rgba(255, 255, 255, 0.16);
+  --focus-ring: rgba(122, 215, 255, 0.95);
+  --eyebrow-font: 600 11px/1.4 var(--font-sans);
+  --hairline: rgba(255, 255, 255, 0.1);
+  --hover-wash: rgba(255, 255, 255, 0.08);
+  --raised-edge: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --glow-wash: rgba(255, 255, 255, 0.04);
+  --subtitle-ink: rgba(255, 255, 255, 0.8);
+  --map-legibility: 0 1px 14px rgba(0, 0, 0, 0.55);
+  --hud-legibility: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.6);
+  --aurel-ink: var(--bg-dark);
+  --aurel-raised: var(--raised);
+  --aurel-line: var(--glass-border);
+  --aurel-muted: var(--text-secondary);
+  --aurel-burgundy: var(--accent-tertiary);
+}
+
+/* Observatory (the default appearance): workspace tokens are Spatial glass.
+   Field and Instrument keep their own palettes. */
+:root:not([data-ui-theme='cyber'])
+  body[data-workspace-appearance]:not(
+    [data-workspace-appearance='field'],
+    [data-workspace-appearance='instrument']
+  ) {
+  --workspace-surface: var(--spatial-glass);
+  --workspace-raised: rgba(255, 255, 255, 0.1);
+  --workspace-border: rgba(255, 255, 255, 0.2);
+  --workspace-text: #ffffff;
+  --workspace-muted: rgba(255, 255, 255, 0.74);
+  --workspace-accent: var(--spatial-sky);
+  --workspace-selection: rgba(255, 255, 255, 0.18);
+  --workspace-shadow: var(--spatial-shadow);
+  --workspace-chrome: var(--spatial-glass);
+  --glass-bg: var(--workspace-chrome);
+  --menu-bg: rgba(34, 39, 47, 0.94);
+  --text-dim: rgba(255, 255, 255, 0.58);
+  --panel-surface-title: var(--text-secondary);
+  --panel-surface-detail: var(--panel-surface-detail-base);
+  --panel-radius: 24px;
+  --spatial-pill-on: var(--spatial-on);
+  --spatial-pill-on-ink: var(--spatial-on-ink);
+}
+
+/* Field and Instrument: the Spatial geometry with their own colours. */
+:root:not([data-ui-theme='cyber'])
+  body:is(
+    [data-workspace-appearance='field'],
+    [data-workspace-appearance='instrument']
+  ) {
+  --spatial-pane: var(--workspace-surface);
+  --spatial-edge: var(--workspace-border);
+  --spatial-glass-2: var(--workspace-selection);
+  --spatial-pill-on: var(--workspace-accent);
+  --spatial-pill-on-ink: var(--workspace-surface);
+  --spatial-shadow: var(--workspace-shadow);
+}
+
+/* Title bar: a quiet wordmark, no scanline. */
+:where(:root:not([data-ui-theme='cyber'])) #title-bar h1 {
+  gap: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-shadow: var(--map-legibility);
+}
+:where(:root:not([data-ui-theme='cyber'])) #title-bar h1::after {
+  display: none;
+}
+:where(:root:not([data-ui-theme='cyber'])) #title-bar .subtitle {
+  color: var(--subtitle-ink);
+  font: 500 11px/1.4 var(--font-sans);
+  letter-spacing: 0.04em;
+}
+:where(:root:not([data-ui-theme='cyber'])) .aurel-wordmark {
+  font-weight: 600;
+  letter-spacing: 0.32em;
+}
+:where(:root:not([data-ui-theme='cyber'])) .loader-content .aurel-wordmark {
+  font-family: var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber'])) .aurel-loader-tagline {
+  font: 500 14px/1.6 var(--font-sans);
+}
+
+/* Style indicator: a small glass pill. */
+:where(:root:not([data-ui-theme='cyber'])) #style-indicator .indicator-value {
+  color: var(--text-primary);
+}
+
+/* Panel rail: a glass pane; the open item is the white primary. */
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail {
+  padding: 6px;
+  border-color: var(--spatial-edge);
+  border-radius: 22px;
+  background: var(--spatial-pane);
+  box-shadow: var(--spatial-shadow);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail--expanded,
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail--expanded .ui-rail__item {
+  border-radius: 16px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item {
+  border-radius: 14px;
+  color: var(--text-secondary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: transparent;
+  background-color: var(--spatial-glass-2);
+}
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item--on,
+:where(:root:not([data-ui-theme='cyber']))
+  .ui-rail__item--on:hover:not(:disabled) {
+  color: var(--spatial-on-ink);
+  border-color: transparent;
+  background: var(--spatial-glass-3);
+  box-shadow: none;
+}
+
+/* Tooltips: the menu level, frosted. */
+:where(:root:not([data-ui-theme='cyber'])) .ui-tooltip__tip {
+  padding: 7px 12px;
+  border-color: var(--glass-border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  background: var(--menu-bg);
+  box-shadow: var(--spatial-shadow-soft);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+
+/* Panel headers: titles read as eyebrows over the glass. */
+:where(:root:not([data-ui-theme='cyber'])) [data-panel-header] {
+  border-bottom-color: var(--hairline);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(
+    .panel-surface-title,
+    .first-run-kicker,
+    .key-setup-kicker,
+    .data-layer-group-heading,
+    .locale-picker-heading
+  ) {
+  font: var(--eyebrow-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Panel surfaces: the glass pane is the ::before skin; bodies sit on it. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is([data-panel-surface], [data-panel-popup])::before {
+  border-color: var(--spatial-edge);
+  background-color: transparent;
+  background-image: var(--panel-surface-detail), var(--spatial-pane);
+  box-shadow: var(--spatial-shadow);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber'])) [data-panel-body] {
+  background: var(--surface-info);
+  border-radius: 18px;
+}
+:where(:root:not([data-ui-theme='cyber'])) [data-panel-popup] {
+  background: var(--menu-bg);
+  border-radius: 18px;
+}
+
+/* Secondary actions: glass pills; hover lifts the fill, press settles. */
+:where(:root:not([data-ui-theme='cyber'])) :is(.gev-action-button, .scene-btn) {
+  min-height: 32px;
+  padding: 7px 14px;
+  color: var(--text-primary);
+  font: 600 12px/1.3 var(--font-sans);
+  letter-spacing: 0;
+  border-color: transparent;
+  border-radius: 999px;
+  background: var(--raised);
+  box-shadow: var(--raised-edge);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    transform 140ms var(--spatial-ease);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.gev-action-button, .scene-btn):hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: transparent;
+  background: var(--spatial-glass-2);
+  transform: translateY(-1px);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.gev-action-button, .scene-btn, .ui-button):active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.gev-action-button--danger, .scene-btn-danger) {
+  color: var(--state-error);
+}
+
+/* Primary actions: the white pill with dark text. */
+:where(:root:not([data-ui-theme='cyber'])) .ui-button--primary {
+  color: var(--spatial-on-ink);
+  border-color: transparent;
+  background: var(--spatial-on);
+  font-weight: 700;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .ui-button--primary:hover:not(:disabled) {
+  color: var(--spatial-on-ink);
+  background: #eef6fb;
+}
+
+/* Fields: a recessed glass well, sky ring on keyboard focus. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is([data-panel-surface], [data-panel-popup], #key-setup, #gev-chat-panel)
+  :is(
+    input:not([type='range']):not([type='checkbox']):not([type='color']),
+    textarea,
+    select
+  ) {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+  font-family: var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is([data-panel-surface], [data-panel-popup], #key-setup, #gev-chat-panel)
+  :is(input, textarea, select):focus-visible {
+  border-color: var(--focus-ring);
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is([data-panel-surface], #key-setup, #gev-chat-panel)
+  :is(input, textarea)::placeholder {
+  color: var(--text-dim);
+  opacity: 1;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(input[type='checkbox'], input[type='range']) {
+  accent-color: var(--accent);
+}
+
+/* Globe actions: round glass buttons; pressed is the white primary. */
+:where(:root:not([data-ui-theme='cyber'])) #top-center-actions {
+  gap: 8px;
+}
+:where(:root:not([data-ui-theme='cyber'])) #top-center-actions button {
+  color: var(--text-primary);
+  background: var(--spatial-pane);
+  border-color: var(--spatial-edge);
+  border-radius: 999px;
+  box-shadow: var(--spatial-shadow-soft);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+  transition:
+    background-color 200ms ease,
+    transform 140ms var(--spatial-ease);
+}
+:where(:root:not([data-ui-theme='cyber'])) #top-center-actions button:hover {
+  color: var(--text-primary);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+:where(:root:not([data-ui-theme='cyber'])) #tilt-map-view[aria-pressed='true'] {
+  color: var(--spatial-on-ink);
+  background: var(--spatial-on);
+  box-shadow: var(--spatial-shadow-soft);
+}
+
+/* Command dock: one glass ornament along the bottom. Colour, edge and blur
+   only; its box is pinned by the attribution geometry tests. */
+:where(:root:not([data-ui-theme='cyber'])) #command-dock {
+  border: 1px solid var(--spatial-edge);
+  border-radius: 26px;
+  background: var(--spatial-pane);
+  box-shadow: var(--spatial-shadow);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  > :is(#location-bar, #control-panel) {
+  background: transparent;
+  border-color: transparent;
+}
+:where(:root:not([data-ui-theme='cyber'])) #command-dock > #gev-voice-control {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: transparent;
+  border-radius: 22px;
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  > #gev-voice-control[data-chat-open='true'] {
+  border-color: var(--accent-strong);
+  box-shadow:
+    var(--raised-edge),
+    0 0 0 4px var(--accent-dim);
+}
+:where(:root:not([data-ui-theme='cyber'])) #command-dock .panel-title,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  .location-toolbar-label {
+  font-family: var(--font-sans);
+  font-size: var(--dock-label-font-size);
+  font-weight: var(--dock-label-font-weight);
+  letter-spacing: var(--dock-label-letter-spacing);
+  color: var(--dock-label-color);
+}
+:where(:root:not([data-ui-theme='cyber'])) #command-dock .panel-title::after,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  .location-toolbar-label::after {
+  color: var(--text-primary);
+}
+
+/* Dock popovers: frosted menus. Colour and edge only (geometry is pinned). */
+:where(:root:not([data-ui-theme='cyber'])) #command-dock .dock-popover-content {
+  border-color: var(--spatial-edge);
+  border-radius: 24px;
+  background: var(--menu-bg);
+  box-shadow: var(--spatial-shadow);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+
+/* Dock pills and style buttons: glass chips; active is the white primary. */
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.location-pill, .poi-pill, .style-btn) {
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  border-color: transparent;
+  border-radius: 999px;
+  background-color: var(--raised);
+}
+:where(:root:not([data-ui-theme='cyber'])) #command-dock .style-btn {
+  border-radius: 18px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.location-pill, .poi-pill, .style-btn):hover {
+  color: var(--text-primary);
+  border-color: transparent;
+  background-color: var(--spatial-glass-2);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.location-pill, .poi-pill, .style-btn).active {
+  color: var(--spatial-on-ink);
+  border-color: transparent;
+  background: var(--spatial-on);
+  box-shadow: none;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  .style-btn.active
+  :is(.btn-icon, .btn-label, .btn-key) {
+  color: var(--spatial-on-ink);
+  text-shadow: none;
+}
+:where(:root:not([data-ui-theme='cyber'])) #command-dock #location-search {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Voice: the Spatial voice pill. A glass mic socket at rest; listening turns
+   it sky with a halo and the waveform lights up. Voice logic is untouched. */
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(.gev-mic-label, .gev-chat-label) {
+  color: var(--dock-label-color);
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  :is(#gev-voice-button, #gev-chat-button) {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-chat-button
+  > svg {
+  color: var(--text-primary);
+  filter: none;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-control
+  .gev-mic-orbit,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-chat-button
+  > svg {
+  border-color: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: var(--spatial-glass-2);
+  box-shadow: var(--spatial-highlight);
+  transition:
+    background-color 300ms var(--spatial-ease),
+    box-shadow 300ms var(--spatial-ease);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-button:hover
+  .gev-mic-orbit,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-chat-button:hover:not(:disabled)
+  > svg,
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-control[data-assistant-mode='chat']
+  #gev-chat-button
+  > svg {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow:
+    var(--spatial-highlight),
+    0 0 0 4px rgba(255, 255, 255, 0.08);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-control:is(
+    [data-status='listening'],
+    [data-status='connecting'],
+    [data-status='executing']
+  )
+  .gev-mic-orbit {
+  border-color: transparent;
+  background: var(--spatial-sky);
+  box-shadow: 0 0 0 6px var(--accent-glow);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #command-dock
+  #gev-voice-control:is(
+    [data-status='listening'],
+    [data-status='connecting'],
+    [data-status='executing']
+  )
+  .gev-mic-orbit
+  img {
+  filter: brightness(0.12);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #gev-voice-control
+  .gev-voice-visualizer
+  span {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.5);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #gev-voice-control[data-status='listening']
+  .gev-voice-visualizer
+  span {
+  background: var(--spatial-sky);
+}
+
+/* First-run launcher and provider settings: glass dialogs. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#first-run-launcher, #key-setup) {
+  padding: 28px;
+  border: 1px solid var(--spatial-edge);
+  border-radius: var(--spatial-radius);
+  background: var(--panel-surface-detail-base), var(--spatial-pane);
+  box-shadow: var(--spatial-shadow);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-scanline, .key-setup-scanline) {
+  display: none;
+}
+:where(:root:not([data-ui-theme='cyber'])) .aurel-welcome-brand {
+  font: 600 14px var(--font-sans);
+  letter-spacing: 0.3em;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-kicker, .key-setup-kicker) {
+  color: var(--text-dim);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#first-run-launcher, #key-setup)
+  h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(26px, 2.6vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#first-run-description, #key-setup-description) {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices button {
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--raised-edge);
+  color: var(--text-primary);
+  transition:
+    background-color 200ms ease,
+    transform 140ms var(--spatial-ease);
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices button:hover,
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button:focus-visible {
+  border-color: transparent;
+  background: var(--spatial-glass-2);
+  box-shadow: var(--raised-edge);
+  transform: translateY(-1px);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button
+  > .material-symbols-outlined:first-child {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices strong {
+  font: 600 14px/1.4 var(--font-sans);
+  letter-spacing: 0;
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-choices small {
+  font: 13px/1.5 var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button:is(:hover, :focus-visible)
+  .first-run-arrow {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button.first-run-explore {
+  color: var(--spatial-on-ink);
+  background: var(--spatial-on);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .first-run-choices
+  button.first-run-explore
+  :is(strong, small, .first-run-arrow, .material-symbols-outlined) {
+  color: var(--spatial-on-ink);
+}
+:where(:root:not([data-ui-theme='cyber'])) .first-run-footer {
+  border-top-color: var(--hairline);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-suppress, .first-run-dismiss) {
+  font: 13px/1.5 var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.first-run-note, .key-setup-note) {
+  font: 13px/1.6 var(--font-sans);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #first-run-launcher[data-state='loading']
+  .first-run-note {
+  color: var(--accent);
+}
+
+/* Provider rows: glass cards; apply is the white primary. */
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-row {
+  border-color: transparent;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-row-head strong {
+  font: 600 14px var(--font-sans);
+  letter-spacing: 0;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.key-setup-get, .key-setup-close) {
+  color: var(--accent);
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-apply {
+  background: var(--spatial-on);
+  color: var(--spatial-on-ink);
+  border-color: transparent;
+  border-radius: 999px;
+  font: 700 13px var(--font-sans);
+  letter-spacing: 0;
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-apply:hover,
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-apply:focus-visible {
+  background: #eef6fb;
+  border-color: transparent;
+  color: var(--spatial-on-ink);
+}
+:where(:root:not([data-ui-theme='cyber'])) #key-setup-chip {
+  color: var(--text-primary);
+  border-color: var(--spatial-edge);
+  background: var(--spatial-pane);
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  box-shadow: var(--spatial-shadow-soft);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber'])) #key-setup-chip:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--spatial-pane);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  #key-setup-chip
+  .material-symbols-outlined {
+  color: var(--spatial-warm);
+}
+:where(:root:not([data-ui-theme='cyber'])) .key-setup-cloud-auth-toggle {
+  color: var(--text-primary);
+  background: var(--raised);
+  border-color: transparent;
+  border-radius: 999px;
+}
+
+/* Assistant chat: a glass pane; send is the white primary. */
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-panel {
+  background: var(--spatial-pane-solid);
+  border-color: var(--spatial-edge);
+  border-radius: var(--spatial-radius);
+  box-shadow: var(--spatial-shadow);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-form {
+  border-color: transparent;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-suggestions button {
+  color: var(--text-secondary);
+  border-color: transparent;
+  border-radius: 999px;
+  background: var(--raised);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-suggestions button:hover {
+  color: var(--text-primary);
+  border-color: transparent;
+  background: var(--spatial-glass-2);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .gev-chat-message[data-role='assistant']
+  small {
+  background: var(--spatial-glass-2) url('/aurel-mark.svg') center / 1.45rem
+    1.45rem no-repeat;
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-send {
+  background: var(--spatial-on);
+  color: var(--spatial-on-ink);
+}
+:where(:root:not([data-ui-theme='cyber'])) #gev-chat-send:hover:not(:disabled) {
+  background: #eef6fb;
+}
+
+/* The assistant panels live inside the frosted dock (their backdrop root),
+   so their shared glass token is the nearly opaque pane. */
+:root:not([data-ui-theme='cyber']) #gev-voice-control {
+  --assistant-glass: var(--spatial-pane-solid);
+  --assistant-glass-border: var(--spatial-edge);
+  --assistant-glass-shadow: var(--spatial-shadow);
+}
+
+/* Voice panel and its settings: the same frosted pane. */
+:where(:root:not([data-ui-theme='cyber'])) #gev-voice-panel {
+  border-color: var(--spatial-edge);
+  border-radius: var(--spatial-radius);
+  background: var(--spatial-pane-solid);
+  box-shadow: var(--spatial-shadow);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+
+/* Global loading feed and toast: glass pills. */
+:where(:root:not([data-ui-theme='cyber'])) #global-loading-status {
+  background: var(--spatial-pane);
+  border-color: var(--spatial-edge);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  box-shadow: var(--spatial-shadow-soft);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber'])) #toast {
+  border-color: var(--spatial-edge);
+  border-radius: 999px;
+  background: var(--menu-bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  box-shadow: var(--spatial-shadow-soft);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+
+/* Intel HUD (tactical/minimal): white ink, sky mode marks, steady digits. */
+:root:not([data-ui-theme='cyber'])
+  #intel-hud:is([data-variant='tactical'], [data-variant='minimal'])
+  * {
+  color: var(--hud-ink);
+  text-shadow: var(--hud-legibility);
+}
+:root:not([data-ui-theme='cyber'])
+  #intel-hud:is([data-variant='tactical'], [data-variant='minimal'])
+  :is(.hud-mode, .hud-bracket) {
+  color: var(--hud-accent);
+}
+
+/* Data Layers: rows on the glass; an enabled row is lit, not underlined. */
+:where(:root:not([data-ui-theme='cyber'])) .data-layer-group-heading {
+  color: var(--text-dim);
+  border-color: transparent;
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-list {
+  background: transparent;
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-row {
+  border-radius: 16px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-row + .data-toggle-row {
+  border-top-color: transparent;
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-row:hover {
+  background: var(--hover-wash);
+  border-color: transparent;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  .data-toggle-row:has(.data-toggle-btn.active) {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--raised-edge);
+}
+:where(:root:not([data-ui-theme='cyber'])) .data-toggle-btn {
+  border-radius: 999px;
+}
+
+/* Rail panel titles take the interface face. */
+:root:not([data-ui-theme='cyber'])
+  :is(#left-panel-stack, #right-context-rail)
+  :is(.panel-header > .panel-title, .pp-header-label) {
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+/* Mobile shell: a glass tab bar; the open tab is the white primary. */
+:where(:root:not([data-ui-theme='cyber'])) body.mobile-shell #mobile-tab-bar {
+  background: var(--spatial-pane);
+  border-top-color: var(--spatial-edge);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber'])) body.mobile-shell .mobile-tab {
+  border-radius: 16px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell
+  .mobile-tab[aria-expanded='true'] {
+  color: var(--spatial-on-ink);
+  background: var(--spatial-on);
+  box-shadow: none;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell
+  #top-center-actions
+  button {
+  border-radius: 999px;
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell[data-mobile-sheet]
+  :is(#left-panel-stack, #right-context-rail),
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell[data-mobile-sheet='search']
+  #command-dock,
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell[data-mobile-sheet='more']
+  #command-dock {
+  background: var(--spatial-pane);
+  border-color: var(--spatial-edge);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber']))
+  body.mobile-shell:is(
+    [data-mobile-sheet='layers'],
+    [data-mobile-sheet='cameras'],
+    [data-mobile-sheet='context']
+  )
+  :is(#left-panel-stack, #right-context-rail)::before {
+  width: 40px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+/* Locale picker: a glass pill and a frosted menu. */
+:where(:root:not([data-ui-theme='cyber']))
+  :is(.locale-picker-button, .locale-picker-popup) {
+  color: var(--text-primary);
+  border-color: var(--spatial-edge);
+  background: var(--spatial-pane);
+  box-shadow: var(--spatial-shadow-soft);
+  backdrop-filter: var(--spatial-blur);
+  -webkit-backdrop-filter: var(--spatial-blur);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-button {
+  border-radius: 999px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-popup {
+  border-radius: 20px;
+  background: var(--menu-bg);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-button:hover,
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-button:focus-visible,
+:where(:root:not([data-ui-theme='cyber']))
+  .locale-picker.is-open
+  .locale-picker-button {
+  background: var(--spatial-pane);
+  border-color: var(--glass-border-hover);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-globe {
+  color: var(--text-primary);
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-option {
+  border-radius: 12px;
+}
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-option.is-active {
+  color: var(--spatial-on-ink);
+  background: var(--spatial-on);
+  box-shadow: none;
+}
+
+/* Instrumentation detail: hairlines only. */
+:root:not([data-ui-theme='cyber']) .panel-header::after {
+  background: var(--divider-gradient);
+}
+:root:not([data-ui-theme='cyber']) :is(.panel-glow, .title-glow) {
+  background: none;
+}
+
+/* Sky keyboard ring on surfaces whose focus rules are not pinned by tests. */
+:where(:root:not([data-ui-theme='cyber'])) .ui-rail__item:focus-visible,
+:where(:root:not([data-ui-theme='cyber']))
+  body[data-workspace-appearance]
+  #aurel-workspace
+  :is(button, select, summary):focus-visible,
+:where(:root:not([data-ui-theme='cyber']))
+  :is(#key-setup, #key-setup-chip, #gev-chat-panel, .locale-picker)
+  :is(button, a, input, select, textarea, [tabindex]):focus-visible,
+:where(:root:not([data-ui-theme='cyber'])) #key-setup-chip:focus-visible,
+:where(:root:not([data-ui-theme='cyber'])) .locale-picker-button:focus-visible {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px;
+}
+
+@media (max-width: 620px) {
+  :where(:root:not([data-ui-theme='cyber'])) #title-bar h1 {
+    font-size: 17px;
+    letter-spacing: 0.26em;
+  }
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(#first-run-launcher, #key-setup) {
+    padding: 20px;
+    border-radius: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(
+      .gev-action-button,
+      .scene-btn,
+      .ui-button,
+      .first-run-choices button,
+      #top-center-actions button,
+      .gev-mic-orbit,
+      #gev-chat-button > svg
+    ) {
+    transition-duration: 0.01ms;
+  }
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(.gev-action-button, .scene-btn, .ui-button):is(:hover, :active),
+  :where(:root:not([data-ui-theme='cyber']))
+    :is(.first-run-choices button, #top-center-actions button):is(
+      :hover,
+      :focus-visible
+    ) {
+    transform: none;
+  }
+}
