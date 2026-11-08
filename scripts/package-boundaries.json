@@ -217,6 +217,7 @@
     "exports": ["./application/viewer"],
     "modules": [
       "src/app/viewer.js",
+      "src/app/startupMarks.js",
       "src/app/atmosphereCompat.js",
       "src/globeInView.js",
       "src/sky/starrySky.js",
@@ -2426,6 +2427,7 @@
       "src/sources/sourceSlot.js",
       "src/app/sources.js",
       "src/app/startupChrome.js",
+      "src/app/startupMarks.js",
       "src/app/stateChannel.js",
       "src/app/surfaceServices.js",
       "src/app/tools.js",

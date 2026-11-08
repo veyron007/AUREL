@@ -1,4 +1,5 @@
 import { initFirstRunExperience } from '../firstRunExperience.js';
+import { markStartup, STARTUP_MARKS } from './startupMarks.js';
 
 /** Reveal welcome controls only after restoration and the loading transition. */
 export function startApplicationChrome({
@@ -30,6 +31,7 @@ export function startApplicationChrome({
     .then(() => {
       if (disposed || signal.aborted) return;
       loadingScreen.classList.add('hidden');
+      markStartup(STARTUP_MARKS.splashHidden);
       loadingScreen.addEventListener('transitionend', revealFirstRun, {
         once: true,
       });

@@ -27,6 +27,9 @@ function fixture() {
     clearTimeout(id) {
       timers.delete(id);
     },
+    // Imports are stripped above; the startup mark is covered by its own test.
+    markStartup() {},
+    STARTUP_MARKS: Object.freeze({ splashHidden: 'splash-hidden' }),
     initFirstRunExperience() {
       events.push('welcome');
       return { destroy: () => events.push('welcome:destroy') };
