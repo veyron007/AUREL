@@ -2252,3 +2252,9 @@ body.cockpit-mode #intel-hud .hud-right-edge {
     animation: none;
   }
 }
+
+/* Native instrument geometry is hidden outside Cyber (cyber.css shows it). */
+.cockpit-scan-array,
+.cockpit-frame-lines {
+  display: none;
+}

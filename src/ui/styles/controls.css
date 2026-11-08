@@ -761,6 +761,10 @@ html:not([lang='en']) .pp-slider-row > .pp-slider-mini-label {
   display: flex;
 }
 
+#cyber-sonar-status:empty {
+  display: none;
+}
+
 .cyber-sonar-toggle-row,
 .cyber-sonar-setting {
   min-width: 200px;

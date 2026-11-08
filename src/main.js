@@ -3,6 +3,7 @@ import { describeError } from './standalone/errors.js';
 import { isLocaleLoaded, loadLocale, t } from './i18n/index.js';
 import { DEFAULT_LOCALE, resolveLocale } from './i18n/locale.js';
 import { markStartup, STARTUP_MARKS } from './app/startupMarks.js';
+import { preloadCyberStylesheetWhenIdle } from './ui/cyberStylesheet.js';
 
 markStartup(STARTUP_MARKS.cesiumReady);
 
@@ -52,6 +53,10 @@ const started = isLocaleLoaded(bootLocale)
         return startApplication(DEFAULT_LOCALE);
       },
     );
-started.catch(showStartupError);
+started.then(
+  // Off the startup path: a later switch to Cyber finds its stylesheet ready.
+  () => preloadCyberStylesheetWhenIdle(window),
+  showStartupError,
+);
 
 export { application };

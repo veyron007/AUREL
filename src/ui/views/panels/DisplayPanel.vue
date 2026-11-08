@@ -8,6 +8,7 @@ import PanelCollapseButton from '../../rail/PanelCollapseButton.vue';
 import UiSegmented from '../../kit/UiSegmented.vue';
 import UiSlider from '../../kit/UiSlider.js';
 import { useDisplayStore } from '../../stores/display.js';
+import { preloadCyberStylesheet } from '../../cyberStylesheet.js';
 import UiButton from '../../kit/UiButton.vue';
 import UiSelect from '../../kit/UiSelect.js';
 import { StyleParameterRows } from '../../styleParameters.js';
@@ -21,6 +22,8 @@ const { view, models3d, parameters, cockpitPortal } = storeToRefs(display);
 // A control's change goes to its owner (DisplayBindings).
 const act = (name, ...args) => display.act(name, ...args);
 const pct = (value) => `${value}%`;
+// Reaching the layout choice fetches Cyber's stylesheet before it is chosen.
+const preloadCyberTheme = () => preloadCyberStylesheet();
 const hud = computed(() => view.value?.hud ?? null);
 const sonar = computed(() => view.value?.sonar ?? null);
 const sonarOn = computed(() => sonar.value?.enabled ?? true);
@@ -63,7 +66,7 @@ const allocationOptions = computed(() => [
       <span class="pp-icon">&#x25CE;</span>
       <span class="pp-label" translate="no">HUD</span>
     </button>
-    <div class="pp-slider-row" :class="{ visible: hud?.visible }" id="hud-layout-row">
+    <div class="pp-slider-row" :class="{ visible: hud?.visible }" id="hud-layout-row" @pointerenter="preloadCyberTheme" @focusin="preloadCyberTheme">
       <span class="pp-slider-mini-label">{{ t('Layout') }}</span>
       <UiSelect id="hud-layout-select" class="pp-select gev-field gev-field--compact" :model-value="hud?.variant ?? 'tactical'" @update:model-value="act('setHudLayout', $event)" :aria-label="t('HUD layout')">
         <option value="tactical">{{ t('Tactical') }}</option>

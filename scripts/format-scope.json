@@ -1566,5 +1566,6 @@
   "src/overlays/worldOverlayDraw.perf.test.mjs",
   "src/data/localGeojsonCore.perf.test.mjs",
   "src/i18n/catalogLoading.test.mjs",
-  "scripts/register-test-locales.mjs"
+  "scripts/register-test-locales.mjs",
+  "src/ui/cyberStylesheet.test.mjs"
 ]

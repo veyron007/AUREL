@@ -1,5 +1,6 @@
 import { applyCyberSonarThemePhase } from './cyberSonar.js';
 import { syncRadioPanelPlacement } from './ui/radioPanelPlacement.js';
+import { preloadCyberStylesheet } from './ui/cyberStylesheet.js';
 import { HUD_LAYOUTS } from './hudLayoutPolicy.js';
 export { HUD_LAYOUTS } from './hudLayoutPolicy.js';
 
@@ -52,6 +53,8 @@ export function cyberVisualDefaultsForHudTransition(
 export function applyHudUiTheme(root, layout) {
   if (!root?.dataset) return null;
   if (normalizeHudLayout(layout) === 'cyber') {
+    // Usually loaded already (idle or hover preload); a no-op when it is.
+    preloadCyberStylesheet(root.ownerDocument);
     root.dataset.uiTheme = 'cyber';
     applyCyberSonarThemePhase(root, true);
     syncRadioPanelPlacement(root.ownerDocument);
