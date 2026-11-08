@@ -23,7 +23,7 @@ unchanged.
   (`#7ad7ff`) as the only interactive tint (focus ring, listening voice); warm
   amber only for alerts and the provider chip.
 - Plus Jakarta Sans (interface) is bundled locally as four woff2 subsets under
-  `public/fonts/`, registered in `fonts.css` and `manifest.json` with
+  `public/fonts/`, registered in `src/ui/styles/fonts.css` and `manifest.json` with
   provenance and checksums, license in `public/fonts/licenses/`. JetBrains Mono
   (data) was already bundled.
 - Field and Instrument keep their own colours on the Spatial geometry.

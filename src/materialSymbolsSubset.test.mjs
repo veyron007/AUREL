@@ -163,9 +163,16 @@ test('bundled text font files match the reviewed provenance manifest', () => {
 test('typography is available locally without Google Fonts requests', () => {
   const html = readFileSync(INDEX_HTML, 'utf8');
   assert.doesNotMatch(html, /https:\/\/fonts\.(?:googleapis|gstatic)\.com/);
-  assert.match(html, /href="\/fonts\/fonts.css"/);
+  // The faces load with the main stylesheet, not as a second blocking one.
+  assert.doesNotMatch(html, /href="\/fonts\/fonts.css"/);
+  const entry = readFileSync(path.join(REPO_ROOT, 'style.css'), 'utf8');
+  assert.match(
+    entry,
+    /^(?:\/\*[^]*?\*\/\s*)*@import '\.\/src\/ui\/styles\/fonts\.css';/,
+    'style.css imports the font faces before any other rule',
+  );
   const css = readFileSync(
-    path.join(REPO_ROOT, 'public/fonts/fonts.css'),
+    path.join(REPO_ROOT, 'src/ui/styles/fonts.css'),
     'utf8',
   );
   assert.doesNotMatch(css, /https?:\/\//);
@@ -180,12 +187,13 @@ test('typography is available locally without Google Fonts requests', () => {
   }
   const files = [...css.matchAll(/url\(['"]?([^)'"\s]+)['"]?\)/g)];
   assert.ok(files.length >= 5);
-  for (const [, file] of files) {
-    assert.equal(
-      path.basename(file),
-      file,
-      'font URLs stay beside the local stylesheet',
+  for (const [, url] of files) {
+    assert.match(
+      url,
+      /^\/fonts\/[a-z0-9-]+\.woff2$/,
+      'font URLs name the public font directory',
     );
+    const file = path.basename(url);
     const bytes = readFileSync(path.join(REPO_ROOT, 'public/fonts', file));
     assert.equal(bytes.subarray(0, 4).toString(), 'wOF2', file);
   }
@@ -203,4 +211,31 @@ test('typography is available locally without Google Fonts requests', () => {
       ).length > 1000,
     );
   }
+});
+
+test('the first-drawn Latin faces are preloaded with the URLs the stylesheet uses', () => {
+  const html = readFileSync(INDEX_HTML, 'utf8');
+  const css = readFileSync(
+    path.join(REPO_ROOT, 'src/ui/styles/fonts.css'),
+    'utf8',
+  );
+  const preloads = [
+    ...html.matchAll(/<link rel="preload" href="([^"]+)"([^>]*)>/g),
+  ];
+  assert.deepEqual(
+    preloads.map(([, href]) => href),
+    ['/fonts/plus-jakarta-sans-4.woff2', '/fonts/jetbrains-mono-6.woff2'],
+  );
+  for (const [, href, attributes] of preloads) {
+    // A font preload without crossorigin is fetched twice.
+    assert.match(attributes, /as="font" type="font\/woff2" crossorigin/);
+    const face = css.slice(css.indexOf(`src: url(${href})`));
+    assert.ok(face.length < css.length, href);
+    // Only the Latin subsets: other scripts load when their text appears.
+    assert.match(face, /^[^}]*unicode-range:\s*U\+0000-00FF/);
+  }
+  assert.ok(
+    html.indexOf('rel="preload"') < html.indexOf('href="/style.css"'),
+    'preloads start before the stylesheet is parsed',
+  );
 });

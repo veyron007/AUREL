@@ -15,7 +15,9 @@ const application = createStandaloneApplication({
 
 application.start().catch((error) => {
   console.error("God's Eye View initialization failed:", error);
+  // The cover is emptied once start-up finishes; a later failure only logs.
   const loaderStatus = document.querySelector('#loading-screen .loader-status');
+  if (!loaderStatus) return;
   loaderStatus.textContent = t('Error: {message}', {
     message: describeError(error),
   });

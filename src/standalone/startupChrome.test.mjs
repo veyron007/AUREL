@@ -8,9 +8,9 @@ const source = readFileSync(
   'utf8',
 )
   .replace(/^import .*;\n/gm, '')
-  .replace('export function', 'function');
+  .replace(/^export /gm, '');
 
-function fixture() {
+function fixture({ elapsed = 0, waitForView } = {}) {
   const timers = new Map();
   const listeners = new Map();
   const events = [];
@@ -19,6 +19,7 @@ function fixture() {
   const controller = new AbortController();
   const context = {
     console,
+    performance: { now: () => elapsed },
     setTimeout(fn, delay) {
       const id = ++nextTimer;
       timers.set(id, { fn, delay });
@@ -41,6 +42,7 @@ function fixture() {
     initializeSettings: context.initKeySetup,
     loadingScreen: {
       classList: { add: (value) => events.push(value) },
+      replaceChildren: () => events.push('children:removed'),
       addEventListener: (type, listener) => listeners.set(type, listener),
       removeEventListener: (type) => listeners.delete(type),
     },
@@ -51,6 +53,7 @@ function fixture() {
     },
     dataManager: {},
     signal: controller.signal,
+    ...(waitForView ? { waitForView } : {}),
   });
   return {
     events,
@@ -82,8 +85,13 @@ test('welcome waits for restoration, minimum delay, and the cover transition', a
   await flush();
   assert.deepEqual(f.events, ['hidden']);
   f.listeners.get('transitionend')();
-  f.fire(900);
-  assert.deepEqual(f.events, ['hidden', 'welcome']);
+  f.fire(400);
+  assert.deepEqual(f.events, [
+    'hidden',
+    'children:removed',
+    'retired',
+    'welcome',
+  ]);
   await f.stop();
   assert.deepEqual(f.events.slice(-2), ['welcome:destroy', 'settings:destroy']);
   assert.equal(f.timers.size, 0);
@@ -94,9 +102,31 @@ test('reduced motion uses the bounded fallback after the cover hides', async () 
   f.restored();
   f.fire(1000);
   await flush();
-  f.fire(900);
-  assert.deepEqual(f.events, ['hidden', 'welcome']);
+  f.fire(400);
+  assert.deepEqual(f.events, [
+    'hidden',
+    'children:removed',
+    'retired',
+    'welcome',
+  ]);
   await f.stop();
+});
+
+test('the minimum splash counts from navigation start, not from bootstrap', async () => {
+  const late = fixture({ elapsed: 2500 });
+  late.fire(0);
+  late.restored();
+  await flush();
+  assert.deepEqual(late.events, ['hidden']);
+  await late.stop();
+  const early = fixture({ elapsed: 300 });
+  early.restored();
+  await flush();
+  assert.deepEqual(early.events, []);
+  early.fire(700);
+  await flush();
+  assert.deepEqual(early.events, ['hidden']);
+  await early.stop();
 });
 
 test('shutdown while restore is pending never reveals late welcome UI', async () => {
@@ -106,7 +136,7 @@ test('shutdown while restore is pending never reveals late welcome UI', async ()
   f.restored();
   await flush();
   f.fire(1000);
-  f.fire(900);
+  f.fire(400);
   assert.deepEqual(f.events, ['settings:destroy']);
   assert.equal(f.listeners.size, 0);
   assert.equal(f.timers.size, 0);
@@ -121,6 +151,24 @@ test('shutdown during the cover transition cancels the listener and fallback', a
   f.controller.abort();
   await f.stop();
   transition();
-  f.fire(900);
+  f.fire(400);
   assert.deepEqual(f.events, ['hidden', 'settings:destroy']);
+});
+
+test('the cover waits for the start-up view before it hides', async () => {
+  let viewReady;
+  const f = fixture({
+    waitForView: () =>
+      new Promise((resolve) => {
+        viewReady = resolve;
+      }),
+  });
+  f.restored();
+  f.fire(1000);
+  await flush();
+  assert.deepEqual(f.events, [], 'restored, but the view is still loading');
+  viewReady('loaded');
+  await flush();
+  assert.deepEqual(f.events, ['hidden']);
+  await f.stop();
 });

@@ -27,6 +27,9 @@ import {
   shareLinkUrl,
 } from './share/shareLinkPath.js';
 
+/** Length of the flight to a share opened while the app is already showing. */
+export const SHARED_VIEW_FLIGHT_SECONDS = 3.0;
+
 /**
  * Share Links — URL Hash State Management
  *
@@ -323,7 +326,10 @@ export class ShareLinkManager {
   /**
    * Apply a parsed state to the viewer + style manager.
    */
-  async applyState(state, { applyCamera = true, navigationToken = null } = {}) {
+  async applyState(
+    state,
+    { applyCamera = true, navigationToken = null, instantCamera = false } = {},
+  ) {
     if (this._destroyed || !state)
       return { succeeded: false, reason: 'unavailable' };
     const view = {
@@ -360,9 +366,12 @@ export class ShareLinkManager {
       };
       // Re-apply the final pose only while this share restoration still owns
       // navigation. A later user or voice command wins over delayed restore.
+      // Under the start-up cover nobody sees the flight, so the start-up
+      // restore lands at once and the cover can lift 3 s sooner. Flight and
+      // landing share the same completion, ownership and final setView.
       this.viewer.camera.flyTo({
         ...view,
-        duration: 3.0,
+        duration: instantCamera ? 0 : SHARED_VIEW_FLIGHT_SECONDS,
         easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
         complete: () => {
           if (
