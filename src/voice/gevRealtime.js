@@ -5,7 +5,7 @@ import { createVoiceCommands } from './commands.js';
 import { cameraPoseKey, createPointerTracker } from './pointerContext.js';
 import { createPointerPicker } from './pointerPick.js';
 import { createReferentRegistry } from './referents.js';
-export * from './realtimeController.js';
+export { preloadVoiceSessions } from './commands.js';
 
 const ACTION_NAMES = new Set(GEV_ACTION_SCHEMAS.map((schema) => schema.name));
 

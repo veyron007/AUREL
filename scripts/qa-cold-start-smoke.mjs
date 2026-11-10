@@ -14,6 +14,7 @@
  *   - the four looks (Observatory, Field, Instrument, Cyber) apply, with a
  *     computed-style signature of the main surfaces printed per look.
  *   - a panel opened during start-up ends with its full body and height;
+ *   - chat and voice sessions start before their code has loaded;
  *   - the Authoring panel lists scenes and a scene document imports;
  *   - replaying the Bhote Koshi evidence shot autoplays its clip.
  * `--only layers,share,voice,palette,panels,locales,looks,director,media`
@@ -562,6 +563,60 @@ async function directorOpens() {
   );
 }
 
+// Chat and voice start from a cold start, before the provider's session code
+// has loaded: each start loads it and reaches the provider (connecting, then
+// whatever the provider answers here), never a load failure.
+async function voiceAndChatStart() {
+  const outcomes = {};
+  for (const mode of ['chat', 'voice']) {
+    const page = await browser.newPage();
+    page.on('pageerror', (error) =>
+      pageErrors.push({ label: `session-${mode}`, message: error.message }),
+    );
+    await page.setViewport({ width: 1440, height: 900 });
+    await page.goto(`${base}/?welcome=0#v=2&${VIEW}&l=`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90_000,
+    });
+    // Start as soon as the controls exist, before start-up settles.
+    await page.waitForFunction(() => window.__gevVoiceCommands?.session, {
+      timeout: 90_000,
+      polling: 20,
+    });
+    outcomes[mode] = await page.evaluate(async (textOnly) => {
+      const commands = window.__gevVoiceCommands;
+      const early = !performance.getEntriesByName('splash-hidden').length;
+      const states = [];
+      const off = commands.session.subscribe((event) => {
+        if (event.type === 'state')
+          states.push([event.state, String(event.detail ?? '')]);
+      });
+      await commands.start(
+        textOnly ? { textOnly: true } : { pushToTalk: false },
+      );
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      off();
+      const result = {
+        beforeSettled: early,
+        states: states.map(([state]) => state),
+        detail: states.at(-1)?.[1] ?? '',
+        controller: typeof commands.notifyMapEvent === 'function',
+      };
+      commands.stop();
+      return result;
+    }, mode === 'chat');
+    await page.close();
+  }
+  const loaded = (outcome) =>
+    outcome.states.includes('connecting') &&
+    !/could not be loaded/.test(outcome.detail);
+  check(
+    'chat and voice sessions start from a cold start',
+    loaded(outcomes.chat) && loaded(outcomes.voice),
+    outcomes,
+  );
+}
+
 const onlyIndex = process.argv.indexOf('--only');
 const only = onlyIndex > 0 ? process.argv[onlyIndex + 1].split(',') : null;
 const want = (name) => !only || only.includes(name);
@@ -570,6 +625,7 @@ try {
   if (want('layers')) summary.layers = await toggleEveryLayer();
   if (want('share')) await shareLinkRestores();
   if (want('voice')) await voiceEnablesColdLayer();
+  if (want('voice')) await voiceAndChatStart();
   if (want('palette')) await paletteEnablesColdLayer();
   if (want('panels')) summary.panels = await everyPanelOpens();
   if (want('panels')) await earlyPanelOpens();

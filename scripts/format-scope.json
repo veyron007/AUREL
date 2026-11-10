@@ -1604,6 +1604,8 @@
   "src/app/deferredLayer.test.mjs",
   "src/app/layers/deferredDescriptors.test.mjs",
   "src/app/layers/deferredFacades.test.mjs",
+  "src/voice/lazySession.js",
+  "src/voice/lazySession.test.mjs",
   "src/app/sceneDirectorTools.js",
   "src/scenes/lazyDirector.js",
   "src/scenes/lazyDirector.test.mjs",

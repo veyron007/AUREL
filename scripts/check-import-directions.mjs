@@ -34,6 +34,7 @@ const compatibilityEdge = (from, to) =>
 const ON_DEMAND_OWNERS = Object.freeze([
   'src/app/constructCatalog.js',
   'src/app/sceneDirectorTools.js',
+  'src/voice/commands.js',
 ]);
 const STARTUP_ENTRY = 'src/main.js';
 const portableExport = (key) =>
