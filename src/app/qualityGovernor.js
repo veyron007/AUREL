@@ -8,13 +8,20 @@
  *   level 1  FXAA instead of MSAA
  *   level 2  and resolutionScale 0.85
  *   level 3  and solid panes (data-quality-panes='solid', spatial-budget.css)
+ *   level 4  and fewer map labels (the world text overlay's ambient caps at
+ *            REDUCED_LABEL_DENSITY, src/overlays/worldOverlay.js)
  *
- * High, Balanced and Battery hold levels 0, 2 and 3. It never steps down
+ * High, Balanced and Battery hold levels 0, 2 and 4; Balanced also shows
+ * fewer map labels. Stepping back up restores full label density. It never
+ * steps down
  * while a recording runs or a capture reads the canvas, so neither films a
  * cheaper frame than the person chose. A fast machine never leaves level 0:
  * stepping down needs frames over 20 ms for 3 s, measured only between
  * consecutive rendered frames after a warm-up.
  */
+
+/** Ambient label caps in the reduced label step, as a share of full. */
+export const REDUCED_LABEL_DENSITY = 0.5;
 
 export const QUALITY_LEVELS = Object.freeze([
   Object.freeze({
@@ -22,28 +29,41 @@ export const QUALITY_LEVELS = Object.freeze([
     fxaa: false,
     resolutionScale: 1,
     solidPanes: false,
+    labelDensity: 1,
   }),
   Object.freeze({
     msaaSamples: 1,
     fxaa: true,
     resolutionScale: 1,
     solidPanes: false,
+    labelDensity: 1,
   }),
   Object.freeze({
     msaaSamples: 1,
     fxaa: true,
     resolutionScale: 0.85,
     solidPanes: false,
+    labelDensity: 1,
   }),
   Object.freeze({
     msaaSamples: 1,
     fxaa: true,
     resolutionScale: 0.85,
     solidPanes: true,
+    labelDensity: 1,
+  }),
+  Object.freeze({
+    msaaSamples: 1,
+    fxaa: true,
+    resolutionScale: 0.85,
+    solidPanes: true,
+    labelDensity: REDUCED_LABEL_DENSITY,
   }),
 ]);
 export const TOP_LEVEL = QUALITY_LEVELS.length - 1;
-export const MODE_LEVELS = Object.freeze({ high: 0, balanced: 2, battery: 3 });
+export const MODE_LEVELS = Object.freeze({ high: 0, balanced: 2, battery: 4 });
+/** Modes that show fewer map labels whatever their level. */
+const REDUCED_LABEL_MODES = new Set(['balanced', 'battery']);
 export const QUALITY_PANES_ATTRIBUTE = 'data-quality-panes';
 
 export const FRAME_BUDGET = Object.freeze({
@@ -101,6 +121,18 @@ export function levelForMode(mode, adapted) {
   return Math.min(TOP_LEVEL, Math.max(0, adapted));
 }
 
+/**
+ * The world text overlay's label density for a mode at a level: reduced in
+ * Balanced and Battery and at Auto's last step, full otherwise.
+ * @param {string} mode
+ * @param {number} level
+ * @returns {number}
+ */
+export function labelDensityFor(mode, level) {
+  if (REDUCED_LABEL_MODES.has(mode)) return REDUCED_LABEL_DENSITY;
+  return QUALITY_LEVELS[level]?.labelDensity ?? 1;
+}
+
 /** Write one level to the scene, viewer and page root. */
 export function applyQualityLevel({ viewer, root }, level) {
   const settings = QUALITY_LEVELS[level];
@@ -131,6 +163,8 @@ function nextAdapted(adapted, verdict, canStepDown) {
  * @param {Element} options.root Page root for the solid-pane flag.
  * @param {() => string} options.readMode 'auto' | 'high' | 'balanced' | 'battery'.
  * @param {(level: number) => void} [options.publishLevel]
+ * @param {(density: number) => void} [options.setLabelDensity] Applies the
+ *   world text overlay's label density (1 = full).
  * @param {() => boolean} [options.isRecording]
  * @param {() => boolean} [options.isCapturing]
  * @param {() => number} [options.now]
@@ -141,6 +175,7 @@ export function installQualityGovernor({
   root,
   readMode,
   publishLevel = () => {},
+  setLabelDensity = () => {},
   isRecording = () => false,
   isCapturing = () => false,
   now = () => performance.now(),
@@ -154,12 +189,24 @@ export function installQualityGovernor({
   const startedAt = now();
   let adapted = 0;
   let applied = null;
+  let appliedDensity = null;
   let frameStart = null;
   let lastFrameEnd = null;
   let destroyed = false;
 
+  const applyDensity = (density) => {
+    if (density === appliedDensity) return;
+    try {
+      setLabelDensity(density);
+      appliedDensity = density;
+    } catch (error) {
+      console.warn('[quality] could not apply label density', density, error);
+    }
+  };
   const apply = () => {
-    const level = levelForMode(readMode(), adapted);
+    const mode = readMode();
+    const level = levelForMode(mode, adapted);
+    applyDensity(labelDensityFor(mode, level));
     if (level === applied) return;
     try {
       applyQualityLevel({ viewer, root }, level);
@@ -198,12 +245,20 @@ export function installQualityGovernor({
       apply();
     },
     readLevel: () => applied,
+    readLabelDensity: () => appliedDensity,
     destroy() {
       if (destroyed) return;
       destroyed = true;
       removePreUpdate?.();
       removePostRender?.();
       root?.removeAttribute?.(QUALITY_PANES_ATTRIBUTE);
+      if (appliedDensity !== null && appliedDensity !== 1) {
+        try {
+          setLabelDensity(1);
+        } catch (error) {
+          console.warn('[quality] could not restore label density', error);
+        }
+      }
     },
   };
 }

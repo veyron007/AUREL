@@ -118,10 +118,40 @@ function heapPop(heap) {
  * @returns {Array<Object>}
  */
 export function queryFireGridIndex(index, firesByFrp, bounds, limit, contains) {
+  const steps = queryFireGridIndexSteps(
+    index,
+    firesByFrp,
+    bounds,
+    limit,
+    contains,
+  );
+  for (;;) {
+    const { done, value } = steps.next();
+    if (done) return value;
+  }
+}
+
+/** Detections merged between yields of {@link queryFireGridIndexSteps}. */
+const QUERY_STEP = 2048;
+
+/**
+ * {@link queryFireGridIndex} as a generator that yields every QUERY_STEP
+ * merged detections, for a caller running in time slices; it returns the
+ * same array.
+ * @returns {Generator<void, Array<Object>, void>}
+ */
+export function* queryFireGridIndexSteps(
+  index,
+  firesByFrp,
+  bounds,
+  limit,
+  contains,
+) {
   const heap = [];
   for (const list of touchedCells(index, bounds))
     heapPush(heap, { list, at: 0, rank: list[0] });
   const result = [];
+  let merged = 0;
   while (heap.length && result.length < limit) {
     const cursor = heapPop(heap);
     const fire = firesByFrp[cursor.rank];
@@ -131,6 +161,7 @@ export function queryFireGridIndex(index, firesByFrp, bounds, limit, contains) {
       cursor.rank = cursor.list[cursor.at];
       heapPush(heap, cursor);
     }
+    if (++merged % QUERY_STEP === 0) yield;
   }
   return result;
 }

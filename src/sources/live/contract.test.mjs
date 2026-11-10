@@ -299,7 +299,7 @@ test('AIS reports limited received coverage and keeps connection state separate 
     fetchImpl: async (url) => {
       if (url.includes('/track?'))
         return response({ samples: [{ lat: 30, lon: -97, t: now / 1000 }] });
-      assert.equal(url, 'http://example.test/api/vessels?maxRows=500');
+      assert.equal(url, 'http://example.test/api/vessels?maxRows=500&since=0');
       return response({
         status: 'reconnecting',
         refreshing: true,

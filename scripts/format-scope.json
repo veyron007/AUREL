@@ -1644,5 +1644,16 @@
   "src/data/localGeojsonParse.test.mjs",
   "src/data/localGeojsonPrimitives.test.mjs",
   "scripts/qa-local-geojson-shot.mjs",
-  "scripts/qa-phase4a-smoke.mjs"
+  "scripts/qa-phase4a-smoke.mjs",
+  "src/data/firmsColumns.js",
+  "src/data/firmsColumns.test.mjs",
+  "server/providers/vessels/ais-delta.js",
+  "server/providers/vessels/ais-delta.test.mjs",
+  "src/sources/live/vesselDelta.js",
+  "src/layers/vessels/horizonCells.js",
+  "src/layers/vessels/horizonVisibility.js",
+  "src/layers/vessels/horizonCells.test.mjs",
+  "src/layers/firms/slicedJob.js",
+  "src/layers/firms/markerPool.js",
+  "src/layers/firms/markerRebuild.test.mjs"
 ]

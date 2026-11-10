@@ -1,5 +1,6 @@
 import { isRecognizedAisEnvelope } from '../../../src/data/aisStreamAdapter.js';
 import { createSortedSnapshot } from './ais-snapshot.js';
+import { buildVesselSyncBody, createVesselChangeLog } from './ais-delta.js';
 export const AISSTREAM_CACHE_MAX = 50000;
 export const AISSTREAM_STALE_MS = 30 * 60 * 1000;
 /** How long one newest-first sort is shared by every `/api/vessels` request. */
@@ -22,15 +23,19 @@ const _aisSnapshot = createSortedSnapshot({
   ttlMs: AISSTREAM_SNAPSHOT_TTL_MS,
 });
 
+const _aisChanges = createVesselChangeLog();
+
 /** Every change to the vessel map goes through these two, so the shared
- * snapshot always knows which rows to merge in. */
+ * snapshot always knows which rows to merge in and every row version gets
+ * the change sequence delta clients sync by (ais-delta.js). */
 function putVessel(mmsi, row) {
-  _aisStreamVessels.set(mmsi, row);
+  _aisStreamVessels.set(mmsi, { ...row, _seq: _aisChanges.nextSeq() });
   _aisSnapshot.markChanged(mmsi);
 }
 
 function dropVessel(mmsi) {
   _aisStreamVessels.delete(mmsi);
+  _aisChanges.recordRemoval(mmsi);
   _aisSnapshot.markChanged(mmsi);
   _aisStreamTracks.delete(mmsi);
   _aisStreamTrackPending.delete(mmsi);
@@ -255,10 +260,17 @@ function approxMetersBetween(lat1, lon1, lat2, lon2) {
 function mergeAisStaticIntoLiveVessel(mmsi, staticData) {
   const existing = _aisStreamVessels.get(mmsi);
   if (!existing) return;
-  if (staticData.name) existing.name = staticData.name;
-  if (staticData.type) existing.type = staticData.type;
-  if (staticData.destination) existing.destination = staticData.destination;
-  if (staticData.imo) existing.imo = staticData.imo;
+  const merged = {
+    ...existing,
+    ...(staticData.name ? { name: staticData.name } : {}),
+    ...(staticData.type ? { type: staticData.type } : {}),
+    ...(staticData.destination ? { destination: staticData.destination } : {}),
+    ...(staticData.imo ? { imo: staticData.imo } : {}),
+  };
+  const fields = ['name', 'type', 'destination', 'imo'];
+  if (fields.every((field) => merged[field] === existing[field])) return;
+  // A new row version (same position time) so delta clients see the names.
+  putVessel(mmsi, merged);
 }
 
 function vesselNameFromAis(metadata, message, staticData = {}) {
@@ -288,6 +300,25 @@ function vesselTypeFromAis(message, staticData = {}) {
  */
 export function aisStreamRows(maxRows, area = null) {
   return _aisSnapshot.rows(maxRows, area);
+}
+
+/**
+ * A cursor-mode answer (ais-delta.js): the full window, or only what changed
+ * since `sinceCursor` when that cursor can be answered exactly.
+ * @param {number} maxRows
+ * @param {?{lat: number, lon: number, radiusKm: number}} area
+ * @param {?string} sinceCursor
+ */
+export function aisStreamSync(maxRows, area, sinceCursor) {
+  const since = _aisChanges.parseCursor(sinceCursor);
+  const window = _aisSnapshot.window(maxRows, area);
+  return buildVesselSyncBody({
+    window,
+    since,
+    cursor: _aisChanges.cursor(),
+    removedSince: _aisChanges.removedSince,
+    storedRows: () => _aisStreamVessels.values(),
+  });
 }
 
 function pruneAisStreamCache() {

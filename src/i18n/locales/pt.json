@@ -4432,6 +4432,7 @@
   "Balanced": "Equilibrada",
   "Battery": "Bateria",
   "Now: reduced, step {step} of {steps}": "Agora: reduzida, nível {step} de {steps}",
+  "fewer map labels": "menos rótulos no mapa",
   "Now: full quality": "Agora: qualidade total",
   "Display quality": "Qualidade de exibição"
 }

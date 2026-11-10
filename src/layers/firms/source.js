@@ -1,3 +1,21 @@
+import {
+  decodeFirmsColumns,
+  FIRMS_COLUMNS_FORMAT,
+} from '../../data/firmsColumns.js';
+
+/**
+ * The fire rows of a snapshot body. The proxy sends the columnar form when
+ * asked; a body in the row form (an older proxy, a QA fixture) is used as is.
+ * @param {object} payload
+ * @returns {object[]}
+ */
+function snapshotFires(payload) {
+  if (payload?.format === FIRMS_COLUMNS_FORMAT)
+    return decodeFirmsColumns(payload);
+  if (Array.isArray(payload?.fires)) return payload.fires;
+  throw new Error('Malformed fire snapshot');
+}
+
 /** Construct the existing live-fire endpoint without making a request. */
 export function createFirmsSource({
   fetchImpl = (...args) => globalThis.fetch(...args),
@@ -13,7 +31,7 @@ export function createFirmsSource({
      */
     async getSnapshot({ signal, etag = null } = {}) {
       signal?.throwIfAborted();
-      const response = await fetchImpl('/api/firms', {
+      const response = await fetchImpl('/api/firms?format=columns', {
         signal,
         cache: 'no-store',
         ...(etag ? { headers: { 'If-None-Match': etag } } : {}),
@@ -32,9 +50,12 @@ export function createFirmsSource({
           return { keyRequired: true };
         throw new Error(`FIRMS HTTP ${response.status}`);
       }
-      if (!Array.isArray(payload?.fires))
-        throw new Error('Malformed fire snapshot');
-      return { ...payload, etag: response.headers?.get?.('ETag') || null };
+      const { columns, dictionaries, fields, format, ...rest } = payload || {};
+      return {
+        ...rest,
+        fires: snapshotFires(payload),
+        etag: response.headers?.get?.('ETag') || null,
+      };
     },
   };
 }

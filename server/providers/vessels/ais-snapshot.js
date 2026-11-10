@@ -15,7 +15,13 @@ import { haversineKm } from '../common/geo.js';
 /** Changed vessels merged at read time before a full re-sort is cheaper. */
 const MAX_PENDING_CHANGES = 5_000;
 
-const newestFirst = (a, b) => b._updatedAt - a._updatedAt;
+/**
+ * Newest position first; among rows stored in the same millisecond, the one
+ * stored last first. `_seq` is the store's change sequence, unique per row
+ * version, so the order is total and a delta client can rebuild it exactly.
+ */
+export const newestFirst = (a, b) =>
+  b._updatedAt - a._updatedAt || (b._seq ?? 0) - (a._seq ?? 0);
 
 /**
  * @param {{
@@ -54,11 +60,34 @@ export function createSortedSnapshot({
     let next = 0;
     for (const row of built.rows) {
       if (changed.has(row.mmsi)) continue;
-      while (next < fresh.length && fresh[next]._updatedAt > row._updatedAt)
+      while (next < fresh.length && newestFirst(fresh[next], row) < 0)
         yield fresh[next++];
       yield row;
     }
     while (next < fresh.length) yield fresh[next++];
+  }
+
+  /**
+   * The stored rows a request sees, newest first, with their internal
+   * fields, and the stale cutoff they were read at.
+   * @param {number} maxRows
+   * @param {?{lat: number, lon: number, radiusKm: number}} [area]
+   * @returns {{rows: object[], cutoff: number}}
+   */
+  function readWindow(maxRows, area = null) {
+    const at = now();
+    ensureBuilt(at);
+    const cutoff = at - staleMs;
+    const out = [];
+    if (maxRows <= 0) return { rows: out, cutoff };
+    // No changes since the sort: walk the sorted array itself.
+    for (const row of changed.size ? merged() : built.rows) {
+      if (row._updatedAt < cutoff) break;
+      if (area && !inArea(row, area)) continue;
+      out.push(row);
+      if (out.length >= maxRows) break;
+    }
+    return { rows: out, cutoff };
   }
 
   return {
@@ -67,31 +96,31 @@ export function createSortedSnapshot({
       if (built) changed.add(key);
     },
 
+    window: readWindow,
+
     /**
-     * Rows newest first, without the internal timestamp.
+     * Rows newest first, without the internal fields.
      * @param {number} maxRows
      * @param {?{lat: number, lon: number, radiusKm: number}} [area]
      * @returns {object[]}
      */
     rows(maxRows, area = null) {
-      const at = now();
-      ensureBuilt(at);
-      const cutoff = at - staleMs;
-      const out = [];
-      if (maxRows <= 0) return out;
-      // No changes since the sort: walk the sorted array itself.
-      for (const row of changed.size ? merged() : built.rows) {
-        if (row._updatedAt < cutoff) break;
-        if (area && !inArea(row, area)) continue;
-        const { _updatedAt, ...visible } = row;
-        out.push(visible);
-        if (out.length >= maxRows) break;
-      }
-      return out;
+      return readWindow(maxRows, area).rows.map(visibleRow);
     },
 
     stats: () => ({ builds, pendingChanges: changed.size }),
   };
+}
+
+/**
+ * A stored row as a client sees it: without the internal timestamp and
+ * change sequence.
+ * @param {object} row
+ * @returns {object}
+ */
+export function visibleRow(row) {
+  const { _updatedAt, _seq, ...visible } = row;
+  return visible;
 }
 
 /** Kilometres per degree of latitude (great circle on the 6371 km sphere). */

@@ -1,5 +1,6 @@
 import { installCameraMotionFlag } from '../ui/cameraMotionFlag.js';
 import { installQualityGovernor } from './qualityGovernor.js';
+import { setWorldOverlayLabelDensity } from '../overlays/worldOverlay.js';
 import { useQualityStore } from '../ui/stores/quality.js';
 import { captureInFlight } from '../voice/cesiumFrameCapture.js';
 import { createSessionControls } from './sessionControls.js';
@@ -434,6 +435,10 @@ function installAdaptiveQuality(viewer) {
     root: document.documentElement,
     readMode: () => quality.mode,
     publishLevel: (level) => quality.publishLevel(level),
+    setLabelDensity: (density) => {
+      setWorldOverlayLabelDensity(density);
+      quality.publishLabelDensity(density);
+    },
     isRecording: () => document.body.classList.contains('recording-mode'),
     isCapturing: captureInFlight,
   });

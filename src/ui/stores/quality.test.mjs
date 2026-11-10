@@ -44,3 +44,15 @@ test('only whole non-negative levels are published', () => {
   store.publishLevel(1.5);
   assert.equal(store.level, 2);
 });
+
+test('the published label density is kept only when it is a valid share', () => {
+  const store = useQualityStore(createPinia());
+  assert.equal(store.labelDensity, 1);
+  store.publishLabelDensity(0.5);
+  assert.equal(store.labelDensity, 0.5);
+  for (const bad of [0, -1, 2, Number.NaN, '0.5'])
+    store.publishLabelDensity(bad);
+  assert.equal(store.labelDensity, 0.5);
+  store.publishLabelDensity(1);
+  assert.equal(store.labelDensity, 1);
+});

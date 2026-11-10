@@ -41,6 +41,7 @@ import {
   selectBoundedOverlayCohort,
   setOverlayEntries,
   setOverlaySourceVisible,
+  setWorldOverlayLabelDensity,
   upsertOverlayEntry,
 } from './worldOverlay.js';
 
@@ -2509,4 +2510,40 @@ test('promoting an ambient entry to selected paints it once with no fading dupli
     setOverlayEntries('military-installations', [entry]); paint(); env.advanceTime(200);
     assert.equal(paint(), 1, 'deselect restores the ambient card without re-entry cooldown');
   } finally { env.cleanup(); }
+});
+
+test('label density shrinks ambient caps, keeps protected entries and restores exactly', () => {
+  const env = installMockEnvironment();
+  initWorldOverlay(env.viewer);
+  const ambient = Array.from({ length: 40 }, (_, index) =>
+    selectedEntry(`ambient-${index}`, {
+      selected: false,
+      protected: false,
+      collisionGroup: 'density',
+      position: positionAtScreen(10 + index * 9, 150),
+    }),
+  );
+  const pinned = selectedEntry('pinned', { collisionGroup: 'density' });
+  setOverlayEntries('density', [...ambient, pinned], {
+    cohortLimit: 20,
+    collisionCapacity: 20,
+  });
+  const frame = () => {
+    env.advanceTime(16);
+    env.postRender.raise();
+    return getWorldOverlayDiagnostics().candidateCount;
+  };
+  const full = frame();
+  assert.equal(full, 21, '20 ambient plus the protected entry');
+  try {
+    setWorldOverlayLabelDensity(0.5);
+    assert.equal(frame(), 11, 'half the ambient cap, protected entry kept');
+    setWorldOverlayLabelDensity(1);
+    assert.equal(frame(), full);
+    assert.throws(() => setWorldOverlayLabelDensity(0), RangeError);
+    assert.throws(() => setWorldOverlayLabelDensity(1.5), RangeError);
+  } finally {
+    setWorldOverlayLabelDensity(1);
+    env.cleanup();
+  }
 });

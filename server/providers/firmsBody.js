@@ -15,6 +15,10 @@
  */
 
 import { filterTrailing24h } from '../../src/data/firmsCsv.js';
+import {
+  encodeFirmsColumns,
+  FIRMS_COLUMNS_FORMAT,
+} from '../../src/data/firmsColumns.js';
 import { ifNoneMatchHits, snapshotCacheControl } from './common/etag.js';
 
 export { ifNoneMatchHits };
@@ -39,8 +43,22 @@ export function firmsFilterCutoff(entry, stale, now, ttlMs) {
  * @param {number} cutoff
  * @returns {string}
  */
-export function firmsEtag(at, stale, cutoff) {
-  return `W/"firms-${at}-${stale ? 's' : 'f'}-${cutoff}"`;
+export function firmsEtag(at, stale, cutoff, format = 'rows') {
+  const suffix = format === FIRMS_COLUMNS_FORMAT ? '-c' : '';
+  return `W/"firms-${at}-${stale ? 's' : 'f'}-${cutoff}${suffix}"`;
+}
+
+/**
+ * The body format a request asked for: `?format=columns` opts into the
+ * columnar body (src/data/firmsColumns.js); anything else gets the row body
+ * every existing caller expects.
+ * @param {string} [url]
+ * @returns {'rows'|'columns'}
+ */
+export function firmsRequestFormat(url) {
+  const query = String(url || '').split('?')[1] || '';
+  const format = new URLSearchParams(query).get('format');
+  return format === FIRMS_COLUMNS_FORMAT ? FIRMS_COLUMNS_FORMAT : 'rows';
 }
 
 /**
@@ -56,16 +74,23 @@ export function firmsCacheControl(entry, stale, now, ttlMs) {
   return snapshotCacheControl(entry.at, ttlMs, now, stale);
 }
 
+/** The fire list in the shape a format sends it. */
+function firesFields(fires, format) {
+  if (format !== FIRMS_COLUMNS_FORMAT) return { fires };
+  return { format: FIRMS_COLUMNS_FORMAT, ...encodeFirmsColumns(fires) };
+}
+
 /**
- * One-slot memo of the serialized body. Holding a single body bounds memory to
- * one copy of the payload, which is the copy every request would build anyway.
+ * One-slot memo of the serialized body per format. Holding a single body per
+ * format bounds memory to one copy of the payload in each shape a client asked
+ * for, which is the copy every request would build anyway.
  * @param {{ttlMs: number, stringify?: (value: unknown) => string}} options
  */
 export function createFirmsBodyCache({ ttlMs, stringify = JSON.stringify }) {
-  /** @type {?{entry: object, etag: string, body: string, count: number}} */
-  let slot = null;
+  /** @type {Map<string, {entry: object, etag: string, body: string, count: number}>} */
+  const slots = new Map();
 
-  function build(entry, stale, cutoff) {
+  function build(entry, stale, cutoff, format) {
     const fires = filterTrailing24h(entry.fires, cutoff);
     const body = stringify({
       fetchedAt: entry.at,
@@ -73,11 +98,11 @@ export function createFirmsBodyCache({ ttlMs, stringify = JSON.stringify }) {
       ttlMs,
       sources: entry.sources,
       count: fires.length,
-      fires,
+      ...firesFields(fires, format),
     });
     return {
       entry,
-      etag: firmsEtag(entry.at, stale, cutoff),
+      etag: firmsEtag(entry.at, stale, cutoff, format),
       body,
       count: fires.length,
     };
@@ -88,14 +113,17 @@ export function createFirmsBodyCache({ ttlMs, stringify = JSON.stringify }) {
      * @param {{at: number, sources: object[], fires: object[]}} entry
      * @param {boolean} stale
      * @param {number} now
+     * @param {'rows'|'columns'} [format]
      * @returns {{etag: string, body: string, count: number}}
      */
-    get(entry, stale, now) {
+    get(entry, stale, now, format = 'rows') {
       const cutoff = firmsFilterCutoff(entry, stale, now, ttlMs);
-      const etag = firmsEtag(entry.at, stale, cutoff);
+      const etag = firmsEtag(entry.at, stale, cutoff, format);
+      const slot = slots.get(format);
       if (slot?.entry === entry && slot.etag === etag) return slot;
-      slot = build(entry, stale, cutoff);
-      return slot;
+      const fresh = build(entry, stale, cutoff, format);
+      slots.set(format, fresh);
+      return fresh;
     },
   };
 }
