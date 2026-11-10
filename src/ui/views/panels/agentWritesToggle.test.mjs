@@ -8,7 +8,10 @@ import { useFieldbookStore } from '../../stores/fieldbook.js';
 import { createFieldbook } from '../../../fieldbook/document.js';
 import { addNote, addPlace } from '../../../fieldbook/operations.js';
 import AgentWritesToggle from './AgentWritesToggle.vue';
-import FieldbookPanel from './FieldbookPanel.vue';
+import FieldbookPanelBody from './FieldbookPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const FieldbookPanel = panelWithBody('fieldbook-panel', FieldbookPanelBody);
 
 function mount(t, component, pinia) {
   document.body.replaceChildren();

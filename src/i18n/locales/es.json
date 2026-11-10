@@ -4434,5 +4434,7 @@
   "Now: reduced, step {step} of {steps}": "Ahora: reducida, paso {step} de {steps}",
   "fewer map labels": "menos etiquetas en el mapa",
   "Now: full quality": "Ahora: calidad completa",
-  "Display quality": "Calidad de visualización"
+  "Display quality": "Calidad de visualización",
+  "Try again": "Reintentar",
+  "Voice and chat": "Voz y chat"
 }

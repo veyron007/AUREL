@@ -31,8 +31,8 @@ import {
   readStoredVoiceLimits,
   writeStoredVoiceTier,
   writeStoredVoiceLimits,
-  withToolCatalog,
-} from './gevRealtime.js';
+} from './realtimeController.js';
+import { withToolCatalog } from './gevRealtime.js';
 import { createVoiceCostTracker } from './voiceCost.js';
 import { createTestVoiceUi } from '../testSupport/voiceUi.mjs';
 

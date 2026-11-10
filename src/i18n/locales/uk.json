@@ -4509,5 +4509,7 @@
   "Now: reduced, step {step} of {steps}": "Зараз: знижено, крок {step} з {steps}",
   "fewer map labels": "менше підписів на мапі",
   "Now: full quality": "Зараз: повна якість",
-  "Display quality": "Якість зображення"
+  "Display quality": "Якість зображення",
+  "Try again": "Повторити",
+  "Voice and chat": "Голос і чат"
 }

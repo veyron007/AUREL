@@ -29,6 +29,17 @@ Pinia store in `src/ui/stores/`, views in `src/ui/views/` render them, and user
 actions return through the handlers the owner connects to that store. See
 [Building UI](../CONTRIBUTING.md#building-ui).
 
+The ten left-rail work panels (Lens, Fieldbook, Planner, Raindrop, Chronicle,
+Research, Watch areas, Orbit Witness, Region packs, Local commands) are split
+in two. `views/panels/<Name>Panel.vue` keeps the `RailPanel` (id, header,
+collapsed geometry) in the start-up bundle; `<Name>PanelBody.vue` is a separate
+chunk that `rail/DeferredPanelBody.vue` loads on the panel's first open or once
+start-up settles, holding a fixed-height placeholder meanwhile. A body must not
+be looked up by id from start-up code: the CCTV and Street Level panels stay
+whole because `shellElements.js` and `streetLevelControls.js` bind their markup
+when the shell starts. Body tests mount the body directly through
+`src/testSupport/panelBody.mjs`.
+
 Owners receive named services, elements, operations and readers. They do not
 receive the application shell itself. Readers resolve a replaceable collaborator
 at use time; operations cross an ownership boundary without copying its state.

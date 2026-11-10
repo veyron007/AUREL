@@ -198,7 +198,9 @@ export function createPersonalToolBindings({
     let result;
     if (kind === 'route') result = captureRoute(directions());
     else if (kind === 'drawing') result = captureManualDrawings(annotations);
-    else if (kind === 'scene') result = captureScene(sceneDirector);
+    else if (kind === 'scene')
+      // The Director loads on first use (src/scenes/lazyDirector.js).
+      result = captureScene((await sceneDirector?.ready?.()) ?? sceneDirector);
     else if (kind === 'attachment') result = await captureAttachment(file);
     else throw new Error('Unsupported personal capture.');
     assertLive();

@@ -175,3 +175,91 @@ test('descriptors must describe a complete layer', () => {
     /loader is required/,
   );
 });
+
+const FACADE = Object.freeze({
+  ...DESCRIPTOR,
+  methods: Object.freeze([
+    ...DESCRIPTOR.methods,
+    'subscribe',
+    'getUIState',
+    'duck',
+    'setPresentation',
+  ]),
+  answers: Object.freeze({
+    getUIState: (pending) => ({ mode: pending.mode ?? 'all' }),
+    findThing: Object.freeze(['none']),
+  }),
+  emits: Object.freeze({ subscribe: 'getUIState' }),
+  commands: Object.freeze(['duck']),
+  skipWhenIdle: Object.freeze({ duck: ([on] = []) => !on }),
+  remember: Object.freeze(['setPresentation']),
+  acceptParams: (params) => params.mode !== 'bad',
+});
+
+function facadeDemo() {
+  const log = [];
+  let imports = 0;
+  const layer = createDeferredLayer(FACADE, async () => {
+    imports += 1;
+    return {
+      ...realLayer(log),
+      subscribe(listener) {
+        listener({ mode: 'real' });
+        return () => log.push(['unsubscribed']);
+      },
+      getUIState: () => ({ mode: 'real' }),
+      duck: (on) => log.push(['duck', on]) && 'ducked',
+      setPresentation: (value) => log.push(['presentation', value]),
+    };
+  });
+  return { layer, log, imports: () => imports };
+}
+
+test('a facade answers queries, emits at once and after parameters', () => {
+  const { layer, imports } = facadeDemo();
+  const seen = [];
+  layer.subscribe((state) => seen.push(state.mode));
+  assert.deepEqual(layer.findThing(), ['none']);
+  assert.notEqual(layer.findThing(), layer.findThing(), 'copied per call');
+  assert.equal(layer.setParams({ mode: 'bad' }), false);
+  assert.equal(layer.setParams({ mode: 'near' }), true);
+  assert.deepEqual(layer.getUIState(), { mode: 'near' });
+  assert.deepEqual(seen, ['all', 'near']);
+  assert.equal(imports(), 0);
+});
+
+test('a facade command loads and forwards in order; an idle no-op does not', async () => {
+  const { layer, log, imports } = facadeDemo();
+  layer.setPresentation('first');
+  layer.setPresentation('latest');
+  const seen = [];
+  layer.subscribe((state) => seen.push(state.mode));
+  assert.equal(layer.duck(false), undefined);
+  assert.equal(imports(), 0);
+  const first = layer.duck(true);
+  const second = layer.duck(false);
+  assert.equal(await first, 'ducked');
+  await second;
+  assert.equal(imports(), 1);
+  assert.deepEqual(log, [
+    ['presentation', 'latest'],
+    ['duck', true],
+    ['duck', false],
+  ]);
+  assert.deepEqual(seen, ['all', 'real']);
+});
+
+test('a facade must name real methods and answered emissions', () => {
+  assert.throws(
+    () => createDeferredLayer({ ...FACADE, commands: ['fly'] }, () => {}),
+    /no fly\(\)/,
+  );
+  assert.throws(
+    () =>
+      createDeferredLayer(
+        { ...FACADE, emits: { subscribe: 'getMissing' } },
+        () => {},
+      ),
+    /getMissing\(\) has no idle answer/,
+  );
+});

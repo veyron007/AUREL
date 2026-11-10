@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { useWatchlistsStore } from '../../stores/watchlists.js';
-import WatchlistPanel from './WatchlistPanel.vue';
+import WatchlistPanelBody from './WatchlistPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const WatchlistPanel = panelWithBody('watchlist-panel', WatchlistPanelBody);
 function mount(t, view) {
   document.body.replaceChildren();
   const pinia = createPinia(),

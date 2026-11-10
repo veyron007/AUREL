@@ -86,6 +86,11 @@ test('the catalog module imports no deferred layer statically', async () => {
     './layers/bikeshare.js',
     './layers/submarineCables.js',
     './layers/firms.js',
+    './layers/cctv.js',
+    './layers/radio.js',
+    './layers/rocketLaunches.js',
+    './layers/transit.js',
+    '../data/bhoteKoshiEvent.js',
   ]) {
     assert.ok(!imports.includes(file), `${file} is imported statically`);
     assert.match(

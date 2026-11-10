@@ -3,7 +3,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
-import LensPanel from './LensPanel.vue';
+import LensPanelBody from './LensPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const LensPanel = panelWithBody('lens-panel', LensPanelBody);
 import { useLensStore } from '../../stores/lens.js';
 import { normalizeLensSelection, buildLensEvidence } from '../../lensPresentation.js';
 function fixture(t) {

@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { useRegionsStore } from '../../stores/regions.js';
-import RegionPanel from './RegionPanel.vue';
+import RegionPanelBody from './RegionPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const RegionPanel = panelWithBody('region-panel', RegionPanelBody);
 function mount(t, view) {
   document.body.replaceChildren();
   const pinia = createPinia(),

@@ -196,7 +196,7 @@ test('sheet copy never uses go/no-go or safety wording', () => {
     ))
       assert.doesNotMatch(literal, FORBIDDEN_WORDS, `${file}: ${literal}`);
   }
-  const panel = readFileSync('src/ui/views/panels/PlannerPanel.vue', 'utf8');
+  const panel = readFileSync('src/ui/views/panels/PlannerPanelBody.vue', 'utf8');
   const sheetCopy = panel.match(
     /'[^']*mountain sheet[^']*'|'On request only[^']*'/g,
   );

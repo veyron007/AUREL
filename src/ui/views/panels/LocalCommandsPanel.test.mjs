@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import { useLocalCommandsStore } from '../../stores/localCommands.js';
-import LocalCommandsPanel from './LocalCommandsPanel.vue';
+import LocalCommandsPanelBody from './LocalCommandsPanelBody.vue';
+import { panelWithBody } from '../../../testSupport/panelBody.mjs';
+
+const LocalCommandsPanel = panelWithBody('local-commands-panel', LocalCommandsPanelBody);
 function mount(t, view) {
   document.body.replaceChildren();
   const pinia = createPinia(),

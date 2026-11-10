@@ -92,24 +92,16 @@
     "pass": true,
     "detail": {
       "target": {
-        "x": 990.514053717603,
-        "y": 295.5210462657925
+        "x": 938.4468366930836,
+        "y": 192.08491190801442
       },
-      "title": "M4.7 · 137 km E of Miyako, Japan",
+      "title": "M4.7 · 103 km W of Attu Station, Alaska",
       "eyebrow": "USGS"
     }
   },
   {
     "name": "chrome rests after a quiet spell",
-    "pass": true,
-    "detail": {
-      "held": [
-        "cockpit-context-toggle",
-        "cockpit-signal-toggle",
-        "param-panel-collapse-btn",
-        "locale-picker-search"
-      ]
-    }
+    "pass": true
   },
   {
     "name": "movement wakes the chrome",

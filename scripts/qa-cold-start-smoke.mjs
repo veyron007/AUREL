@@ -13,7 +13,12 @@
  *   - every locale switches and renders translated text;
  *   - the four looks (Observatory, Field, Instrument, Cyber) apply, with a
  *     computed-style signature of the main surfaces printed per look.
- * `--only layers,share,voice,palette,panels,locales,looks` runs a subset.
+ *   - a panel opened during start-up ends with its full body and height;
+ *   - chat and voice sessions start before their code has loaded;
+ *   - the Authoring panel lists scenes and a scene document imports;
+ *   - replaying the Bhote Koshi evidence shot autoplays its clip.
+ * `--only layers,share,voice,palette,panels,locales,looks,director,media`
+ * runs a subset.
  * Prints one JSON summary (`--json <file>` writes it too) and exits non-zero on
  * a page error or a failed check. Compare two builds by running it on each.
  */
@@ -33,6 +38,9 @@ const SHARED_LAYERS = Object.freeze([
   'telegeography-submarine-cables',
   'drone-airspace',
   'traffic',
+  'cctv',
+  'radio',
+  'rocket-launches',
 ]);
 const LAYER_TIMEOUT_MS = 45_000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -191,6 +199,61 @@ async function paletteEnablesColdLayer() {
     opened,
     row,
   });
+}
+
+// A panel opened while start-up is still running, before its body's code has
+// loaded, ends with the same text and height as one opened later.
+async function earlyPanelOpens(panelId = 'planner-panel') {
+  const measure = (id) => {
+    const element = document.getElementById(id);
+    return {
+      open: Boolean(element && !element.classList.contains('collapsed')),
+      height: Math.round(element?.getBoundingClientRect().height ?? 0),
+      text: (element?.textContent ?? '').replace(/\s+/g, ' ').trim().length,
+    };
+  };
+  const late = await open('panel-late');
+  await late.evaluate((id) => {
+    window.__godsEyeView.styleManager._panelNavigation.openPanel(id);
+  }, panelId);
+  await wait(1500);
+  const expected = await late.evaluate(measure, panelId);
+  await late.close();
+  const page = await browser.newPage();
+  page.on('pageerror', (error) =>
+    pageErrors.push({ label: 'panel-early', message: error.message }),
+  );
+  await page.setViewport({ width: 1440, height: 900 });
+  await page.goto(`${base}/?welcome=0#v=2&${VIEW}&l=`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 90_000,
+  });
+  await page.waitForFunction(
+    () => window.__godsEyeView?.styleManager?._panelNavigation,
+    { timeout: 90_000, polling: 20 },
+  );
+  const placeholder = await page.evaluate((id) => {
+    window.__godsEyeView.styleManager._panelNavigation.openPanel(id);
+    return Boolean(
+      document.querySelector(`#${id} .deferred-panel-body[aria-busy]`),
+    );
+  }, panelId);
+  await page.waitForFunction(
+    () =>
+      document.querySelector('#loading-screen')?.classList.contains('hidden'),
+    { timeout: 90_000 },
+  );
+  await wait(1500);
+  const restored = await page.evaluate(measure, panelId);
+  await page.close();
+  check(
+    'a panel opened during start-up shows its full body and height',
+    expected.open &&
+      restored.open &&
+      restored.text === expected.text &&
+      restored.height === expected.height,
+    { placeholder, expected, restored },
+  );
 }
 
 async function everyPanelOpens() {
@@ -381,6 +444,179 @@ async function everyLookApplies() {
   return looks;
 }
 
+const MEDIA_BEAT = 'immediate-collapse-viewpoint';
+
+// Replaying the Bhote Koshi evidence shot from a cold start grants the event
+// layer its media owner before the shot enables it (and before its code has
+// loaded); only an owned shot autoplays its clip.
+async function bhoteKoshiMediaPlays() {
+  const page = await open('bhote-koshi-media');
+  const result = await page.evaluate(
+    async (beatId, timeout) => {
+      const app = window.__godsEyeView;
+      const director = app.sceneDirector;
+      await director.ready?.();
+      const isMediaShot = (shot) =>
+        shot.sourcePackId &&
+        shot.layers?.['bhote-koshi-2026']?.params?.beatId === beatId;
+      const scene = director
+        .getProjectSnapshot()
+        .scenes.find((candidate) => candidate.shots.some(isMediaShot));
+      const shot = scene?.shots.find(isMediaShot);
+      if (!shot) return { found: false };
+      void director.replayShot(scene.id, shot.id);
+      const autoplaying = () =>
+        [...document.querySelectorAll('iframe, video')].some(
+          (element) =>
+            /[?&]autoplay=1/.test(element.src || '') ||
+            (element.tagName === 'VIDEO' && !element.paused),
+        );
+      const deadline = Date.now() + timeout;
+      let playing = false;
+      while (Date.now() < deadline && !playing) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        playing = autoplaying();
+      }
+      director.stopScene();
+      return {
+        found: true,
+        enabled: app.dataManager.isEnabled('bhote-koshi-2026'),
+        playing,
+      };
+    },
+    MEDIA_BEAT,
+    LAYER_TIMEOUT_MS,
+  );
+  await page.close();
+  check(
+    'Bhote Koshi evidence media autoplays from a cold start',
+    result.found && result.playing,
+    result,
+  );
+}
+
+// The Authoring panel opened from a cold start lists the project's scenes,
+// and a scene document imported before the Director has loaded is restored
+// and playable (the Fieldbook and Orbit Witness paths).
+async function directorOpens() {
+  const page = await open('director');
+  const panel = await page.evaluate(async () => {
+    window.__godsEyeView.styleManager._panelNavigation.openPanel('scene-panel');
+    const deadline = Date.now() + 15_000;
+    const options = () =>
+      document.querySelectorAll('#scene-select option').length;
+    while (Date.now() < deadline && options() === 0)
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    return {
+      options: options(),
+      shots: document.querySelectorAll('#scene-panel .scene-shot-list li')
+        .length,
+      status: document.getElementById('scene-status')?.textContent.trim(),
+    };
+  });
+  await page.close();
+  check('the Authoring panel opens with its scenes', panel.options > 0, panel);
+
+  const importer = await open('scene-import');
+  const imported = await importer.evaluate(async () => {
+    const director = window.__godsEyeView.sceneDirector;
+    const loadedBefore = director.loaded;
+    const original = (await director.ready()).getProjectSnapshot();
+    const camera = {
+      lat: 30.3258,
+      lon: 78.0438,
+      alt: 4000,
+      heading: 0,
+      pitch: -90,
+      roll: 0,
+    };
+    const project = {
+      version: 6,
+      scenes: [
+        {
+          id: 'smoke-import',
+          title: 'Smoke import',
+          shots: [
+            {
+              id: 'shot-1',
+              title: 'Shot 1',
+              camera,
+              durationSec: 1,
+              holdSec: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const restored = await director.restoreProjectSnapshot(project);
+    const listed = director.listScenes().map((scene) => scene.id ?? scene);
+    // Put the visitor's project back: later checks share this browser.
+    await director.restoreProjectSnapshot(original);
+    return { loadedBefore, restored: Boolean(restored), listed };
+  });
+  await importer.close();
+  check(
+    'a scene document imported from a cold start is restored',
+    imported.restored &&
+      JSON.stringify(imported.listed).includes('smoke-import'),
+    imported,
+  );
+}
+
+// Chat and voice start from a cold start, before the provider's session code
+// has loaded: each start loads it and reaches the provider (connecting, then
+// whatever the provider answers here), never a load failure.
+async function voiceAndChatStart() {
+  const outcomes = {};
+  for (const mode of ['chat', 'voice']) {
+    const page = await browser.newPage();
+    page.on('pageerror', (error) =>
+      pageErrors.push({ label: `session-${mode}`, message: error.message }),
+    );
+    await page.setViewport({ width: 1440, height: 900 });
+    await page.goto(`${base}/?welcome=0#v=2&${VIEW}&l=`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90_000,
+    });
+    // Start as soon as the controls exist, before start-up settles.
+    await page.waitForFunction(() => window.__gevVoiceCommands?.session, {
+      timeout: 90_000,
+      polling: 20,
+    });
+    outcomes[mode] = await page.evaluate(async (textOnly) => {
+      const commands = window.__gevVoiceCommands;
+      const early = !performance.getEntriesByName('splash-hidden').length;
+      const states = [];
+      const off = commands.session.subscribe((event) => {
+        if (event.type === 'state')
+          states.push([event.state, String(event.detail ?? '')]);
+      });
+      await commands.start(
+        textOnly ? { textOnly: true } : { pushToTalk: false },
+      );
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      off();
+      const result = {
+        beforeSettled: early,
+        states: states.map(([state]) => state),
+        detail: states.at(-1)?.[1] ?? '',
+        controller: typeof commands.notifyMapEvent === 'function',
+      };
+      commands.stop();
+      return result;
+    }, mode === 'chat');
+    await page.close();
+  }
+  const loaded = (outcome) =>
+    outcome.states.includes('connecting') &&
+    !/could not be loaded/.test(outcome.detail);
+  check(
+    'chat and voice sessions start from a cold start',
+    loaded(outcomes.chat) && loaded(outcomes.voice),
+    outcomes,
+  );
+}
+
 const onlyIndex = process.argv.indexOf('--only');
 const only = onlyIndex > 0 ? process.argv[onlyIndex + 1].split(',') : null;
 const want = (name) => !only || only.includes(name);
@@ -389,10 +625,14 @@ try {
   if (want('layers')) summary.layers = await toggleEveryLayer();
   if (want('share')) await shareLinkRestores();
   if (want('voice')) await voiceEnablesColdLayer();
+  if (want('voice')) await voiceAndChatStart();
   if (want('palette')) await paletteEnablesColdLayer();
   if (want('panels')) summary.panels = await everyPanelOpens();
+  if (want('panels')) await earlyPanelOpens();
   if (want('locales')) summary.locales = await everyLocaleRenders();
   if (want('looks')) summary.looks = await everyLookApplies();
+  if (want('director')) await directorOpens();
+  if (want('media')) await bhoteKoshiMediaPlays();
 } finally {
   await browser.close();
 }

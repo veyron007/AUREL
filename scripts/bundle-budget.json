@@ -1,6 +1,15 @@
 {
-  "description": "Startup bundle budget in bytes, checked by npm run check:bundle after npm run build. Measured sizes plus about 3%. Phase 2 (2026-11-08) lowered entry JS from 8,051,095 raw / 2,622,933 gzip to 4,185,503 / 1,319,171 and entry CSS from 594,839 / 94,102 to 532,281 / 84,739. staticImportsJs now holds the vendor chunk (Vue, Pinia, vue-i18n: 109,909 / 42,157), moved out of the entry, so entry plus static imports fell by 3.76 MB raw. Lower each limit when a work package shrinks the bundle; never raise one to land a change.",
-  "entryJs": { "bytes": 4311069, "gzipBytes": 1358747 },
-  "staticImportsJs": { "bytes": 113207, "gzipBytes": 43422 },
-  "entryCss": { "bytes": 548250, "gzipBytes": 87282 }
+  "description": "Startup bundle budget in bytes, checked by npm run check:bundle after npm run build. Measured sizes plus about 3%. Phase 2 (2026-11-08) lowered entry JS from 8,051,095 raw / 2,622,933 gzip to 4,185,503 / 1,319,171 and entry CSS from 594,839 / 94,102 to 532,281 / 84,739. staticImportsJs now holds the vendor chunk (Vue, Pinia, vue-i18n: 109,909 / 42,157), moved out of the entry, so entry plus static imports fell by 3.76 MB raw. Phase 2 remainder (2026-11-10: CCTV, radio, launches, transit and the Bhote Koshi event built on first use, ten left-rail panel bodies on demand, the Scene Director and the voice sessions on first use) lowered entry JS from 4,222,360 / 1,331,560 to 3,346,831 / 1,069,616; static imports and CSS are unchanged. Lower each limit when a work package shrinks the bundle; never raise one to land a change.",
+  "entryJs": {
+    "bytes": 3447236,
+    "gzipBytes": 1101704
+  },
+  "staticImportsJs": {
+    "bytes": 113207,
+    "gzipBytes": 43422
+  },
+  "entryCss": {
+    "bytes": 548250,
+    "gzipBytes": 87282
+  }
 }

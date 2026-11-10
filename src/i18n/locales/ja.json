@@ -4284,5 +4284,7 @@
   "Now: reduced, step {step} of {steps}": "現在: 低減中（{steps} 段階中 {step}）",
   "fewer map labels": "地図ラベルを削減",
   "Now: full quality": "現在: 最高品質",
-  "Display quality": "表示品質"
+  "Display quality": "表示品質",
+  "Try again": "再試行",
+  "Voice and chat": "音声とチャット"
 }

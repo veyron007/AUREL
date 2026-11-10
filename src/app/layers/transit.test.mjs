@@ -4,6 +4,7 @@ import { createSurfaceServices } from '../surfaceServices.js';
 import { createApplicationTransit } from './transit.js';
 import { createApplicationCatalog } from '../constructCatalog.js';
 import { createStandaloneLayerSources } from '../../standalone/layerSources.js';
+import { loadDeferredLayer } from '../deferredLayer.js';
 
 /** A terrain source that answers every point with one ellipsoidal height. */
 function fixtureSurface(signal, demM) {
@@ -72,8 +73,9 @@ test('the catalog hands transit the same surface it hands everything else', asyn
     signal: lifetime.signal,
     surface,
   });
-  const transit = catalog.get('transit');
-  assert.ok(transit, 'transit is in the catalog');
+  assert.ok(catalog.get('transit'), 'transit is in the catalog');
+  // Transit is built on first use (src/app/deferredLayer.js).
+  const transit = await loadDeferredLayer(catalog.get('transit'));
   const lat = 30.2672;
   const lon = -97.7431;
   await surface.groundFloor.resolveGroundFloorCells([{ lat, lon }]);
