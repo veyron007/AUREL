@@ -398,12 +398,39 @@ The parallel tracks do not touch the same files: Phase 3 is mostly `server/` and
 
 ## 8. Progress against the goal
 
-| Phase | Status | Measured result | Commits |
-|---|---|---|---|
-| 0 Measure | not started | | |
-| 1 Delivery | WP1.1 to WP1.6 landed | Empty globe, cold cache, same probe: dev server 1,594 requests, 80.8 MB, ready 6.9 s (17.3 s at 50 Mbps); `npm run serve` 295 requests, 11.9 MB, ready 3.8 s (4.3 s at 50 Mbps). Served build before this phase: 351 requests, 14.2 MB, ready 6.1 s. About 7 MB of the remainder is remote terrain and imagery. Most of the ready gain is WP1.5: the cover waited for the start-up share flight (a fixed 1.5 s delay plus a 3 s `flyTo` no one could see), so the start-up restore now lands at once and the cover lifts when the destination's tiles report loaded (capped at 2 s, `src/app/startupView.js`); app-ready to cover-hidden fell from about 4.4 s to about 2.2 s with an identical reveal frame. | `worktree-agent-a01e7c00e67b2833d` |
-| 2 Startup bundle | WP2.1 to WP2.6 landed. WP2.2: 15 of 38 layers built on first use, five of them (CCTV, radio, launches, transit, Bhote Koshi event) through per-layer facades in their descriptors (`src/app/layers/descriptors/`); Street Level, military, weather, wind, cyclones, GNSS and the rest stay eager. WP2.3: the Scene Director (`src/scenes/lazyDirector.js`) and the OpenAI/Gemini voice sessions (`src/voice/lazySession.js`) load on first use or once start-up settles; the action runner (`gevActions.js`) stays eager. WP2.4: ten left-rail panel bodies load on demand (`src/ui/rail/DeferredPanelBody.vue`); CCTV and Street Level stay whole because start-up binds their markup by id. | Entry JS 8,053 KB -> 4,186 KB (first pass) -> 3,347 KB (1,070 KB gzip); vendor chunk 110 KB; entry CSS 535 KB. Probe after the remainder, 2 runs, loaded machine, remote tiles: empty globe ready 7.9 s (runs 6.2 / 9.5 s, dominated by first-tile -> bootstrap-done tile waits), 304 requests, 10.9 MB, heap 67 MB; flights-quakes-sats ready 5.3 s, 11.3 MB, heap 91 MB. No back-to-back main run (single-worker load limit), so ready is not attributed (**verify**). | `worktree-agent-a57f2250d14c79336`, `worktree-agent-a9e514ab5a4909cd0` |
-| 3 Data pipeline | not started | | |
-| 4 Rendering | not started | | |
-| 5 Interface | not started | | |
-| 6 Guardrails | not started | | |
+Final measurement on 10 November 2026: the served build (`npm run serve`) of the combined work, Apple M4 through the hardware Metal path, 1440 by 900, cache disabled, three runs per scene, medians (`npm run perf:probe`). The machine's load average was about 10 during the run, so frame rates are slightly pessimistic.
+
+### 8.1 Scoreboard
+
+| Target | Baseline (section 2) | Goal | Final | Met |
+|---|---|---|---|---|
+| Time to usable globe, 50 Mbps, cold cache | 17.2 s dev / 6.2 s built | 4.0 s or less | 5.2 s | no |
+| Bytes to usable globe, cold cache | 81 MB dev / 14.2 MB built | 6 MB or less on the wire | 10.8 MB | no |
+| Main JavaScript chunk | 8.0 MB (2.6 MB gzip) | 2.5 MB or less (0.8 MB gzip) | 3.3 MB (1.05 MB gzip) | no |
+| Heap, empty globe | 79 MB built / 187 MB dev | 80 MB or less | 67 MB | yes |
+| Heap, cables + datacenters + fires | 488 MB | 250 MB or less | 122 MB | yes |
+| Long tasks, that scene, first 15 s | 3.8 s total, worst 594 ms | 1.0 s, worst 150 ms | 1.1 s, worst 223 ms | nearly |
+| Motion frame rate, that scene | 45 FPS | 58 FPS or more | 57 FPS | nearly |
+| FIRMS bytes per unchanged poll | about 18 MB | about 200 bytes | 304, empty body | yes |
+
+Why the three misses remain, measured with the startup marks:
+
+- **Ready time.** The app is ready about 1.4 s after navigation. The share restore then takes about 1.4 s (map source, layers, view), and the cover waits until the destination's imagery tiles are loaded, which takes about 1.9 s from Esri at this view. Lifting the cover sooner would show the map still streaming in, which the quality bar rules out. The next lever is the restore step itself.
+- **Bytes.** About 7 MB of the 10.8 MB is remote terrain and imagery, which the app cannot shrink. The app's own files are compressed.
+- **Main chunk.** Street Level, military, weather, wind, cyclones, GNSS and the action runner (`gevActions.js`) still load at start-up, because controllers read them synchronously. Each needs a stand-in like the five in `src/app/layers/descriptors/`.
+
+### 8.2 What landed, by phase
+
+| Phase | Status | Main results |
+|---|---|---|
+| 0 Measure | done | `npm run perf:probe` with start-up marks, `npm run check:bundle` with a budget, opt-in benchmarks for FIRMS, vessels, overlay text and datacenters. |
+| 1 Delivery | done | `npm run serve` is the default launch; Brotli/gzip for text responses except credential routes; immutable caching of hashed files; minified, deferred Cesium; the start-up view lands at once; fonts preloaded. Empty globe: 1,594 requests and 80.8 MB (dev) to 295 and 11.9 MB. |
+| 2 Startup bundle | done, with the gaps above | Lazy locales; 15 of 38 layers built on first use; the Director and voice sessions on first use (voice preloads as the cover lifts, so Space push-to-talk works at once); ten panel bodies on demand; vendor chunk; Cyber CSS on demand; Lamplight trimmed. Entry JS 8.0 MB to 3.3 MB. |
+| 3 Data pipeline | done | FIRMS ETag/304, aged-out pruning on 304, columnar payload; satellites per-group ETag and 60 min refresh; vessels area filter, shared snapshot and `since=` deltas; batched aircraft types (about 130 requests to 4); diffs for earthquakes and slow layers; CCTV catalog and frame cache; terrain cache in sqlite; quiet timers. |
+| 4 Rendering | done, two parts limited by Cesium | Cables and local GeoJSON on primitives (cables 868 MB to 106 MB heap; datacenters 244 MB to 108 MB), with the double-click camera lock restored; FIRMS heat raster in a worker without a PNG step, grid index, diffed and time-sliced markers; vessel rotation once per update and horizon tests per cell; detection overlay without a full-screen filter; cached label bitmaps; separable FLIR and NVG blurs; traffic decode in a worker. Radio keeps Entities (its clustering has no primitive equivalent) and the FIRMS fade still writes visible markers (Cesium has no per-collection alpha). |
+| 5 Interface | done | 20 px glass blur budget, solid panes while the camera moves; annotations written directly to SVG; paint-heavy animations and page-wide `:has()` rules replaced; adaptive quality (Auto, High, Balanced, Battery) including a label-density step; `preserveDrawingBuffer` off with captures read in `postRender`; smaller tile cache. |
+| 6 Guardrails | done | `npm run check:bundle` on every CI run; a weekly `Performance probe` workflow that records startup cost and never fails on frame rate; this section and docs/PERFORMANCE.md updated. |
+
+### 8.3 Verification of the combined work
+
+`npm test` 12,190 passed, 0 failed; `npm run test:perf` 10 of 10; format, boundaries, i18n, build and bundle budget pass. Browser checks on the served build: Spatial QA 19 of 19, cold-start smoke 14 of 14 (every layer, panel, locale, look, voice and chat start, Director, scene import, Bhote Koshi media), canvas capture 4 of 4, Phase 4A layer smoke, and a real double-click camera lock on a datacenter. Not verified: Windows, phones, integrated graphics, the Docker image build and the Pinokio launch end to end, live AIS vessels on the combined build, and live voice streaming (blocked in Free-only).

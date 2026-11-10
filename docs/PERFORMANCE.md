@@ -153,6 +153,19 @@ name a `setup` run once the app is ready (`annotations-10` places ten pins).
 static imports or the entry CSS exceed `scripts/bundle-budget.json`.
 `npm run test:perf` runs the `*.perf.test.mjs` timing budgets.
 
+## 10 November 2026: after the performance plan
+
+These rows come from `npm run perf:probe` (three runs, medians) on an Apple M4 through the hardware Metal path, 1440 x 900 at device pixel ratio 1, cache disabled, against the served build (`npm run serve`). They are a different machine and different scenes from the August capture above, so compare them only with later runs of the same probe. The full plan and its scoreboard are in [docs/design/aurel/PERFORMANCE-PLAN.md](design/aurel/PERFORMANCE-PLAN.md), section 8.
+
+| Scene | Ready | Requests | Transfer | Heap | Long tasks (worst) | Rest / motion FPS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Empty globe over Dehradun | 4.7 s | 292 | 10.8 MB | 67 MB | 0.3 s (125 ms) | 0 / 60 |
+| Same, 50 Mbps link | 5.2 s | 292 | 10.8 MB | 66 MB | 0.5 s (168 ms) | 0 / 60 |
+| Flights, earthquakes, satellites | 4.5 s | 338 | 11.3 MB | 92 MB | 0.3 s (122 ms) | 60 / 60 |
+| Cables, datacenters, fires (world view) | 2.9 s | 212 | 11.0 MB | 122 MB | 1.1 s (223 ms) | 0 / 57 |
+
+The same three scenes on 8 November, before the plan, measured 5.9 s / 6.5 s / 6.6 s ready, 78 / 163 / 488 MB heap and 60 / 60 / 45 FPS in motion. A rest rate of 0 means the render governor drew nothing while nothing changed. About 7 MB of each transfer is remote terrain and imagery.
+
 ## What is not established yet
 
 - This report does not establish Windows performance.
