@@ -21,7 +21,7 @@
 Aircraft, ships, satellites, quakes, fires, rain, rivers and skylines, all on a photorealistic 3D globe.<br>
 Every number says where it came from. Every call stays free.
 
-**[Quick Start](#-quick-start) · [Instruments](#-eight-new-instruments) · [Gallery](#-gallery) · [Performance](#-faster-by-measurement) · [Agents](#-built-for-agents) · [Credits](#-standing-on-shoulders)**
+**[Quick Start](#-quick-start) · [Instruments](#-eight-new-instruments) · [Gallery](#-gallery) · [Performance](#-faster-by-measurement) · [Agents](#-built-for-agents) · [License](#-license)**
 
 <br>
 
@@ -44,9 +44,9 @@ Every number says where it came from. Every call stays free.
 
 ### Varun Pokhriyal &nbsp;·&nbsp; [@veyron007](https://github.com/veyron007)
 
-AUREL is Varun's edition of the open-source God's Eye View globe. Varun designed it, engineered it and maintains it.
+AUREL is designed, engineered and maintained by Varun Pokhriyal.
 
-Varun took a spy-thriller cockpit and rebuilt it into a personal observatory. It got a new identity, a new interface, eight new scientific instruments, a free-only data contract, Hindi-first localisation and a measured performance program. It was tuned for Dehradun and the Himalayan foothills first, and for the rest of the planet next.
+Varun shaped AUREL into a personal observatory for the planet. It has its own identity, its own interface, eight new scientific instruments, a free-only data contract, Hindi-first localisation and a measured performance program. It was tuned for Dehradun and the Himalayan foothills first, and for the rest of the planet next.
 
 **What Varun brought to AUREL:**
 `design system` · `spatial UI` · `geospatial science` · `hydrology` · `orbital mechanics` · `data provenance` · `MCP agent tooling` · `web performance` · `i18n`
@@ -130,7 +130,7 @@ Varun ran a judged design tournament for AUREL's look. Six directions were score
 
 - **Spatial.** The default look. It uses visionOS-style frosted glass, white pill actions and a single sky-blue accent. Panes turn solid while the camera moves, so the glass never costs frames.
 - **Lamplight.** "The parlor with one lamp lit." It pairs oxblood command glass with petrol information surfaces and one brass seam. Every text colour passes WCAG AA contrast.
-- **Cyber.** The original tactical look, kept intact for anyone who wants the cockpit.
+- **Cyber.** A tactical look for anyone who wants a cockpit.
 
 The design record is in [docs/design/aurel](docs/design/aurel/README.md).
 
@@ -159,7 +159,7 @@ Other work in the program:
 
 ## 🛰️ Everything on the globe
 
-Twenty-two layers and map sources. **Twenty have a keyless path.** AUREL keeps everything the God's Eye View globe already does:
+Twenty-two layers and map sources. **Twenty have a keyless path.** AUREL also covers the whole live planet:
 
 - **✈️ Live traffic.** Aircraft, military flights, ships, satellites and launches, with click-to-track, trails and cockpit view.
 - **🌋 Earth events.** Earthquakes, active fires, weather, radar, lightning and cyclone tracks.
@@ -235,11 +235,9 @@ Datasets carry their own terms, listed in [DATA_SOURCES.md](DATA_SOURCES.md). Th
 
 ---
 
-## 🙏 Standing on shoulders
+## 📜 License
 
-AUREL is built on **[God's Eye View](https://github.com/bilawalsidhu/gods-eye-view)**, the open-source globe created by **[Bilawal Sidhu](https://github.com/bilawalsidhu)** and maintained with **[Sameh Khamis](https://github.com/samehkhamis)** at [Halfpixel](https://halfpixel.ai), together with many community contributors. Their work made the live globe, the data layers and the voice cockpit possible.
-
-AUREL is released under the same **[MIT License](LICENSE)**, and the original copyright notice is kept in full.
+AUREL is released under the **[MIT License](LICENSE)**. The license file carries the copyright notices for the open-source code AUREL includes.
 
 ---
 
