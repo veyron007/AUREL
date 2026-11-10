@@ -35,7 +35,7 @@ import {
   initGevVoiceCommands,
   preloadVoiceSessions,
 } from '../voice/gevRealtime.js';
-import { whenStartupSettled } from '../ui/rail/deferredBody.js';
+import { whenStartupCoverGone } from '../ui/rail/deferredBody.js';
 import { installViews, isEmbeddedInline } from './embed.js';
 import {
   installScopeMask,
@@ -396,8 +396,9 @@ export function createApplicationTools({
   });
   debug.voiceCommands = voiceCommands;
   // The provider's session code loads on the first mic or chat use, or here
-  // once start-up has settled, so push-to-talk is ready soon after.
-  void whenStartupSettled().then(() => {
+  // as soon as the loading cover lifts, so holding Space works from the first
+  // moment the map is shown (the idle wait used by panel bodies is too late).
+  void whenStartupCoverGone().then(() => {
     if (signal?.aborted) return;
     preloadVoiceSessions(voiceCommands.provider).catch((error) =>
       console.warn('[Voice] Session code could not be preloaded:', error),

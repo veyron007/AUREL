@@ -8,7 +8,7 @@ import { createApp, h, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import DeferredPanelBody from './DeferredPanelBody.vue';
 import { usePanelChromeStore } from '../stores/panelChrome.js';
-import { whenStartupSettled } from './deferredBody.js';
+import { whenStartupCoverGone, whenStartupSettled } from './deferredBody.js';
 import LensPanel from '../views/panels/LensPanel.vue';
 
 const Body = { render: () => h('p', { class: 'loaded-body' }, 'Body text') };
@@ -129,4 +129,36 @@ test('the Lens panel keeps its header in the shell and loads its body', async (t
     panel.querySelector('.lens-empty, .lens-identity'),
     'body rendered',
   );
+});
+
+test('the cover-gone wait resolves when the cover lifts, before any idle moment', async () => {
+  const marks = [];
+  let observer = null;
+  let idle = 0;
+  const gone = whenStartupCoverGone({
+    document: { getElementById: () => ({}) },
+    performance: {
+      getEntriesByName: (name) => marks.filter((mark) => mark === name),
+    },
+    PerformanceObserver: class {
+      constructor(callback) {
+        observer = callback;
+      }
+      observe() {}
+      disconnect() {}
+    },
+    requestIdleCallback: () => {
+      idle += 1;
+    },
+  });
+  let done = false;
+  gone.then(() => (done = true));
+  await settle();
+  assert.equal(done, false, 'the cover is still up');
+  marks.push('splash-hidden');
+  observer({
+    getEntriesByName: (name) => marks.filter((mark) => mark === name),
+  });
+  await gone;
+  assert.equal(idle, 0, 'no idle wait');
 });

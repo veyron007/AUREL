@@ -38,6 +38,21 @@ function whenIdle(scope) {
 }
 
 /**
+ * Resolves as soon as the loading cover is told to hide, without waiting for
+ * an idle moment. For code the person may need the instant the map shows
+ * (push-to-talk on Space), loaded after the start-up bundle but before idle.
+ * @param {object} [scope] The window; injectable for tests.
+ * @returns {Promise<void>}
+ */
+export function whenStartupCoverGone(scope = globalThis) {
+  return whenCoverGone(
+    scope.document,
+    scope.performance,
+    scope.PerformanceObserver,
+  );
+}
+
+/**
  * Resolves once start-up has settled: the loading cover is gone and the page
  * has been idle once. Shared by every deferred body.
  * @param {object} [scope] The window; injectable for tests.
