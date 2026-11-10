@@ -1,0 +1,76 @@
+name: Performance probe
+
+# Records startup cost on a schedule. CI runners render WebGL in software, so
+# frame rates here are not comparable with docs/PERFORMANCE.md and this job
+# never fails on them; the size gate (npm run check:bundle) runs in CI.yml.
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: Startup probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GEV_REQUIRE_ALLOCATION_GATE: '0'
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.22.2
+          cache: npm
+
+      - name: Install locked dependencies and headless Chrome
+        run: npm ci
+
+      - name: Build and check the startup bundle budget
+        run: |
+          npm run build
+          npm run check:bundle
+
+      - name: Start the served build
+        run: |
+          node scripts/serve-built.mjs --port 4173 > serve.log 2>&1 &
+          for attempt in $(seq 1 90); do
+            curl -sf http://localhost:4173/ > /dev/null && exit 0
+            sleep 2
+          done
+          cat serve.log
+          exit 1
+
+      - name: Probe the empty globe and the flights scene
+        run: |
+          mkdir -p perf-artifacts
+          npm run perf:probe -- --base http://localhost:4173 --runs 3 \
+            --scenes empty-dehradun,flights-quakes-sats --allow-software \
+            | tee perf-artifacts/probe.txt
+          npm run perf:probe -- --base http://localhost:4173 --runs 3 \
+            --scenes empty-dehradun --throttle 50mbps --allow-software \
+            | tee perf-artifacts/probe-50mbps.txt
+
+      - name: Served build log
+        if: failure()
+        run: cat serve.log
+
+      - name: Upload probe results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: perf-probe
+          path: perf-artifacts/
+          if-no-files-found: ignore
+          retention-days: 90
