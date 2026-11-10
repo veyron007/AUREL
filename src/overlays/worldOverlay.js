@@ -165,6 +165,14 @@ let _canvasDpr = 1;
  */
 let _frameStamp = 0;
 
+/**
+ * Label density from the quality governor (src/app/qualityGovernor.js): 1 is
+ * every source's shipped caps; below 1 the ambient caps (cohort, collision
+ * capacity, per-source ceiling) shrink by this factor. Selected, pinned and
+ * tracked entries bypass caps at any density.
+ */
+let _labelDensity = 1;
+
 /** @type {Map<string, object>} */
 const _sources = new Map();
 /** @type {Array<object>} Append-only iteration order for `_sources`. */
@@ -786,6 +794,39 @@ function getOrCreateDomain(domainId) {
   return domain;
 }
 
+/**
+ * An ambient cap at the current label density. At full density the cap is
+ * returned untouched, so the High look is exactly the shipped one.
+ * @param {number} cap
+ * @returns {number}
+ */
+function densityCap(cap) {
+  if (_labelDensity === 1 || !Number.isFinite(cap) || cap <= 0) return cap;
+  return Math.max(1, Math.floor(cap * _labelDensity));
+}
+
+/**
+ * Set the world text overlay's label density (1 = full). Reduced density
+ * keeps fewer ambient labels and cards per source; it is restored by
+ * setting 1 again.
+ * @param {number} density In (0, 1].
+ */
+export function setWorldOverlayLabelDensity(density) {
+  const next = Number(density);
+  if (!(next > 0 && next <= 1))
+    throw new RangeError(`Label density must be in (0, 1], got ${density}`);
+  if (next === _labelDensity) return;
+  _labelDensity = next;
+  for (const source of _sourceList) rebuildSourceCohorts(source);
+  updateEntryDiagnostics();
+  invalidateHost();
+}
+
+/** The current label density (1 = full). */
+export function getWorldOverlayLabelDensity() {
+  return _labelDensity;
+}
+
 function rebuildSourceCohorts(source) {
   const groups = new Map();
   source.demandByDomain.clear();
@@ -805,7 +846,7 @@ function rebuildSourceCohorts(source) {
     source.cohortDomainIds[index] = domainId;
     source.cohortLists[index] = selectBoundedOverlayCohort(
       entries,
-      source.options.cohortLimit,
+      densityCap(source.options.cohortLimit),
       incumbentKeys,
     );
     index++;
@@ -2085,13 +2126,14 @@ function collectFrameCandidates(keyhole, viewProjection) {
       const domainId = source.cohortDomainIds[c];
       const cohort = source.cohortLists[c];
       const domain = getOrCreateDomain(domainId);
+      const collisionCapacity = densityCap(source.options.collisionCapacity);
       domain.capacity =
         domainId === 'ambient-card'
           ? Math.min(
-              AMBIENT_CARD_COLLISION_CAPACITY,
-              domain.capacity + source.options.collisionCapacity,
+              densityCap(AMBIENT_CARD_COLLISION_CAPACITY),
+              domain.capacity + collisionCapacity,
             )
-          : Math.max(domain.capacity, source.options.collisionCapacity);
+          : Math.max(domain.capacity, collisionCapacity);
       domain.moving ||= source.options.moving;
       domain.solveIntervalMs = Math.min(
         domain.solveIntervalMs,
@@ -2101,7 +2143,10 @@ function collectFrameCandidates(keyhole, viewProjection) {
         source.id,
         source.demandByDomain.get(domainId) || 0,
       );
-      domain.limitsBySource.set(source.id, source.options.maxVisible);
+      domain.limitsBySource.set(
+        source.id,
+        densityCap(source.options.maxVisible),
+      );
       candidateCount += cohort.length;
       for (let i = 0; i < cohort.length; i++) {
         const entry = cohort[i];

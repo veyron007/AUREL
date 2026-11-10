@@ -17,12 +17,14 @@ const display = useDisplayStore();
 const location = useLocationStore();
 const quality = useQualityStore();
 // What adaptive quality applies now (src/app/qualityGovernor.js levels).
-const QUALITY_STEPS = 3;
-const qualityStatus = computed(() =>
-  quality.level > 0
-    ? t('Now: reduced, step {step} of {steps}', { step: quality.level, steps: QUALITY_STEPS })
-    : t('Now: full quality'),
-);
+const QUALITY_STEPS = 4;
+const qualityStatus = computed(() => {
+  const level =
+    quality.level > 0
+      ? t('Now: reduced, step {step} of {steps}', { step: quality.level, steps: QUALITY_STEPS })
+      : t('Now: full quality');
+  return quality.labelDensity < 1 ? `${level} · ${t('fewer map labels')}` : level;
+});
 // Only a real place is named; the pin is the tray's decoration, not the name.
 const placeLabel = computed(() => {
   const city = location.view?.status?.city;

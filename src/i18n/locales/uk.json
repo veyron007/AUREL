@@ -4507,6 +4507,7 @@
   "Balanced": "Збалансована",
   "Battery": "Економія батареї",
   "Now: reduced, step {step} of {steps}": "Зараз: знижено, крок {step} з {steps}",
+  "fewer map labels": "менше підписів на мапі",
   "Now: full quality": "Зараз: повна якість",
   "Display quality": "Якість зображення"
 }

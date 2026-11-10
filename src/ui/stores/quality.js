@@ -21,11 +21,14 @@ const isMode = (id) => QUALITY_MODES.some((mode) => mode.id === id);
 
 /**
  * The chosen mode and the level the governor currently applies (0 is full
- * quality). The governor reads `mode` and publishes `level`.
+ * quality). The governor reads `mode` and publishes `level` and the map
+ * label density.
  */
 export const useQualityStore = defineStore('gev-display-quality', () => {
   const mode = ref('auto');
   const level = ref(0);
+  // Map label density the governor applies (1 = every label).
+  const labelDensity = ref(1);
 
   function setMode(id, storage) {
     if (!isMode(id)) return;
@@ -53,5 +56,18 @@ export const useQualityStore = defineStore('gev-display-quality', () => {
     if (Number.isInteger(next) && next >= 0) level.value = next;
   }
 
-  return { mode, level, setMode, restoreMode, publishLevel };
+  function publishLabelDensity(next) {
+    if (Number.isFinite(next) && next > 0 && next <= 1)
+      labelDensity.value = next;
+  }
+
+  return {
+    mode,
+    level,
+    labelDensity,
+    setMode,
+    restoreMode,
+    publishLevel,
+    publishLabelDensity,
+  };
 });

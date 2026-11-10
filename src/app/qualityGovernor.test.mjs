@@ -5,7 +5,9 @@ import {
   QUALITY_PANES_ATTRIBUTE,
   createFrameJudge,
   installQualityGovernor,
+  labelDensityFor,
   levelForMode,
+  REDUCED_LABEL_DENSITY,
 } from './qualityGovernor.js';
 
 function eventSource() {
@@ -44,12 +46,13 @@ function fixture({ mode = 'auto', recording = false, capturing = false } = {}) {
     toggleAttribute: (name, on) =>
       on ? attributes.set(name, '') : attributes.delete(name),
   };
-  const state = { mode, recording, capturing, published: [] };
+  const state = { mode, recording, capturing, published: [], densities: [] };
   const governor = installQualityGovernor({
     viewer,
     root,
     readMode: () => state.mode,
     publishLevel: (level) => state.published.push(level),
+    setLabelDensity: (density) => state.densities.push(density),
     isRecording: () => state.recording,
     isCapturing: () => state.capturing,
     now: () => time,
@@ -96,8 +99,8 @@ test('the judge needs 3 s of slow frames to step down and 10 s of fast ones to s
 test('modes hold their levels and Auto stays within range', () => {
   assert.equal(levelForMode('high', 3), 0);
   assert.equal(levelForMode('balanced', 0), 2);
-  assert.equal(levelForMode('battery', 0), 3);
-  assert.equal(levelForMode('auto', 9), 3);
+  assert.equal(levelForMode('battery', 0), 4);
+  assert.equal(levelForMode('auto', 9), 4);
   assert.equal(levelForMode('auto', -1), 0);
 });
 
@@ -123,8 +126,15 @@ test('sustained slow frames step down in order, fast frames step back up', () =>
   assert.equal(viewer.resolutionScale, 0.85);
   frames(30, 3100, 25);
   assert.equal(attributes.get(QUALITY_PANES_ATTRIBUTE), 'solid');
+  assert.equal(governor.readLabelDensity(), 1, 'labels go last');
   frames(30, 3100, 25);
-  assert.equal(governor.readLevel(), 3, 'never past the last level');
+  assert.equal(governor.readLevel(), 4);
+  assert.equal(governor.readLabelDensity(), REDUCED_LABEL_DENSITY);
+  frames(30, 3100, 25);
+  assert.equal(governor.readLevel(), 4, 'never past the last level');
+  frames(16.7, 10200, 5);
+  assert.equal(governor.readLevel(), 3);
+  assert.equal(governor.readLabelDensity(), 1, 'labels come back first');
   frames(16.7, 10200, 5);
   assert.equal(governor.readLevel(), 2);
   assert.equal(attributes.has(QUALITY_PANES_ATTRIBUTE), false);
@@ -156,7 +166,37 @@ test('a manual mode applies at once and Auto resumes adapting from it', () => {
   governor.sync();
   assert.equal(scene.msaaSamples, 4);
   assert.equal(attributes.has(QUALITY_PANES_ATTRIBUTE), false);
-  assert.deepEqual(state.published, [0, 3, 0]);
+  assert.deepEqual(state.published, [0, 4, 0]);
+  assert.deepEqual(state.densities, [1, REDUCED_LABEL_DENSITY, 1]);
+});
+
+test('High keeps full labels; Balanced and Battery show fewer, restored on High', () => {
+  assert.equal(labelDensityFor('high', 0), 1);
+  assert.equal(labelDensityFor('auto', 0), 1);
+  assert.equal(labelDensityFor('auto', 3), 1);
+  assert.equal(labelDensityFor('auto', 4), REDUCED_LABEL_DENSITY);
+  assert.equal(labelDensityFor('balanced', 2), REDUCED_LABEL_DENSITY);
+  assert.equal(labelDensityFor('battery', 4), REDUCED_LABEL_DENSITY);
+  const { governor, state } = fixture({ mode: 'high' });
+  assert.deepEqual(state.densities, [1]);
+  state.mode = 'balanced';
+  governor.sync();
+  state.mode = 'high';
+  governor.sync();
+  assert.deepEqual(state.densities, [1, REDUCED_LABEL_DENSITY, 1]);
+});
+
+test('a fast machine in Auto never touches label density after the first apply', () => {
+  const { frames, warmUp, state } = fixture();
+  warmUp();
+  frames(16.7, 60000, 5);
+  assert.deepEqual(state.densities, [1]);
+});
+
+test('destroy restores full label density', () => {
+  const { governor, state } = fixture({ mode: 'battery' });
+  governor.destroy();
+  assert.deepEqual(state.densities, [REDUCED_LABEL_DENSITY, 1]);
 });
 
 test('destroy removes listeners and the pane flag', () => {
